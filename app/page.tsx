@@ -31,7 +31,7 @@ const initialPosts = [
 
 export default function HomePage() {
   const [active, setActive] = useState("الرئيسية");
-  const [posts, setPosts] = useState(initialPosts);
+  const [posts, setPosts] = useState<Array<{ id: string | number; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean }>>(initialPosts);
   const [draft, setDraft] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notice, setNotice] = useState("");
@@ -65,7 +65,7 @@ export default function HomePage() {
     setPosts([{ id: Date.now(), name: "أنت", handle: "@your.profile", avatar: "أ", time: "الآن", text: draft.trim(), likes: 0, comments: 0, shares: 0, tag: "منشور جديد", liked: false }, ...posts]);
     setDraft(""); setNotice("تم نشر منشورك بنجاح"); setTimeout(() => setNotice(""), 2500);
   }
-  function toggleLike(id: number) {
+  function toggleLike(id: string | number) {
     setPosts(current => current.map(p => p.id === id ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p));
   }
   return <main className={focus ? "app-shell focus-mode" : "app-shell"}>
