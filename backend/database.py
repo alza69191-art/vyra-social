@@ -13,7 +13,15 @@ def _database_url():
 
 
 DATABASE_URL = _database_url()
-engine = create_engine(DATABASE_URL, pool_pre_ping=True) if DATABASE_URL else None
+# Render's outbound network is IPv4; use Supabase's shared SESSION pooler
+# (port 5432) and require TLS. Do not use transaction pooler for this ORM.
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_size=3,
+    max_overflow=0,
+    connect_args={"sslmode": "require"},
+) if DATABASE_URL else None
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False) if engine else None
 
 
