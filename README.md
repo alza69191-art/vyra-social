@@ -1,58 +1,56 @@
 # VYRA Social
 
-Arabic RTL social platform starter built with Next.js 15, TypeScript, FastAPI and PostgreSQL (Supabase-hosted).
+Arabic RTL social platform starter built with Next.js 15, TypeScript, FastAPI and Supabase PostgreSQL.
 
-## Repository structure
-- `app/`: Next.js web interface.
-- `backend/`: FastAPI service, SQLAlchemy models, Supabase JWT verification and social API endpoints.
-- `render.yaml`: Render Blueprint for separate web and API services.
-- `index.html`: standalone HTML prototype; the production Next.js app is served from the web service.
+## Deploy on Render
+
+1. Open the Render Dashboard and choose **New → Blueprint**.
+2. Connect GitHub repository `alza69191-art/vyra-social`, branch `main`.
+3. Render reads `render.yaml` and prepares two free web services:
+   - `vyra-api`: FastAPI backend.
+   - `vyra-web`: Next.js website.
+4. When prompted, provide the Supabase project URL and public anon/publishable key for the web service, plus the same project URL and PostgreSQL connection string for the API service.
+5. For `DATABASE_URL`, copy the **Session pooler** connection string from Supabase → Connect → Session pooler. Replace the password placeholder. Render's outbound network should use the IPv4-compatible shared pooler; do not use Supabase's direct IPv6 URL on this free setup.
+6. Deploy both services. The web service proxies `/api/*` to the API over Render's private network, so the browser does not need a separate API URL or cross-origin CORS access.
+7. After deployment, open the `vyra-web` service URL. Verify `/` loads and `/api/health` returns the API health JSON through the proxy.
+
+## Environment variables
+
+API service:
+- `SUPABASE_URL`: Supabase project URL.
+- `DATABASE_URL`: Supabase PostgreSQL **Session pooler** connection string. Keep private.
+- `CORS_ORIGINS`: local development origin only; production browser requests use the same-origin Next.js proxy.
+
+Web service:
+- `API_INTERNAL_HOSTPORT`: supplied automatically from the API service by the Render Blueprint.
+- `NEXT_PUBLIC_SUPABASE_URL`: same Supabase project URL.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: public anon/publishable key.
+
+Never expose `DATABASE_URL`, Supabase service-role keys, or other server secrets in client-side code or `NEXT_PUBLIC_*` variables.
 
 ## Local development
 
-### Web
-```bash
-npm install
-npm run dev
-```
+Web: `npm install && npm run dev` (Next.js proxies `/api/*` to `http://localhost:8000`).
 
-### API
+API:
 ```bash
-python -m venv .venv
-# Activate the environment, then:
 pip install -r backend/requirements.txt
 uvicorn backend.main:app --reload
 ```
 
 API docs: `http://localhost:8000/api/docs`
 
-## Environment variables
+## Implemented API foundation
 
-Web service:
-- `NEXT_PUBLIC_API_URL`: deployed FastAPI base URL.
-- `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL.
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase publishable/anon key.
+- Health checks: `/api/health`, `/api/health/database`
+- Public feed: `GET /api/posts`
+- Authenticated profile: `GET/PUT /api/me`
+- Authenticated posts: `POST /api/posts`
+- Comments: `GET/POST /api/posts/{post_id}/comments`
+- Reactions: `PUT /api/posts/{post_id}/reaction`
 
-API service (server only):
-- `SUPABASE_URL`: same Supabase project URL; used to verify Supabase access tokens.
-- `DATABASE_URL`: Supabase PostgreSQL connection string. Keep it private.
-- `CORS_ORIGINS`: comma-separated exact frontend origins, e.g. the Render web URL.
+Supabase Auth issues access tokens. Protected API calls must send `Authorization: Bearer <access_token>`.
 
-Never put `DATABASE_URL`, service-role keys, or other secrets in `NEXT_PUBLIC_*` variables or client-side code.
+## Current limitations
 
-## API currently implemented
-- `GET /api/health` and `GET /api/health/database`
-- `GET /api/posts` (public posts)
-- Authenticated `GET/PUT /api/me`
-- Authenticated `POST /api/posts`
-- `GET/POST /api/posts/{post_id}/comments`
-- Authenticated `PUT /api/posts/{post_id}/reaction`
-
-Supabase Auth issues the access token. Protected API calls must send it as `Authorization: Bearer <access_token>`.
-
-## Important deployment notes
-- Create a Supabase project first and use its PostgreSQL connection string as `DATABASE_URL`.
-- Set the exact deployed web origin in the API service's `CORS_ORIGINS`.
-- Render free services may sleep when idle. Free database/storage quotas and retention limits apply.
-- SQLAlchemy creates the initial tables on API startup. For production schema changes, introduce Alembic migrations before making destructive or complex schema changes.
-- The existing UI still contains demo/local-state interactions. The API foundation is implemented, but full UI authentication, live feed loading, uploads, messaging and realtime notifications remain separate integration milestones.
+The project is a deployment-ready foundation, not a completed social network. The current UI still has demo interactions. UI registration/login, authenticated post publishing, media uploads, private-follow authorization, messaging and realtime notifications still need implementation and testing. SQLAlchemy currently creates initial tables at API startup; add Alembic migrations before complex production schema changes. Free Render services may sleep when idle, and Supabase free quotas/pausing rules apply.
