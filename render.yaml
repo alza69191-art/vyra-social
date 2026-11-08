@@ -14,7 +14,7 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: CORS_ORIGINS
-        sync: false
+        value: http://localhost:3000
 
   - type: web
     name: vyra-web
@@ -22,11 +22,15 @@ services:
     plan: free
     buildCommand: npm install && npm run build
     startCommand: npm run start
+    healthCheckPath: /
     envVars:
       - key: NODE_VERSION
         value: 22.14.0
-      - key: NEXT_PUBLIC_API_URL
-        sync: false
+      - key: API_INTERNAL_HOSTPORT
+        fromService:
+          name: vyra-api
+          type: web
+          property: hostport
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
