@@ -5,6 +5,7 @@ import { Home, Compass, Clapperboard, Users, MessageCircle, Bell, Bookmark, Radi
 
 const navigation = [
   { label: "الرئيسية", icon: Home, active: true },
+  { label: "الذكاء الاصطناعي", icon: Sparkles },
   { label: "استكشف", icon: Compass },
   { label: "VYRA Pulse", icon: Clapperboard, tag: "جديد" },
   { label: "الأصدقاء", icon: Users },
@@ -24,10 +25,7 @@ const stories = [
   { name: "كريم", initials: "ك", tone: "story-d" },
   { name: "نور", initials: "ن", tone: "story-e" },
 ];
-const initialPosts = [
-  { id: 1, name: "ليان أحمد", handle: "@layan.ah", avatar: "ل", time: "منذ 12 دقيقة", text: "أحياناً أجمل الأفكار تبدأ بخطوة صغيرة. اليوم قررت أبدأ مشروعاً جديداً وأشارك رحلتي معكم. ✨", likes: 128, comments: 24, shares: 8, tag: "إلهام", liked: false },
-  { id: 2, name: "استوديو عدسة", handle: "@lens.studio", avatar: "ع", time: "منذ 38 دقيقة", text: "تفاصيل بسيطة، لكنها تصنع فرقاً كبيراً. ما رأيكم بهذا الأسلوب البصري؟", likes: 86, comments: 17, shares: 12, tag: "تصميم", liked: true },
-];
+const initialPosts: Array<{ id: string | number; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean }> = [];
 
 export default function HomePage() {
   const [active, setActive] = useState("الرئيسية");
@@ -55,7 +53,7 @@ export default function HomePage() {
         liked: false,
       })));
     }).catch(() => {
-      // Keep the clearly illustrative starter feed while the API is not deployed/configured.
+      setPosts([]);
     });
     return () => { activeRequest = false; };
   }, []);
@@ -77,7 +75,7 @@ export default function HomePage() {
       <div className="brand-row"><Brand/><button className="collapse-button" onClick={() => setFocus(!focus)} title="وضع التركيز"><PanelLeftClose size={18}/></button></div>
       <button className="profile-switch" onClick={() => setNotice("إدارة الحسابات ستتوفر قريباً")}><span className="avatar avatar-dark">أ</span><span className="profile-meta"><b>حسابك الشخصي</b><small>@your.profile</small></span><ChevronDown size={16}/></button>
       <div className="nav-caption">مساحتك</div>
-      <nav className="main-nav">{navigation.map(item => { const Icon = item.icon; return <button key={item.label} className={active === item.label ? "nav-item active" : "nav-item"} onClick={() => {setActive(item.label);setMobileOpen(false);}}><Icon size={19}/><span>{item.label}</span>{item.tag && <em>{item.tag}</em>}{item.count && <small className="nav-count">{item.count}</small>}</button>; })}</nav>
+      <nav className="main-nav">{navigation.map(item => { const Icon = item.icon; return <button key={item.label} className={active === item.label ? "nav-item active" : "nav-item"} onClick={() => {if(item.label === "الذكاء الاصطناعي"){window.location.href="/ai";return;}setActive(item.label);setMobileOpen(false);}}><Icon size={19}/><span>{item.label}</span>{item.tag && <em>{item.tag}</em>}{item.count && <small className="nav-count">{item.count}</small>}</button>; })}</nav>
       <div className="nav-caption secondary-caption">إدارة وتخصيص</div>
       <nav className="main-nav"><button className="nav-item" onClick={() => setActive("الإعدادات")}><Settings size={19}/><span>الإعدادات</span></button><button className="nav-item" onClick={() => setActive("مركز المساعدة")}><CircleHelp size={19}/><span>مركز المساعدة</span></button></nav>
       <div className="sidebar-bottom"><div className="online-dot"/><span>مساحتك جاهزة للإبداع</span></div>
