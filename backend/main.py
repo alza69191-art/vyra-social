@@ -134,3 +134,17 @@ def set_reaction(post_id: str, claims: dict = Depends(current_user), db: Session
     db.add(reaction)
     db.commit()
     return {"reacted": True}
+
+from pydantic import BaseModel, Field
+from backend.ai_router import generate_reply
+
+class AIMessage(BaseModel):
+    prompt: str = Field(min_length=1, max_length=12000)
+    history: list[dict] = Field(default_factory=list, max_length=12)
+
+@app.post("/api/ai/chat")
+def ai_chat(payload: AIMessage, claims: dict = Depends(current_user)):
+    try:
+        return generate_reply(payload.prompt.strip(), payload.history)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
