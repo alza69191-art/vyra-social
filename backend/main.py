@@ -89,7 +89,7 @@ def update_my_profile(payload: ProfileUpdate, claims: dict = Depends(current_use
 
 @app.get("/api/posts", response_model=list[PostOut])
 def list_posts(limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db)):
-    return db.scalars(select(models.Post).where(models.Post.visibility == "public").order_by(desc(models.Post.created_at)).limit(limit).offset(offset)).all()
+    return db.scalars(select(models.Post).join(models.Profile, models.Profile.id == models.Post.author_id).where(models.Post.visibility == "public", models.Profile.is_private.is_(False)).order_by(desc(models.Post.created_at)).limit(limit).offset(offset)).all()
 
 @app.post("/api/posts", response_model=PostOut, status_code=201)
 def create_post(payload: PostCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
