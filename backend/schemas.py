@@ -21,6 +21,7 @@ class PostCreate(BaseModel):
     visibility: str = Field(default="public", pattern="^(public|followers|private)$")
 
 class PostOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: str
     author_id: str
     body: str | None
