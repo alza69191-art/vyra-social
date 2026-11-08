@@ -6,17 +6,11 @@ export type VyraPost = {
   created_at: string;
 };
 
-function apiBase(): string {
-  return (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-}
-
 async function request<T>(path: string, init: RequestInit = {}, accessToken?: string): Promise<T> {
-  const base = apiBase();
-  if (!base) throw new Error("خادم VYRA غير مضبوط بعد. أضف NEXT_PUBLIC_API_URL.");
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-  const response = await fetch(`${base}${path}`, { ...init, headers, cache: "no-store" });
+  const response = await fetch(path, { ...init, headers, cache: "no-store" });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const detail = typeof payload.detail === "string" ? payload.detail : "تعذر تنفيذ الطلب.";
