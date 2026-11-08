@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getPublicPosts } from "@/lib/vyra-api";
 import { Home, Compass, Clapperboard, Users, MessageCircle, Bell, Bookmark, Radio, Store, Gavel, UsersRound, Settings, Search, Plus, Image as ImageIcon, Video, Smile, MoreHorizontal, Heart, MessageSquare, Share2, Send, ChevronDown, Sparkles, PanelLeftClose, Menu, X, Check, TrendingUp, CircleHelp, WandSparkles, Hash } from "lucide-react";
 
 const navigation = [
@@ -36,6 +37,28 @@ export default function HomePage() {
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
   const [focus, setFocus] = useState(false);
+  useEffect(() => {
+    let activeRequest = true;
+    getPublicPosts(30, 0).then(rows => {
+      if (!activeRequest || rows.length === 0) return;
+      setPosts(rows.map((row, index) => ({
+        id: row.id,
+        name: "عضو VYRA",
+        handle: "@member",
+        avatar: "V",
+        time: new Date(row.created_at).toLocaleString("ar"),
+        text: row.body || "",
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        tag: "منشور",
+        liked: false,
+      })));
+    }).catch(() => {
+      // Keep the clearly illustrative starter feed while the API is not deployed/configured.
+    });
+    return () => { activeRequest = false; };
+  }, []);
   const filteredPosts = useMemo(() => posts.filter(p => (p.text + p.name + p.tag).toLowerCase().includes(query.toLowerCase())), [posts, query]);
   function publish() {
     if (!draft.trim()) return;
