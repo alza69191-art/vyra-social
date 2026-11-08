@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>VYRA — مجتمعك يبدأ هنا</title>
+  <style>
+    :root{--black:#080808;--white:#fff;--ink:#171717;--muted:#777;--line:#e9e9e9;--soft:#f5f5f5;--radius:18px}
+    *{box-sizing:border-box} body{margin:0;background:#fafafa;color:var(--ink);font-family:Arial,"Segoe UI",sans-serif}
+    button,input{font:inherit} button{cursor:pointer}
+    .topbar{height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:5}
+    .brand{display:flex;align-items:center;gap:10px;font-size:23px;font-weight:800;letter-spacing:1px}.logo{width:39px;height:39px;border-radius:50%;background:#050505;color:#fff;display:grid;place-items:center;font-size:25px;font-weight:800}
+    .search{width:min(420px,38vw);background:var(--soft);border:1px solid transparent;border-radius:30px;padding:12px 18px;outline:none}.search:focus{border-color:#aaa;background:#fff}
+    .top-actions{display:flex;gap:10px;align-items:center}.icon-btn{width:40px;height:40px;border:0;border-radius:50%;background:var(--soft);font-size:18px}.avatar{width:39px;height:39px;border-radius:50%;background:#111;color:white;display:grid;place-items:center;font-weight:bold}
+    .layout{max-width:1440px;margin:auto;display:grid;grid-template-columns:245px minmax(0,680px) 285px;gap:22px;padding:22px}
+    .sidebar,.rightbar{position:sticky;top:92px;height:calc(100vh - 110px);overflow:auto}
+    .nav{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px}
+    .nav a{display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:12px;color:#333;text-decoration:none;font-weight:600;margin:2px 0}
+    .nav a:hover,.nav a.active{background:#080808;color:#fff}.nav .ico{width:22px;text-align:center;font-size:18px}
+    .create-btn{width:100%;background:#080808;color:#fff;border:0;border-radius:13px;padding:14px;margin-top:14px;font-weight:700}
+    .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:17px;margin-bottom:16px}
+    .stories{display:flex;gap:13px;overflow:auto}.story{min-width:72px;text-align:center;font-size:12px;color:#555}.story-ring{width:58px;height:58px;border:2px solid #111;border-radius:50%;padding:3px;margin:0 auto 7px}.story-ring span{display:grid;place-items:center;background:#eee;border-radius:50%;height:100%;font-weight:bold;color:#111}
+    .composer-head{display:flex;align-items:center;gap:11px}.composer input{width:100%;border:0;background:var(--soft);padding:14px 18px;border-radius:25px;outline:none}.composer-tools{display:flex;gap:8px;border-top:1px solid var(--line);margin-top:15px;padding-top:13px}.tool{flex:1;border:0;background:white;border-radius:10px;padding:10px 4px;color:#444}.tool:hover{background:var(--soft)}
+    .post-head{display:flex;align-items:center;gap:10px}.post-meta{flex:1}.post-meta strong{display:block}.muted{color:var(--muted);font-size:12px;margin-top:4px}.more{border:0;background:transparent;font-size:22px}.post-text{line-height:1.8;margin:16px 0}.post-media{height:290px;border-radius:14px;background:linear-gradient(135deg,#111,#555);display:grid;place-items:center;color:white;font-size:36px;font-weight:800;letter-spacing:4px}.post-stats{display:flex;justify-content:space-between;color:#777;font-size:13px;padding:13px 0;border-bottom:1px solid var(--line)}.post-actions{display:flex;gap:5px;padding-top:9px}.post-actions button{flex:1;border:0;background:#fff;padding:10px;border-radius:10px;color:#444}.post-actions button:hover,.post-actions button.liked{background:#f0f0f0;color:#000;font-weight:bold}
+    .section-title{font-size:15px;font-weight:800;margin:0 0 14px}.trend{padding:12px 0;border-bottom:1px solid var(--line)}.trend:last-child{border:0}.trend b{display:block;margin-bottom:5px}.suggest{display:flex;align-items:center;gap:10px;margin:13px 0}.suggest .avatar{background:#e8e8e8;color:#111}.suggest div:nth-child(2){flex:1;font-size:13px}.follow{border:1px solid #111;background:white;border-radius:20px;padding:7px 12px;font-size:12px}
+    .section-note{font-size:12px;color:#888;line-height:1.7}.mobile-nav{display:none}
+    @media(max-width:1100px){.layout{grid-template-columns:210px minmax(0,1fr)}.rightbar{display:none}}
+    @media(max-width:700px){.topbar{padding:0 13px;height:62px}.search{width:38vw}.top-actions .icon-btn:nth-child(2){display:none}.layout{display:block;padding:12px 10px 82px}.sidebar{display:none}.card{padding:14px}.mobile-nav{position:fixed;bottom:0;right:0;left:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:10px 4px;z-index:8}.mobile-nav button{border:0;background:none;font-size:20px}.post-media{height:220px}.brand{font-size:19px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">V</span><span>VYRA</span></div>
+    <input class="search" type="search" placeholder="ابحث في VYRA...">
+    <div class="top-actions"><button class="icon-btn" aria-label="الرسائل" title="الرسائل">✉</button><button class="icon-btn" aria-label="الإشعارات" title="الإشعارات">♧</button><div class="avatar">ع</div></div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      <nav class="nav" aria-label="التنقل الرئيسي">
+        <a class="active" href="#"><span class="ico">⌂</span> الرئيسية</a>
+        <a href="#explore"><span class="ico">⌕</span> استكشف</a>
+        <a href="#watch"><span class="ico">▷</span> VYRA Watch</a>
+        <a href="#messages"><span class="ico">✉</span> الرسائل</a>
+        <a href="#groups"><span class="ico">♧</span> المجتمعات</a>
+        <a href="#pages"><span class="ico">▤</span> الصفحات والقنوات</a>
+        <a href="#market"><span class="ico">◇</span> السوق والمزاد</a>
+        <a href="#saved"><span class="ico">☆</span> المحفوظات</a>
+        <a href="#events"><span class="ico">▦</span> المناسبات</a>
+        <a href="#settings"><span class="ico">⚙</span> الإعدادات</a>
+        <button class="create-btn" onclick="document.getElementById('postInput').focus()">＋ إنشاء منشور</button>
+      </nav>
+    </aside>
+    <main>
+      <section class="card"><div class="stories">
+        <div class="story"><div class="story-ring"><span>＋</span></div>قصتك</div>
+        <div class="story"><div class="story-ring"><span>م</span></div>محمد</div>
+        <div class="story"><div class="story-ring"><span>س</span></div>سارة</div>
+        <div class="story"><div class="story-ring"><span>ر</span></div>ريم</div>
+        <div class="story"><div class="story-ring"><span>ع</span></div>عمر</div>
+        <div class="story"><div class="story-ring"><span>ل</span></div>ليان</div>
+      </div></section>
+      <section class="card composer">
+        <div class="composer-head"><div class="avatar">ع</div><input id="postInput" placeholder="بماذا تفكر اليوم؟"></div>
+        <div class="composer-tools"><button class="tool" onclick="chooseMedia()">▧ صورة</button><button class="tool" onclick="chooseMedia()">▷ فيديو</button><button class="tool">◉ بث مباشر</button><button class="tool">☺ شعور</button></div>
+        <input id="mediaInput" type="file" accept="image/*,video/*" hidden>
+      </section>
+      <div id="feed">
+        <article class="card">
+          <div class="post-head"><div class="avatar">م</div><div class="post-meta"><strong>محمد أحمد</strong><div class="muted">منذ 12 دقيقة · 🌐 عام</div></div><button class="more" aria-label="المزيد">⋯</button></div>
+          <p class="post-text">مساحة جديدة للأفكار واللحظات الجميلة. أهلاً بكم في VYRA! ما أول شيء تتمنون رؤيته هنا؟</p>
+          <div class="post-media">VYRA</div>
+          <div class="post-stats"><span>♡ <span class="count">128</span> إعجاب</span><span>24 تعليق · 8 مشاركات</span></div>
+          <div class="post-actions"><button onclick="like(this)">♡ إعجاب</button><button onclick="comment()">▢ تعليق</button><button onclick="share()">↗ مشاركة</button></div>
+        </article>
+        <article class="card">
+          <div class="post-head"><div class="avatar">س</div><div class="post-meta"><strong>سارة خالد</strong><div class="muted">منذ ساعة · 🌐 عام</div></div><button class="more">⋯</button></div>
+          <p class="post-text">صباح الإبداع! شاركونا إنجازكم الصغير لهذا اليوم.</p>
+          <div class="post-stats"><span>♡ <span class="count">46</span> إعجاب</span><span>9 تعليقات · 3 مشاركات</span></div>
+          <div class="post-actions"><button onclick="like(this)">♡ إعجاب</button><button onclick="comment()">▢ تعليق</button><button onclick="share()">↗ مشاركة</button></div>
+        </article>
+      </div>
+    </main>
+    <aside class="rightbar">
+      <section class="card"><h3 class="section-title">الرائج الآن</h3><div class="trend"><b>#تقنية</b><span class="muted">2.4 ألف منشور</span></div><div class="trend"><b>#تصوير</b><span class="muted">1.8 ألف منشور</span></div><div class="trend"><b>#صناعة_المحتوى</b><span class="muted">950 منشور</span></div><div class="trend"><b>#VYRA</b><span class="muted">انضم إلى البداية</span></div></section>
+      <section class="card"><h3 class="section-title">أشخاص قد تعرفهم</h3><div class="suggest"><div class="avatar">ن</div><div><b>نور علي</b><div class="muted">3 أصدقاء مشتركون</div></div><button class="follow" onclick="this.textContent='تمت المتابعة'">متابعة</button></div><div class="suggest"><div class="avatar">ي</div><div><b>ياسر محمود</b><div class="muted">مهتم بالتقنية</div></div><button class="follow" onclick="this.textContent='تمت المتابعة'">متابعة</button></div></section>
+      <section class="card"><h3 class="section-title">مساحة VYRA</h3><p class="section-note">اكتشف القنوات والمجتمعات، شارك مقاطعك، وأنشئ مساحتك الخاصة. هذه الواجهة نموذج أولي قابل للتطوير.</p></section>
+    </aside>
+  </div>
+  <nav class="mobile-nav" aria-label="تنقل الهاتف"><button>⌂</button><button>⌕</button><button onclick="document.getElementById('postInput').focus()">＋</button><button>✉</button><button>☻</button></nav>
+  <script>
+    function like(button){const count=button.closest('.card').querySelector('.count');const liked=button.classList.toggle('liked');count.textContent=Number(count.textContent)+(liked?1:-1);button.textContent=liked?'♥ أعجبني':'♡ إعجاب'}
+    function comment(){alert('سيتم تفعيل التعليقات بعد ربط قاعدة البيانات.')}
+    function share(){if(navigator.share){navigator.share({title:'VYRA',text:'شاهد هذا المنشور على VYRA'}).catch(()=>{})}else{alert('ميزة المشاركة ستكون متاحة بعد ربط المنصة.')} }
+    function chooseMedia(){document.getElementById('mediaInput').click()}
+    document.getElementById('mediaInput').addEventListener('change',e=>{const f=e.target.files[0];if(f){document.getElementById('postInput').value='تم اختيار: '+f.name+' — أضف وصفك هنا';}})
+    document.getElementById('postInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.value.trim()){const article=document.createElement('article');article.className='card';article.innerHTML='<div class="post-head"><div class="avatar">ع</div><div class="post-meta"><strong>أنت</strong><div class="muted">الآن · 🌐 عام</div></div></div><p class="post-text"></p><div class="post-actions"><button onclick="like(this)">♡ إعجاب</button><button onclick="comment()">▢ تعليق</button><button onclick="share()">↗ مشاركة</button></div>';article.querySelector('.post-text').textContent=e.target.value;document.getElementById('feed').prepend(article);e.target.value='';}})
+  </script>
+</body>
+</html>
