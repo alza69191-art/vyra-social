@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { getPublicPosts } from "@/lib/vyra-api";
+import { getPublicPosts, createPost, toggleReaction } from "@/lib/vyra-api";
 import AuthGate from "@/components/auth-gate";
 import { Home, Compass, Clapperboard, Users, MessageCircle, Bell, Bookmark, Radio, Store, Gavel, UsersRound, Settings, Search, Plus, Image as ImageIcon, Video, Smile, MoreHorizontal, Heart, MessageSquare, Share2, Send, ChevronDown, Sparkles, PanelLeftClose, Menu, X, Check, TrendingUp, CircleHelp, WandSparkles, Hash } from "lucide-react";
 
@@ -61,13 +61,29 @@ function HomeFeed() {
     return () => { activeRequest = false; };
   }, []);
   const filteredPosts = useMemo(() => posts.filter(p => (p.text + p.name + p.tag).toLowerCase().includes(query.toLowerCase())), [posts, query]);
-  function publish() {
-    if (!draft.trim()) return;
-    setPosts([{ id: Date.now(), name: "أنت", handle: "@your.profile", avatar: "أ", time: "الآن", text: draft.trim(), likes: 0, comments: 0, shares: 0, tag: "منشور جديد", liked: false }, ...posts]);
-    setDraft(""); setNotice("تم نشر منشورك بنجاح"); setTimeout(() => setNotice(""), 2500);
+  async function publish() {
+    const body = draft.trim();
+    const token = sessionStorage.getItem("vyra_access_token");
+    if (!body || !token) return;
+    try {
+      const created = await createPost(token, body, "public");
+      setPosts(current => [{ id: created.id, name: "أنت", handle: "@your.profile", avatar: "أ", time: "الآن", text: created.body || "", likes: 0, comments: 0, shares: 0, tag: "منشور جديد", liked: false }, ...current]);
+      setDraft(""); setNotice("تم حفظ المنشور في قاعدة البيانات"); setTimeout(() => setNotice(""), 2500);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "تعذر نشر المنشور");
+      setTimeout(() => setNotice(""), 3500);
+    }
   }
-  function toggleLike(id: string | number) {
-    setPosts(current => current.map(p => p.id === id ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p));
+  async function toggleLike(id: string | number) {
+    const token = sessionStorage.getItem("vyra_access_token");
+    if (!token) return;
+    try {
+      const result = await toggleReaction(token, String(id));
+      setPosts(current => current.map(p => p.id === id ? { ...p, liked: result.reacted, likes: Math.max(0, p.likes + (result.reacted ? 1 : -1)) } : p));
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "تعذر حفظ التفاعل");
+      setTimeout(() => setNotice(""), 3000);
+    }
   }
   return <main className={focus ? "app-shell focus-mode" : "app-shell"}>
     <header className="mobile-header">
