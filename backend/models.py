@@ -10,6 +10,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(254), unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -20,8 +21,37 @@ class Profile(Base):
     display_name: Mapped[str] = mapped_column(String(80))
     bio: Mapped[str | None] = mapped_column(String(300), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cover_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_private: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class EmailVerificationToken(Base):
+    __tablename__ = "email_verification_tokens"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Post(Base):
@@ -71,12 +101,62 @@ class Follow(Base):
     __table_args__ = (UniqueConstraint("follower_id", "followed_id", name="uq_follow_pair"),)
 
 
+class Friendship(Base):
+    __tablename__ = "friendships"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    requester_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    addressee_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    status: Mapped[str] = mapped_column(String(16), default="pending")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (UniqueConstraint("requester_id", "addressee_id", name="uq_friendship_pair"),)
+
+
+class Block(Base):
+    __tablename__ = "blocks"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    blocker_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    blocked_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (UniqueConstraint("blocker_id", "blocked_id", name="uq_block_pair"),)
+
+
+class Story(Base):
+    __tablename__ = "stories"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    media_url: Mapped[str] = mapped_column(Text)
+    media_type: Mapped[str] = mapped_column(String(16))
+    caption: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    is_group: Mapped[bool] = mapped_column(Boolean, default=False)
+    title: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    created_by: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ConversationMember(Base):
+    __tablename__ = "conversation_members"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (UniqueConstraint("conversation_id", "user_id", name="uq_conversation_member"),)
+
+
 class DirectMessage(Base):
     __tablename__ = "direct_messages"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     sender_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
     recipient_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    conversation_id: Mapped[str | None] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True, index=True)
     body: Mapped[str] = mapped_column(Text)
+    media_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
 
@@ -90,3 +170,43 @@ class Notification(Base):
     target_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
+class SocialGroup(Base):
+    __tablename__ = "social_groups"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    privacy: Mapped[str] = mapped_column(String(16), default="public")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class GroupMember(Base):
+    __tablename__ = "group_members"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    group_id: Mapped[str] = mapped_column(ForeignKey("social_groups.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    role: Mapped[str] = mapped_column(String(16), default="member")
+    status: Mapped[str] = mapped_column(String(16), default="active")
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (UniqueConstraint("group_id", "user_id", name="uq_group_member"),)
+
+
+class SocialPage(Base):
+    __tablename__ = "social_pages"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    category: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PageFollower(Base):
+    __tablename__ = "page_followers"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    page_id: Mapped[str] = mapped_column(ForeignKey("social_pages.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (UniqueConstraint("page_id", "user_id", name="uq_page_follower"),)
