@@ -14,4 +14,22 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGINS
-        value: http://localhost:3000,https://alza69191-art.github.io
+        value: http://localhost:3000,https://alza69191-art.github.io,https://vyra-web.onrender.com
+
+  - type: web
+    name: vyra-web
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
+      - key: NEXT_PUBLIC_API_URL
+        value: https://vyra-api-9pxl.onrender.com
+      - key: API_INTERNAL_HOSTPORT
+        fromService:
+          name: vyra-api
+          type: web
+          property: hostport
