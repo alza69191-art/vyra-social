@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { getPublicPosts } from "@/lib/vyra-api";
+import AuthGate from "@/components/auth-gate";
 import { Home, Compass, Clapperboard, Users, MessageCircle, Bell, Bookmark, Radio, Store, Gavel, UsersRound, Settings, Search, Plus, Image as ImageIcon, Video, Smile, MoreHorizontal, Heart, MessageSquare, Share2, Send, ChevronDown, Sparkles, PanelLeftClose, Menu, X, Check, TrendingUp, CircleHelp, WandSparkles, Hash } from "lucide-react";
 
 const navigation = [
@@ -27,7 +28,9 @@ const stories = [
 ];
 const initialPosts: Array<{ id: string | number; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean }> = [];
 
-export default function HomePage() {
+export default function HomePage() { return <AuthGate><HomeFeed /></AuthGate>; }
+
+function HomeFeed() {
   const [active, setActive] = useState("الرئيسية");
   const [posts, setPosts] = useState<Array<{ id: string | number; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean }>>(initialPosts);
   const [draft, setDraft] = useState("");
