@@ -46,17 +46,19 @@ def generate_reply(prompt: str, history: list[dict] | None = None) -> dict:
         except Exception as exc:
             failures.append(f"google: {type(exc).__name__}")
 
-    hf_key = os.getenv("HF_TOKEN")
-    if hf_key:
-        for index in range(1, 5):
-            model = os.getenv(f"HF_MODEL_{index}")
-            if not model: continue
-            try:
-                answer = _openai_compatible("https://router.huggingface.co/v1/chat/completions", hf_key, model, messages)
-                if answer: return {"reply": answer, "provider": f"huggingface:{model}"}
-            except Exception as exc:
-                failures.append(f"hf{index}: {type(exc).__name__}")
+    hf_configured = False
+    for index in range(1, 5):
+        hf_key = os.getenv(f"HF_TOKEN_{index}") or (os.getenv("HF_TOKEN") if index == 1 else None)
+        model = os.getenv(f"HF_MODEL_{index}")
+        if not hf_key or not model:
+            continue
+        hf_configured = True
+        try:
+            answer = _openai_compatible("https://router.huggingface.co/v1/chat/completions", hf_key, model, messages)
+            if answer: return {"reply": answer, "provider": f"huggingface:{model}"}
+        except Exception as exc:
+            failures.append(f"hf{index}: {type(exc).__name__}")
 
-    if not (groq_key or google_key or hf_key):
+    if not (groq_key or google_key or hf_configured):
         raise RuntimeError("لم تتم إضافة أي مفاتيح لمزودي الذكاء الاصطناعي في إعدادات الخادم.")
     raise RuntimeError("تعذر الوصول إلى جميع مزودي الذكاء الاصطناعي. تحقق من المفاتيح وأسماء النماذج والحصص. " + ", ".join(failures))
