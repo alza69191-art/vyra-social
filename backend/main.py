@@ -23,7 +23,7 @@ app = FastAPI(
 
 origins = [item.strip() for item in os.getenv(
     "CORS_ORIGINS",
-    "http://localhost:3000,https://alza69191-art.github.io"
+    "http://localhost:3000,https://alza69191-art.github.io,https://vyra-web.onrender.com"
 ).split(",") if item.strip()]
 app.add_middleware(
     CORSMiddleware,
