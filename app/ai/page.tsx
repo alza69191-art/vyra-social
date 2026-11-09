@@ -3,8 +3,10 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { ArrowRight, Bot, LoaderCircle, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
+import AuthGate from "@/components/auth-gate";
 type Message = { role: "user" | "assistant"; content: string };
-export default function AIChatPage() {
+export default function AIChatPage() { return <AuthGate><AIChat /></AuthGate>; }
+function AIChat() {
  const [messages,setMessages]=useState<Message[]>([]),[input,setInput]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState("");
  const bottom=useRef<HTMLDivElement>(null);
  useEffect(()=>{bottom.current?.scrollIntoView({behavior:"smooth"});},[messages,busy]);
