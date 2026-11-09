@@ -1,56 +1,71 @@
 # VYRA Social
 
-Arabic RTL social platform starter built with Next.js 15, TypeScript, FastAPI and Supabase PostgreSQL.
+Arabic RTL social-platform foundation built with Next.js 15, TypeScript, FastAPI and Render PostgreSQL.
 
-## Deploy on Render
+## Render deployment
 
-1. Open the Render Dashboard and choose **New → Blueprint**.
-2. Connect GitHub repository `alza69191-art/vyra-social`, branch `main`.
-3. Render reads `render.yaml` and prepares two free web services:
-   - `vyra-api`: FastAPI backend.
-   - `vyra-web`: Next.js website.
-4. When prompted, provide the Supabase project URL and public anon/publishable key for the web service, plus the same project URL and PostgreSQL connection string for the API service.
-5. For `DATABASE_URL`, copy the **Session pooler** connection string from Supabase → Connect → Session pooler. Replace the password placeholder. Render's outbound network should use the IPv4-compatible shared pooler; do not use Supabase's direct IPv6 URL on this free setup.
-6. Deploy both services. The web service proxies `/api/*` to the API over Render's private network, so the browser does not need a separate API URL or cross-origin CORS access.
-7. After deployment, open the `vyra-web` service URL. Verify `/` loads and `/api/health` returns the API health JSON through the proxy.
+The repository's `render.yaml` describes:
+- `vyra-api`: FastAPI backend.
+- `vyra-web`: Next.js frontend.
 
-## Environment variables
+If the API service and PostgreSQL database already exist, do not create a second API or database. Keep the existing `vyra-api` service and deploy only the frontend service from this repository, or use the Blueprint after checking the resources it proposes.
 
-API service:
-- `SUPABASE_URL`: Supabase project URL.
-- `DATABASE_URL`: Supabase PostgreSQL **Session pooler** connection string. Keep private.
-- `CORS_ORIGINS`: local development origin only; production browser requests use the same-origin Next.js proxy.
+### API environment
 
-Web service:
-- `API_INTERNAL_HOSTPORT`: supplied automatically from the API service by the Render Blueprint.
-- `NEXT_PUBLIC_SUPABASE_URL`: same Supabase project URL.
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: public anon/publishable key.
+Set these variables on the existing `vyra-api` service:
+- `DATABASE_URL`: Render **Internal Database URL** from `vyra-db`; keep it private.
+- `JWT_SECRET`: a randomly generated secret with at least 32 characters. Generate it in Render and never put it in GitHub.
+- `CORS_ORIGINS`: include the frontend's exact origin, for example `https://vyra-web.onrender.com`.
 
-Never expose `DATABASE_URL`, Supabase service-role keys, or other server secrets in client-side code or `NEXT_PUBLIC_*` variables.
+The API converts Render's PostgreSQL URL to the psycopg SQLAlchemy driver. On startup it creates any missing tables in the configured database.
+
+### Frontend environment
+
+Set:
+- `NEXT_PUBLIC_API_URL=https://vyra-api-9pxl.onrender.com`
+
+This value is a public API address, not a secret. The database URL and JWT secret must never use a `NEXT_PUBLIC_` prefix.
 
 ## Local development
-
-Web: `npm install && npm run dev` (Next.js proxies `/api/*` to `http://localhost:8000`).
 
 API:
 ```bash
 pip install -r backend/requirements.txt
+set DATABASE_URL=postgresql://...
+set JWT_SECRET=replace-with-a-long-random-secret
 uvicorn backend.main:app --reload
 ```
 
-API docs: `http://localhost:8000/api/docs`
+Frontend:
+```bash
+npm install
+npm run dev
+```
 
-## Implemented API foundation
+API docs: `/api/docs`.
 
-- Health checks: `/api/health`, `/api/health/database`
-- Public feed: `GET /api/posts`
-- Authenticated profile: `GET/PUT /api/me`
-- Authenticated posts: `POST /api/posts`
-- Comments: `GET/POST /api/posts/{post_id}/comments`
-- Reactions: `PUT /api/posts/{post_id}/reaction`
+## Authentication and data
 
-Supabase Auth issues access tokens. Protected API calls must send `Authorization: Bearer <access_token>`.
+- Email/password registration and login: `POST /api/auth/register`, `POST /api/auth/login`.
+- Passwords are hashed with Argon2 via pwdlib.
+- API access tokens are signed JWTs and expire after 12 hours.
+- Authenticated profile and social API routes require `Authorization: Bearer <token>`.
+- The browser stores the short-lived token in sessionStorage. This is a basic deployment foundation; harden session storage and add rate limiting before a production public launch.
 
-## Current limitations
+The SQLAlchemy schema includes users, profiles, sessions, email-verification and password-reset token records, posts, media metadata, comments, reactions, follows, friendships, blocks, stories, conversations, conversation members, direct messages, notifications, groups, group members, pages and page followers.
 
-The project is a deployment-ready foundation, not a completed social network. The current UI still has demo interactions. UI registration/login, authenticated post publishing, media uploads, private-follow authorization, messaging and realtime notifications still need implementation and testing. SQLAlchemy currently creates initial tables at API startup; add Alembic migrations before complex production schema changes. Free Render services may sleep when idle, and Supabase free quotas/pausing rules apply.
+## Implemented API routes
+
+- `GET /api/health`, `GET /api/health/database`
+- `POST /api/auth/register`, `POST /api/auth/login`
+- `GET/PUT /api/me`
+- `GET/POST /api/posts`
+- `GET/POST /api/posts/{post_id}/comments`
+- `PUT /api/posts/{post_id}/reaction`
+- `POST /api/ai/chat`
+
+## Not yet implemented
+
+The database tables for email verification, password reset, sessions, stories, groups, pages and messaging are schema foundations; corresponding user-facing workflows and API endpoints are not all implemented yet. Email delivery, media object storage, private-account authorization, WebSocket messaging, rate limiting, Alembic migrations, backups and production security review are still required before a public production launch.
+
+Render Free PostgreSQL expires after its stated trial period. Back up and migrate the database before expiry; do not rely on the free database as permanent storage.
