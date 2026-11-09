@@ -1,18 +1,28 @@
 # VYRA API
 
-FastAPI service scaffold for the VYRA platform.
+FastAPI backend for VYRA, using Render PostgreSQL through SQLAlchemy and psycopg.
 
-## Local run
+## Run locally
 
 ```bash
-python -m pip install -r backend/requirements.txt
+pip install -r backend/requirements.txt
+set DATABASE_URL=postgresql://...
+set JWT_SECRET=use-a-random-secret-at-least-32-characters
 uvicorn backend.main:app --reload
 ```
 
-API health: `/api/health`  
-Database health: `/api/health/database`  
-API documentation: `/api/docs`
+## Health and documentation
 
-Set `DATABASE_URL` only after provisioning PostgreSQL. The API deliberately does not create a local SQLite database in production, because ephemeral application storage is not a safe place for social-network data.
+- `/api/health`
+- `/api/health/database`
+- `/api/docs`
 
-The SQLAlchemy models in `models.py` define the first data domains: profiles, posts, media metadata, comments, reactions, follows, direct messages, and notifications. Authentication and media files will be connected to dedicated services in the next implementation stage.
+## Authentication
+
+- `POST /api/auth/register`: creates a user and profile.
+- `POST /api/auth/login`: verifies the Argon2 password hash and returns a 12-hour JWT.
+- Protected routes require `Authorization: Bearer <token>`.
+
+Never commit `DATABASE_URL` or `JWT_SECRET`. Configure them in Render's private environment settings.
+
+The ORM models define the initial social data schema. The API startup creates missing tables; use Alembic migrations before changing deployed schemas. Email verification, password reset, session revocation, messaging and media workflows still need their endpoint and delivery implementations.
