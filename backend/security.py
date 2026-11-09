@@ -1,35 +1,50 @@
 import os
-from functools import lru_cache
+from datetime import datetime, timezone
+import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jwt import PyJWKClient, decode
 from jwt.exceptions import PyJWTError
 
 bearer = HTTPBearer(auto_error=False)
+JWT_ALGORITHM = "HS256"
+JWT_ISSUER = "vyra-api"
 
-@lru_cache(maxsize=1)
-def _jwks_client():
-    project_url = os.getenv("SUPABASE_URL", "").rstrip("/")
-    if not project_url:
-        raise RuntimeError("SUPABASE_URL is not configured")
-    return PyJWKClient(f"{project_url}/auth/v1/.well-known/jwks.json", cache_keys=True)
+
+def _secret() -> str:
+    secret = os.getenv("JWT_SECRET", "")
+    if len(secret) < 32:
+        raise RuntimeError("JWT_SECRET must be configured with at least 32 characters")
+    return secret
+
+
+def create_access_token(user_id: str) -> str:
+    from datetime import timedelta
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": user_id,
+        "iss": JWT_ISSUER,
+        "iat": now,
+        "exp": now + timedelta(hours=12),
+        "type": "access",
+    }
+    return jwt.encode(payload, _secret(), algorithm=JWT_ALGORITHM)
+
 
 def current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer)):
     if credentials is None:
         raise HTTPException(status_code=401, detail="Authentication required")
-    project_url = os.getenv("SUPABASE_URL", "").rstrip("/")
-    if not project_url:
-        raise HTTPException(status_code=503, detail="Authentication provider is not configured")
     try:
-        signing_key = _jwks_client().get_signing_key_from_jwt(credentials.credentials)
-        claims = decode(
+        claims = jwt.decode(
             credentials.credentials,
-            signing_key.key,
-            algorithms=["ES256", "RS256"],
-            audience="authenticated",
-            issuer=f"{project_url}/auth/v1",
-            options={"require": ["exp", "sub", "iss", "aud"]},
+            _secret(),
+            algorithms=[JWT_ALGORITHM],
+            issuer=JWT_ISSUER,
+            options={"require": ["exp", "sub", "iss", "iat"]},
         )
+        if claims.get("type") != "access":
+            raise HTTPException(status_code=401, detail="Invalid access token")
         return claims
-    except (PyJWTError, RuntimeError, Exception):
+    except HTTPException:
+        raise
+    except (PyJWTError, RuntimeError):
         raise HTTPException(status_code=401, detail="Invalid or expired access token")
