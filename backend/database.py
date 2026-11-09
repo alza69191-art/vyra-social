@@ -13,8 +13,6 @@ def _database_url():
 
 
 DATABASE_URL = _database_url()
-# Render's outbound network is IPv4; use Supabase's shared SESSION pooler
-# (port 5432) and require TLS. Do not use transaction pooler for this ORM.
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
