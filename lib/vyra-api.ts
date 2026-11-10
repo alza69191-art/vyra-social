@@ -74,3 +74,7 @@ export async function uploadMedia(accessToken: string, file: File, purpose: "ava
   if (!response.ok) throw new Error(typeof payload.detail === "string" ? payload.detail : "تعذر رفع الملف.");
   return payload as { url: string; media_type: "image" | "video"; purpose: string; post_id: string | null };
 }
+
+export function getPostMedia(postId: string): Promise<Array<{ url: string; media_type: "image" | "video" }>> {
+  return request<Array<{ url: string; media_type: "image" | "video" }>>(`/api/posts/${encodeURIComponent(postId)}/media`);
+}
