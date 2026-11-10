@@ -4,6 +4,11 @@ export type VyraPost = {
   body: string | null;
   visibility: "public" | "followers" | "private";
   created_at: string;
+  author_name?: string;
+  author_username?: string;
+  avatar_url?: string | null;
+  likes_count?: number;
+  comments_count?: number;
 };
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "https://vyra-api-9pxl.onrender.com").replace(/\/$/, "");
