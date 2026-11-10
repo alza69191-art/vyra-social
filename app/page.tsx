@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { getPublicPosts, createPost, toggleReaction } from "@/lib/vyra-api";
+import { getPublicPosts, createPost, toggleReaction, getComments, createComment, type VyraComment } from "@/lib/vyra-api";
 import AuthGate from "@/components/auth-gate";
 import { Home, Compass, Clapperboard, Users, MessageCircle, Bell, Bookmark, Radio, Store, Gavel, UsersRound, Settings, Search, Plus, Image as ImageIcon, Video, Smile, MoreHorizontal, Heart, MessageSquare, Share2, Send, ChevronDown, Sparkles, PanelLeftClose, Menu, X, Check, TrendingUp, CircleHelp, WandSparkles, Hash } from "lucide-react";
 
@@ -38,6 +38,9 @@ function HomeFeed() {
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
   const [focus, setFocus] = useState(false);
+  const [commentPost, setCommentPost] = useState<string | null>(null);
+  const [comments, setComments] = useState<VyraComment[]>([]);
+  const [commentDraft, setCommentDraft] = useState("");
   useEffect(() => {
     let activeRequest = true;
     getPublicPosts(30, 0).then(rows => {
@@ -74,7 +77,7 @@ function HomeFeed() {
       setTimeout(() => setNotice(""), 3500);
     }
   }
-  async function toggleLike(id: string | number) {
+  async function openComments(id: string | number) {\n    setCommentPost(String(id)); setComments([]);\n    try { setComments(await getComments(String(id))); } catch (error) { setNotice(error instanceof Error ? error.message : "تعذر تحميل التعليقات"); }\n  }\n  async function sendComment() {\n    const token = sessionStorage.getItem("vyra_access_token");\n    if (!token || !commentPost || !commentDraft.trim()) return;\n    try { const item = await createComment(token, commentPost, commentDraft.trim()); setComments(current => [...current, item]); setCommentDraft(""); }\n    catch (error) { setNotice(error instanceof Error ? error.message : "تعذر إضافة التعليق"); }\n  }\n  async function toggleLike(id: string | number) {
     const token = sessionStorage.getItem("vyra_access_token");
     if (!token) return;
     try {
@@ -92,7 +95,7 @@ function HomeFeed() {
     </header>
     <aside className={mobileOpen ? "sidebar sidebar-open" : "sidebar"}>
       <div className="brand-row"><Brand/><button className="collapse-button" onClick={() => setFocus(!focus)} title="وضع التركيز"><PanelLeftClose size={18}/></button></div>
-      <button className="profile-switch" onClick={() => setNotice("إدارة الحسابات ستتوفر قريباً")}><span className="avatar avatar-dark">أ</span><span className="profile-meta"><b>حسابك الشخصي</b><small>@your.profile</small></span><ChevronDown size={16}/></button>
+      <button className="profile-switch" onClick={() => { window.location.href="/account"; }}><span className="avatar avatar-dark">أ</span><span className="profile-meta"><b>حسابك الشخصي</b><small>@your.profile</small></span><ChevronDown size={16}/></button>
       <div className="nav-caption">مساحتك</div>
       <nav className="main-nav">{navigation.map(item => { const Icon = item.icon; return <button key={item.label} className={active === item.label ? "nav-item active" : "nav-item"} onClick={() => {if(item.label === "الذكاء الاصطناعي"){window.location.href="/ai";return;}setActive(item.label);setMobileOpen(false);}}><Icon size={19}/><span>{item.label}</span>{item.tag && <em>{item.tag}</em>}{item.count && <small className="nav-count">{item.count}</small>}</button>; })}</nav>
       <div className="nav-caption secondary-caption">إدارة وتخصيص</div>
@@ -114,17 +117,18 @@ function HomeFeed() {
             <div className="composer-footer"><div className="composer-tools"><button onClick={()=>setNotice("رفع الصور سيكون متاحاً بعد ربط التخزين")}><ImageIcon size={18}/> صورة</button><button onClick={()=>setNotice("رفع الفيديو سيكون متاحاً بعد ربط التخزين")}><Video size={18}/> فيديو</button><button onClick={()=>setNotice("الاستطلاعات ستتوفر قريباً")}><TrendingUp size={18}/> استطلاع</button><button className="emoji-tool" onClick={()=>setDraft(draft+" ✨")}><Smile size={18}/></button></div><button className="publish-button" disabled={!draft.trim()} onClick={publish}>نشر <Send size={15}/></button></div>
           </section>
           <div className="feed-heading"><div><h2>آخر المنشورات</h2><span>من مجتمعك</span></div><button className="sort-button">الأحدث أولاً <ChevronDown size={15}/></button></div>
-          {filteredPosts.map(post=><article className="post-card" key={post.id}><div className="post-header"><span className="avatar avatar-soft">{post.avatar}</span><div className="post-author"><b>{post.name}</b><small>{post.handle} · {post.time}</small></div><button className="icon-button more-button" aria-label="المزيد"><MoreHorizontal/></button></div><p className="post-text">{post.text}</p><div className="post-tag"><Hash size={13}/>{post.tag}</div><div className="post-stats"><span>{post.likes} إعجاب</span><span>{post.comments} تعليق · {post.shares} مشاركة</span></div><div className="post-actions"><button className={post.liked?"liked":""} onClick={()=>toggleLike(post.id)}><Heart size={18} fill={post.liked?"currentColor":"none"}/> إعجاب</button><button onClick={()=>setNotice("التعليقات ستتوفر بعد ربط قاعدة البيانات")}><MessageSquare size={18}/> تعليق</button><button onClick={()=>setNotice("المشاركة ستتوفر قريباً")}><Share2 size={18}/> مشاركة</button></div></article>)}
+          {filteredPosts.map(post=><article className="post-card" key={post.id}><div className="post-header"><span className="avatar avatar-soft">{post.avatar}</span><div className="post-author"><b>{post.name}</b><small>{post.handle} · {post.time}</small></div><button className="icon-button more-button" aria-label="المزيد"><MoreHorizontal/></button></div><p className="post-text">{post.text}</p><div className="post-tag"><Hash size={13}/>{post.tag}</div><div className="post-stats"><span>{post.likes} إعجاب</span><span>{post.comments} تعليق · {post.shares} مشاركة</span></div><div className="post-actions"><button className={post.liked?"liked":""} onClick={()=>toggleLike(post.id)}><Heart size={18} fill={post.liked?"currentColor":"none"}/> إعجاب</button><button onClick={()=>openComments(post.id)}><MessageSquare size={18}/> تعليق</button><button onClick={()=>setNotice("المشاركة ستتوفر قريباً")}><Share2 size={18}/> مشاركة</button></div></article>)}
           {filteredPosts.length===0 && <div className="empty-state">لا توجد منشورات تطابق بحثك.</div>}
         </div>
         <aside className="right-column">
-          <section className="side-card profile-card"><div className="side-card-title"><h3>ملفك الشخصي</h3><button className="subtle-link" onClick={()=>setActive("الملف الشخصي")}>عرض</button></div><div className="profile-summary"><span className="avatar avatar-dark large-avatar">أ</span><div><b>مرحباً بك في VYRA</b><small>أكمل ملفك الشخصي</small></div></div><div className="progress-label"><span>اكتمال الملف</span><b>40%</b></div><div className="progress-track"><span/></div><button className="outline-button" onClick={()=>setActive("تعديل الملف الشخصي")}>إكمال الملف الشخصي</button></section>
+          <section className="side-card profile-card"><div className="side-card-title"><h3>ملفك الشخصي</h3><button className="subtle-link" onClick={()=>{window.location.href="/account";}}>عرض</button></div><div className="profile-summary"><span className="avatar avatar-dark large-avatar">أ</span><div><b>مرحباً بك في VYRA</b><small>أكمل ملفك الشخصي</small></div></div><div className="progress-label"><span>اكتمال الملف</span><b>40%</b></div><div className="progress-track"><span/></div><button className="outline-button" onClick={()=>{window.location.href="/account";}}>إكمال الملف الشخصي</button></section>
           <section className="side-card pulse-card"><div className="side-card-title"><h3><TrendingUp size={17}/> رائج الآن</h3><span className="live-label">مباشر</span></div>{[["#تصميم_المستقبل","2.4 ألف منشور"],["#صناع_المحتوى","1.8 ألف منشور"],["#تقنية","960 منشور"]].map(([tag,count])=><button className="trend-row" key={tag} onClick={()=>setQuery(tag.replace("#",""))}><span><b>{tag}</b><small>{count}</small></span><MoreHorizontal size={17}/></button>)}</section>
           <section className="side-card quick-card"><div className="side-card-title"><h3>مساحات سريعة</h3><WandSparkles size={17}/></div><button onClick={()=>setActive("إنشاء قناة")}><span className="quick-icon"><Radio size={17}/></span><span><b>أنشئ قناتك</b><small>شارك فيديوهاتك وأفكارك</small></span><Plus size={17}/></button><button onClick={()=>setActive("إنشاء مجتمع")}><span className="quick-icon"><UsersRound size={17}/></span><span><b>ابدأ مجتمعاً</b><small>اجمع الأشخاص حول اهتمام</small></span><Plus size={17}/></button><button onClick={()=>setActive("إنشاء صفحة")}><span className="quick-icon"><Sparkles size={17}/></span><span><b>أنشئ صفحة</b><small>ابنِ حضورك العام</small></span><Plus size={17}/></button></section>
           <div className="footer-links"><span>حول VYRA</span><span>الخصوصية</span><span>الشروط</span><span>المساعدة</span><small>© 2026 VYRA</small></div>
         </aside></div>
       </div>
     </section>
+    {commentPost && <div style={{position:"fixed",inset:0,zIndex:80,background:"rgba(0,0,0,.45)",display:"grid",placeItems:"center",padding:16}} onClick={()=>setCommentPost(null)}><section dir="rtl" onClick={e=>e.stopPropagation()} style={{width:"min(520px,100%)",maxHeight:"80vh",overflow:"auto",background:"#fff",borderRadius:16,padding:20}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h2 style={{margin:0}}>التعليقات</h2><button onClick={()=>setCommentPost(null)}>إغلاق ✕</button></div><div style={{padding:"18px 0",minHeight:100}}>{comments.length ? comments.map(item=><article key={item.id} style={{padding:"10px 0",borderBottom:"1px solid #eee"}}><p style={{margin:"0 0 5px"}}>{item.body}</p><small style={{color:"#888"}}>{new Date(item.created_at).toLocaleString("ar")}</small></article>) : <p style={{color:"#888"}}>لا توجد تعليقات بعد.</p>}</div><div style={{display:"flex",gap:8}}><input value={commentDraft} onChange={e=>setCommentDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")sendComment();}} placeholder="اكتب تعليقاً..." style={{flex:1,minWidth:0,padding:11,border:"1px solid #ddd",borderRadius:9}}/><button onClick={sendComment} disabled={!commentDraft.trim()} style={{background:"#090909",color:"#fff",padding:"0 16px",borderRadius:9}}>إرسال</button></div></section></div>}
     {notice && <div className="toast"><Check size={17}/>{notice}<button onClick={()=>setNotice("")}><X size={15}/></button></div>}
   </main>;
 }
