@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from backend.database import Base, SessionLocal, engine, database_status
 from backend import models
-from backend.schemas import ProfileUpdate, ProfileOut, PostCreate, PostOut, CommentCreate, CommentOut
+from backend.schemas import ProfileUpdate, ProfileOut, PostCreate, PostOut, PostFeedOut, CommentCreate, CommentOut
 from backend.security import current_user
 from backend.auth import router as auth_router
 from backend.ai_router import generate_reply, generate_agent_reply
@@ -113,15 +113,30 @@ def update_my_profile(payload: ProfileUpdate, claims: dict = Depends(current_use
         raise HTTPException(status_code=409, detail="Username is already taken")
 
 
-@app.get("/api/posts", response_model=list[PostOut])
+@app.get("/api/posts", response_model=list[PostFeedOut])
 def list_posts(limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db)):
-    return db.scalars(
+    posts = db.scalars(
         select(models.Post)
         .join(models.Profile, models.Profile.id == models.Post.author_id)
         .where(models.Post.visibility == "public", models.Profile.is_private.is_(False))
         .order_by(desc(models.Post.created_at)).limit(limit).offset(offset)
     ).all()
-
+    result = []
+    for post in posts:
+        profile = db.get(models.Profile, post.author_id)
+        result.append({
+            "id": post.id,
+            "author_id": post.author_id,
+            "author_name": profile.display_name if profile else "عضو VYRA",
+            "author_username": profile.username if profile else "member",
+            "avatar_url": profile.avatar_url if profile else None,
+            "body": post.body,
+            "visibility": post.visibility,
+            "created_at": post.created_at,
+            "likes_count": db.scalar(select(func.count(models.Reaction.id)).where(models.Reaction.post_id == post.id)) or 0,
+            "comments_count": db.scalar(select(func.count(models.Comment.id)).where(models.Comment.post_id == post.id)) or 0,
+        })
+    return result
 
 @app.post("/api/posts", response_model=PostOut, status_code=201)
 def create_post(payload: PostCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
