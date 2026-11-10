@@ -149,6 +149,16 @@ def create_post(payload: PostCreate, claims: dict = Depends(current_user), db: S
     return post
 
 
+@app.delete("/api/posts/{post_id}")
+def delete_post(post_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    post = db.get(models.Post, post_id)
+    if post is None or post.author_id != claims["sub"]:
+        raise HTTPException(status_code=404, detail="Post not found")
+    db.delete(post)
+    db.commit()
+    return {"deleted": True}
+
+
 @app.get("/api/posts/{post_id}/media")
 def list_post_media(post_id: str, db: Session = Depends(get_db)):
     if db.get(models.Post, post_id) is None:
