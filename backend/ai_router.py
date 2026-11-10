@@ -9,6 +9,7 @@ TIMEOUT = 90
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 HF_URL = "https://router.huggingface.co/v1/chat/completions"
+CODIV_URL = "https://api.codiv.ai/v1/chat/completions"
 
 
 def _messages(system_prompt: str, prompt: str, history: list[dict] | None) -> list[dict]:
@@ -46,9 +47,12 @@ def _request(url: str, token: str, model: str, messages: list[dict], provider: s
 
 
 def _providers(role: str):
+    codiv_key = os.getenv("CODIV_API_KEY", "").strip()
     groq_key = os.getenv(f"GROQ_{role.upper()}_API_KEY", "").strip() or os.getenv("GROQ_API_KEY", "").strip()
     openrouter_key = os.getenv(f"OPENROUTER_{role.upper()}_API_KEY", "").strip() or os.getenv("OPENROUTER_API_KEY", "").strip()
     hf_key = os.getenv("HF_ASSISTANT_TOKEN" if role == "assistant" else "HF_AGENT_TOKEN", "").strip()
+    if codiv_key:
+        yield "codiv", CODIV_URL, codiv_key, os.getenv("CODIV_MODEL", "diffusiongemma-26b")
     if groq_key:
         yield "groq", GROQ_URL, groq_key, os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
     if openrouter_key:
@@ -64,7 +68,7 @@ def _run(role: str, system_prompt: str, prompt: str, history: list[dict] | None)
     errors = []
     providers = list(_providers(role))
     if not providers:
-        raise RuntimeError("أضف GROQ_API_KEY أو OPENROUTER_API_KEY في Render لتشغيل مساعد VYRA.")
+        raise RuntimeError("أضف CODIV_API_KEY أو مفتاح مزود ذكاء اصطناعي آخر في Render لتشغيل مساعد VYRA.")
     for name, url, key, model in providers:
         try:
             reply = _request(url, key, model, messages, name)
