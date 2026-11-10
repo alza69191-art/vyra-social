@@ -41,6 +41,10 @@ class CommentOut(BaseModel):
     created_at: datetime
 
 
+class PostMediaOut(BaseModel):
+    url: str
+    media_type: str
+
 class PostFeedOut(BaseModel):
     id: str
     author_id: str
@@ -52,3 +56,4 @@ class PostFeedOut(BaseModel):
     created_at: datetime
     likes_count: int = 0
     comments_count: int = 0
+    media: list[PostMediaOut] = Field(default_factory=list)
