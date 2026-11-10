@@ -12,6 +12,7 @@ from backend.schemas import ProfileUpdate, ProfileOut, PostCreate, PostOut, Comm
 from backend.security import current_user
 from backend.auth import router as auth_router
 from backend.ai_router import generate_reply, generate_agent_reply
+from backend.cloudinary_uploads import router as uploads_router
 
 app = FastAPI(
     title="VYRA API",
@@ -41,6 +42,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(uploads_router)
 
 
 def get_db():
