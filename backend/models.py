@@ -203,6 +203,15 @@ class SocialPage(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class PostBookmark(Base):
+    __tablename__ = "post_bookmarks"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    post_id: Mapped[str] = mapped_column(ForeignKey("posts.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (UniqueConstraint("post_id", "user_id", name="uq_post_bookmark"),)
+
+
 class PageFollower(Base):
     __tablename__ = "page_followers"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
