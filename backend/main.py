@@ -147,6 +147,17 @@ def list_posts(limit: int = Query(default=20, ge=1, le=100), offset: int = Query
         .where(models.Comment.post_id.in_(post_ids))
         .group_by(models.Comment.post_id)
     ).all())
+    media_rows = db.scalars(
+        select(models.PostMedia)
+        .where(models.PostMedia.post_id.in_(post_ids))
+        .order_by(models.PostMedia.created_at)
+    ).all()
+    media_by_post: dict[str, list[dict]] = {}
+    for media in media_rows:
+        media_by_post.setdefault(media.post_id, []).append({
+            "url": media.media_url,
+            "media_type": media.media_type,
+        })
     return [{
         "id": post.id,
         "author_id": post.author_id,
@@ -158,6 +169,7 @@ def list_posts(limit: int = Query(default=20, ge=1, le=100), offset: int = Query
         "created_at": post.created_at,
         "likes_count": likes.get(post.id, 0),
         "comments_count": comments.get(post.id, 0),
+        "media": media_by_post.get(post.id, []),
     } for post, profile in rows]
 
 @app.post("/api/posts", response_model=PostOut, status_code=201)
@@ -241,9 +253,14 @@ class SocialSpaceCreate(BaseModel):
 @app.get("/api/groups")
 def list_groups(db: Session = Depends(get_db)):
     groups = db.scalars(select(models.SocialGroup).where(models.SocialGroup.privacy == "public").order_by(desc(models.SocialGroup.created_at)).limit(100)).all()
+    ids = [group.id for group in groups]
+    counts = dict(db.execute(
+        select(models.GroupMember.group_id, func.count(models.GroupMember.id))
+        .where(models.GroupMember.group_id.in_(ids))
+        .group_by(models.GroupMember.group_id)
+    ).all()) if ids else {}
     return [{"id": g.id, "name": g.name, "description": g.description, "privacy": g.privacy,
-             "owner_id": g.owner_id,
-             "members": db.scalar(select(func.count(models.GroupMember.id)).where(models.GroupMember.group_id == g.id)) or 0}
+             "owner_id": g.owner_id, "members": counts.get(g.id, 0)}
             for g in groups]
 
 
@@ -277,9 +294,14 @@ def join_group(group_id: str, claims: dict = Depends(current_user), db: Session 
 @app.get("/api/pages")
 def list_pages(db: Session = Depends(get_db)):
     pages = db.scalars(select(models.SocialPage).order_by(desc(models.SocialPage.created_at)).limit(100)).all()
+    ids = [page.id for page in pages]
+    counts = dict(db.execute(
+        select(models.PageFollower.page_id, func.count(models.PageFollower.id))
+        .where(models.PageFollower.page_id.in_(ids))
+        .group_by(models.PageFollower.page_id)
+    ).all()) if ids else {}
     return [{"id": p.id, "name": p.name, "description": p.description, "category": p.category,
-             "owner_id": p.owner_id,
-             "followers": db.scalar(select(func.count(models.PageFollower.id)).where(models.PageFollower.page_id == p.id)) or 0}
+             "owner_id": p.owner_id, "followers": counts.get(p.id, 0)}
             for p in pages]
 
 
@@ -338,6 +360,69 @@ def toggle_bookmark(post_id: str, claims: dict = Depends(current_user), db: Sess
         db.rollback()
         return {"saved": True}
     return {"saved": True}
+
+
+class MarketListingCreate(BaseModel):
+    title: str = Field(min_length=3, max_length=140)
+    description: str = Field(min_length=5, max_length=4000)
+    price: float = Field(ge=0, le=999999999)
+    currency: str = Field(default="USD", pattern="^(USD|ILS|EUR)$")
+    category: str = Field(min_length=2, max_length=60)
+    condition: str = Field(default="new", pattern="^(new|used|refurbished)$")
+    location: str | None = Field(default=None, max_length=120)
+
+class MarketListingStatus(BaseModel):
+    status: str = Field(pattern="^(active|sold)$")
+
+@app.get("/api/market/listings")
+def list_market_listings(limit: int = Query(default=40, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db)):
+    rows = db.execute(
+        select(models.MarketListing, models.Profile)
+        .join(models.Profile, models.Profile.id == models.MarketListing.owner_id)
+        .where(models.MarketListing.status == "active")
+        .order_by(desc(models.MarketListing.created_at))
+        .limit(limit).offset(offset)
+    ).all()
+    return [{
+        "id": listing.id, "title": listing.title, "description": listing.description,
+        "price": float(listing.price), "currency": listing.currency,
+        "category": listing.category, "condition": listing.condition,
+        "location": listing.location, "status": listing.status,
+        "created_at": listing.created_at, "owner_id": listing.owner_id,
+        "seller_name": profile.display_name, "seller_username": profile.username,
+    } for listing, profile in rows]
+
+@app.post("/api/market/listings", status_code=201)
+def create_market_listing(payload: MarketListingCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    if db.get(models.Profile, claims["sub"]) is None:
+        raise HTTPException(status_code=409, detail="Profile not found")
+    listing = models.MarketListing(
+        id=str(uuid4()), owner_id=claims["sub"], title=payload.title.strip(),
+        description=payload.description.strip(), price=payload.price,
+        currency=payload.currency, category=payload.category.strip(),
+        condition=payload.condition, location=payload.location.strip() if payload.location else None,
+    )
+    db.add(listing)
+    db.commit()
+    db.refresh(listing)
+    profile = db.get(models.Profile, claims["sub"])
+    return {
+        "id": listing.id, "title": listing.title, "description": listing.description,
+        "price": float(listing.price), "currency": listing.currency,
+        "category": listing.category, "condition": listing.condition,
+        "location": listing.location, "status": listing.status,
+        "created_at": listing.created_at, "owner_id": listing.owner_id,
+        "seller_name": profile.display_name, "seller_username": profile.username,
+    }
+
+@app.patch("/api/market/listings/{listing_id}/status")
+def update_market_listing_status(listing_id: str, payload: MarketListingStatus, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    listing = db.get(models.MarketListing, listing_id)
+    if listing is None or listing.owner_id != claims["sub"]:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    listing.status = payload.status
+    db.commit()
+    return {"id": listing.id, "status": listing.status}
 
 
 class AIMessage(BaseModel):
