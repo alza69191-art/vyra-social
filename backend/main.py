@@ -21,10 +21,17 @@ app = FastAPI(
     redoc_url=None,
 )
 
-origins = [item.strip() for item in os.getenv(
-    "CORS_ORIGINS",
-    "http://localhost:3000,https://alza69191-art.github.io,https://vyra-web.onrender.com,https://vyra-social-web.onrender.com"
-).split(",") if item.strip()]
+default_origins = {
+    "http://localhost:3000",
+    "https://alza69191-art.github.io",
+    "https://vyra-web.onrender.com",
+    "https://vyra-web-rs1b.onrender.com",
+    "https://vyra-social-web.onrender.com",
+}
+configured_origins = {
+    item.strip() for item in os.getenv("CORS_ORIGINS", "").split(",") if item.strip()
+}
+origins = sorted(default_origins | configured_origins)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
