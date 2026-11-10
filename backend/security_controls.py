@@ -17,6 +17,7 @@ LIMITS = {
     "/api/ai/chat": 12,
     "/api/ai/agent": 8,
     "/api/uploads": 12,
+    "/api/market/listings": 8,
 }
 
 
