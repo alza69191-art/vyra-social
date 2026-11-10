@@ -90,3 +90,7 @@ export function toggleBookmark(accessToken: string, postId: string): Promise<{ s
 export function getSavedPosts(accessToken: string): Promise<VyraPost[]> {
   return request<VyraPost[]>("/api/bookmarks", {}, accessToken);
 }
+
+export function deletePost(accessToken: string, postId: string): Promise<{ deleted: boolean }> {
+  return request<{ deleted: boolean }>(`/api/posts/${encodeURIComponent(postId)}`, { method: "DELETE" }, accessToken);
+}
