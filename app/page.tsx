@@ -46,9 +46,13 @@ function HomeFeed() {
   const [commentDraft, setCommentDraft] = useState("");
   useEffect(() => {
     let activeRequest = true;
-    getPublicPosts(30, 0).then(rows => {
+    getPublicPosts(30, 0).then(async rows => {
       if (!activeRequest || rows.length === 0) return;
-      setPosts(rows.map((row, index) => ({
+      const enriched = await Promise.all(rows.map(async row => ({
+        row, media: await getPostMedia(row.id).catch(() => []),
+      })));
+      if (!activeRequest) return;
+      setPosts(enriched.map(({ row, media }) => ({
         id: row.id,
         name: "عضو VYRA",
         handle: "@member",
@@ -60,6 +64,7 @@ function HomeFeed() {
         shares: 0,
         tag: "منشور",
         liked: false,
+        media,
       })));
     }).catch(() => {
       setPosts([]);
@@ -73,8 +78,9 @@ function HomeFeed() {
     if (!body || !token) return;
     try {
       const created = await createPost(token, body, "public");
-      setPosts(current => [{ id: created.id, name: "أنت", handle: "@your.profile", avatar: "أ", time: "الآن", text: created.body || "", likes: 0, comments: 0, shares: 0, tag: "منشور جديد", liked: false }, ...current]);
-      setDraft(""); setNotice("تم حفظ المنشور في قاعدة البيانات"); setTimeout(() => setNotice(""), 2500);
+      const uploaded = await Promise.all(selectedFiles.map(file => uploadMedia(token, file, "post", created.id)));
+      setPosts(current => [{ id: created.id, name: "أنت", handle: "@your.profile", avatar: "أ", time: "الآن", text: created.body || "", likes: 0, comments: 0, shares: 0, tag: "منشور جديد", liked: false, media: uploaded.map(item => ({ url: item.url, media_type: item.media_type })) }, ...current]);
+      setDraft(""); setSelectedFiles([]); setNotice("تم نشر المنشور ورفع الوسائط"); setTimeout(() => setNotice(""), 2500);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "تعذر نشر المنشور");
       setTimeout(() => setNotice(""), 3500);
