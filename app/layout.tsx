@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   icons: { icon: "/vyra-mark.svg" },
   verification: {
     google: "lZ0Zz3K7Cplr5vKpdXp-g1gPe5deSqvOt-g39D0oWaE",
+    yandex: "aa714f864cca5c0e",
   },
 };
 
