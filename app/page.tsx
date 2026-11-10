@@ -7,26 +7,11 @@ import { Home, Compass, Clapperboard, Users, MessageCircle, Bell, Bookmark, Radi
 const navigation = [
   { label: "الرئيسية", icon: Home, active: true },
   { label: "الذكاء الاصطناعي", icon: Sparkles },
-  { label: "استكشف", icon: Compass },
-  { label: "VYRA Pulse", icon: Clapperboard, tag: "جديد" },
-  { label: "الأصدقاء", icon: Users },
-  { label: "الرسائل", icon: MessageCircle, count: undefined },
-  { label: "الإشعارات", icon: Bell, count: undefined },
-  { label: "القنوات", icon: Radio },
   { label: "المجتمعات", icon: UsersRound },
   { label: "الصفحات", icon: Compass },
-  { label: "السوق", icon: Store },
-  { label: "المزادات", icon: Gavel },
   { label: "المحفوظات", icon: Bookmark },
 ];
-const stories = [
-  { name: "قصتك", initials: "+", own: true },
-  { name: "ليان", initials: "ل", tone: "story-a" },
-  { name: "آدم", initials: "أ", tone: "story-b" },
-  { name: "سارة", initials: "س", tone: "story-c" },
-  { name: "كريم", initials: "ك", tone: "story-d" },
-  { name: "نور", initials: "ن", tone: "story-e" },
-];
+const stories = [{ name: "قصتك", initials: "+", own: true }];
 const initialPosts: Array<{ id: string | number; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean; media?: Array<{ url: string; media_type: string }> }> = [];
 
 export default function HomePage() { return <AuthGate><HomeFeed /></AuthGate>; }
@@ -129,12 +114,12 @@ function HomeFeed() {
       <div className="nav-caption">مساحتك</div>
       <nav className="main-nav">{navigation.map(item => { const Icon = item.icon; return <button key={item.label} className={active === item.label ? "nav-item active" : "nav-item"} onClick={() => {if(item.label === "الذكاء الاصطناعي"){window.location.href="/ai";return;}if(item.label === "المجتمعات"){window.location.href="/groups";return;}if(item.label === "الصفحات"){window.location.href="/pages";return;}if(item.label === "المحفوظات"){window.location.href="/saved";return;}setActive(item.label);setMobileOpen(false);}}><Icon size={19}/><span>{item.label}</span>{item.tag && <em>{item.tag}</em>}{item.count && <small className="nav-count">{item.count}</small>}</button>; })}</nav>
       <div className="nav-caption secondary-caption">إدارة وتخصيص</div>
-      <nav className="main-nav"><button className="nav-item" onClick={() => setActive("الإعدادات")}><Settings size={19}/><span>الإعدادات</span></button><button className="nav-item" onClick={() => setActive("مركز المساعدة")}><CircleHelp size={19}/><span>مركز المساعدة</span></button></nav>
+      <nav className="main-nav"><button className="nav-item" onClick={() => {window.location.href="/account";}}><Settings size={19}/><span>إعدادات الحساب</span></button></nav>
       <div className="sidebar-bottom"><div className="online-dot"/><span>مساحتك جاهزة للإبداع</span></div>
     </aside>
     <section className="main-area">
       <div className="topbar"><div className="breadcrumb"><span>مساحتك</span><span className="crumb-slash">/</span><b>{active}</b></div>
-        <div className="top-actions"><label className="search-box"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="ابحث في VYRA..."/><kbd>⌘ K</kbd></label><button className="icon-button top-icon" aria-label="الرسائل" onClick={() => setActive("الرسائل")}><MessageCircle/></button><button className="icon-button top-icon notification-icon" aria-label="الإشعارات" onClick={() => setActive("الإشعارات")}><Bell/><i/></button><span className="avatar avatar-dark top-avatar">أ</span></div>
+        <div className="top-actions"><label className="search-box"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="ابحث في المنشورات المحمّلة..."/><kbd>⌘ K</kbd></label><button className="icon-button top-icon" aria-label="الرسائل" onClick={() => setActive("الرسائل")}><MessageCircle/></button><button className="icon-button top-icon notification-icon" aria-label="الإشعارات" onClick={() => setActive("الإشعارات")}><Bell/><i/></button><span className="avatar avatar-dark top-avatar">أ</span></div>
       </div>
       <div className="content-wrap">
         <div className="welcome-row"><div><div className="eyebrow"><Sparkles size={14}/> مساحتك الاجتماعية</div><h1>مرحباً بعودتك<span>.</span></h1><p>اكتشف الجديد، وشارك لحظاتك مع مجتمعك.</p></div><button className="black-button" onClick={() => document.getElementById("composer")?.scrollIntoView({behavior:"smooth"})}><Plus size={18}/> إنشاء منشور</button></div>
@@ -147,14 +132,14 @@ function HomeFeed() {
             <div className="composer-footer"><div className="composer-tools"><button type="button" onClick={()=>mediaInput.current?.click()}><ImageIcon size={18}/> صورة / فيديو</button><button onClick={()=>setNotice("الاستطلاعات ستتوفر قريباً")}><TrendingUp size={18}/> استطلاع</button><button className="emoji-tool" onClick={()=>setDraft(draft+" ✨")}><Smile size={18}/></button></div><button className="publish-button" disabled={!draft.trim()} onClick={publish}>نشر <Send size={15}/></button></div>
           </section>
           <div className="feed-heading"><div><h2>آخر المنشورات</h2><span>من مجتمعك</span></div><button className="sort-button">الأحدث أولاً <ChevronDown size={15}/></button></div>
-          {filteredPosts.map(post=><article className="post-card" key={post.id}><div className="post-header"><span className="avatar avatar-soft">{post.avatar}</span><div className="post-author"><b>{post.name}</b><small>{post.handle} · {post.time}</small></div><button className="icon-button more-button" aria-label="حفظ المنشور" title="حفظ المنشور" onClick={()=>savePost(post.id)}><Bookmark/></button></div><p className="post-text">{post.text}</p>{post.media?.length ? <div style={{display:"grid",gap:8,margin:"12px 0"}}>{post.media.map((item,index)=>item.media_type==="video" ? <video key={index} src={item.url} controls playsInline style={{width:"100%",maxHeight:420,borderRadius:12}}/> : <img key={index} src={item.url} alt="وسائط المنشور" loading="lazy" style={{width:"100%",maxHeight:480,objectFit:"contain",borderRadius:12}}/>)}</div> : null}<div className="post-tag"><Hash size={13}/>{post.tag}</div><div className="post-stats"><span>{post.likes} إعجاب</span><span>{post.comments} تعليق · {post.shares} مشاركة</span></div><div className="post-actions"><button className={post.liked?"liked":""} onClick={()=>toggleLike(post.id)}><Heart size={18} fill={post.liked?"currentColor":"none"}/> إعجاب</button><button onClick={()=>openComments(post.id)}><MessageSquare size={18}/> تعليق</button><button onClick={()=>setNotice("المشاركة غير مفعّلة حالياً.")}><Share2 size={18}/> مشاركة</button></div></article>)}
+          {filteredPosts.map(post=><article className="post-card" key={post.id}><div className="post-header"><span className="avatar avatar-soft">{post.avatar}</span><div className="post-author"><b>{post.name}</b><small>{post.handle} · {post.time}</small></div><button className="icon-button more-button" aria-label="حفظ المنشور" title="حفظ المنشور" onClick={()=>savePost(post.id)}><Bookmark/></button></div><p className="post-text">{post.text}</p>{post.media?.length ? <div style={{display:"grid",gap:8,margin:"12px 0"}}>{post.media.map((item,index)=>item.media_type==="video" ? <video key={index} src={item.url} controls playsInline style={{width:"100%",maxHeight:420,borderRadius:12}}/> : <img key={index} src={item.url} alt="وسائط المنشور" loading="lazy" style={{width:"100%",maxHeight:480,objectFit:"contain",borderRadius:12}}/>)}</div> : null}<div className="post-tag"><Hash size={13}/>{post.tag}</div><div className="post-stats"><span>{post.likes} إعجاب</span><span>{post.comments} تعليق · {post.shares} مشاركة</span></div><div className="post-actions"><button className={post.liked?"liked":""} onClick={()=>toggleLike(post.id)}><Heart size={18} fill={post.liked?"currentColor":"none"}/> إعجاب</button><button onClick={()=>openComments(post.id)}><MessageSquare size={18}/> تعليق</button></div></article>)}
           {filteredPosts.length===0 && <div className="empty-state">لا توجد منشورات تطابق بحثك.</div>}
         </div>
         <aside className="right-column">
-          <section className="side-card profile-card"><div className="side-card-title"><h3>ملفك الشخصي</h3><button className="subtle-link" onClick={()=>{window.location.href="/account";}}>عرض</button></div><div className="profile-summary"><span className="avatar avatar-dark large-avatar">أ</span><div><b>مرحباً بك في VYRA</b><small>أكمل ملفك الشخصي</small></div></div><div className="progress-label"><span>حالة الملف الشخصي</span><b>قيد الإكمال</b></div><div className="progress-track"><span/></div><button className="outline-button" onClick={()=>{window.location.href="/account";}}>إكمال الملف الشخصي</button></section>
+          <section className="side-card profile-card"><div className="side-card-title"><h3>ملفك الشخصي</h3><button className="subtle-link" onClick={()=>{window.location.href="/account";}}>عرض</button></div><div className="profile-summary"><span className="avatar avatar-dark large-avatar">أ</span><div><b>مرحباً بك في VYRA</b><small>أكمل ملفك الشخصي</small></div></div><div className="progress-label"><span>حالة الملف الشخصي</span><b>قيد الإكمال</b></div><button className="outline-button" onClick={()=>{window.location.href="/account";}}>إكمال الملف الشخصي</button></section>
           <section className="side-card pulse-card"><div className="side-card-title"><h3><TrendingUp size={17}/> رائج الآن</h3><span className="live-label">مباشر</span></div>{[["#تصميم_المستقبل","موضوع شائع"],["#صناع_المحتوى","موضوع شائع"],["#تقنية","موضوع شائع"]].map(([tag,count])=><button className="trend-row" key={tag} onClick={()=>setQuery(tag.replace("#",""))}><span><b>{tag}</b><small>{count}</small></span><MoreHorizontal size={17}/></button>)}</section>
-          <section className="side-card quick-card"><div className="side-card-title"><h3>مساحات سريعة</h3><WandSparkles size={17}/></div><button onClick={()=>setActive("إنشاء قناة")}><span className="quick-icon"><Radio size={17}/></span><span><b>أنشئ قناتك</b><small>شارك فيديوهاتك وأفكارك</small></span><Plus size={17}/></button><button onClick={()=>setActive("إنشاء مجتمع")}><span className="quick-icon"><UsersRound size={17}/></span><span><b>ابدأ مجتمعاً</b><small>اجمع الأشخاص حول اهتمام</small></span><Plus size={17}/></button><button onClick={()=>setActive("إنشاء صفحة")}><span className="quick-icon"><Sparkles size={17}/></span><span><b>أنشئ صفحة</b><small>ابنِ حضورك العام</small></span><Plus size={17}/></button></section>
-          <div className="footer-links"><span>حول VYRA</span><span>الخصوصية</span><span>الشروط</span><span>المساعدة</span><small>© 2026 VYRA</small></div>
+          <section className="side-card quick-card"><div className="side-card-title"><h3>مساحات سريعة</h3><WandSparkles size={17}/></div><button onClick={()=>{window.location.href="/groups";}}><span className="quick-icon"><UsersRound size={17}/></span><span><b>استكشف المجتمعات</b><small>أنشئ مجتمعاً أو انضم لآخر</small></span><Plus size={17}/></button><button onClick={()=>{window.location.href="/pages";}}><span className="quick-icon"><Sparkles size={17}/></span><span><b>إدارة الصفحات</b><small>أنشئ صفحة عامة</small></span><Plus size={17}/></button></section>
+          <div className="footer-links"><small>© 2026 VYRA</small></div>
         </aside></div>
       </div>
     </section>
