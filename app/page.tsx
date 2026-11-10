@@ -80,7 +80,14 @@ function HomeFeed() {
   async function openComments(id: string | number) {
     setCommentPost(String(id)); setComments([]);
     try { setComments(await getComments(String(id))); } catch (error) { setNotice(error instanceof Error ? error.message : "تعذر تحميل التعليقات"); }
-  }\n  async function sendComment() {\n    const token = sessionStorage.getItem("vyra_access_token");\n    if (!token || !commentPost || !commentDraft.trim()) return;\n    try { const item = await createComment(token, commentPost, commentDraft.trim()); setComments(current => [...current, item]); setCommentDraft(""); }\n    catch (error) { setNotice(error instanceof Error ? error.message : "تعذر إضافة التعليق"); }\n  }\n  async function toggleLike(id: string | number) {
+  }
+  async function sendComment() {
+    const token = sessionStorage.getItem("vyra_access_token");
+    if (!token || !commentPost || !commentDraft.trim()) return;
+    try { const item = await createComment(token, commentPost, commentDraft.trim()); setComments(current => [...current, item]); setCommentDraft(""); }
+    catch (error) { setNotice(error instanceof Error ? error.message : "تعذر إضافة التعليق"); }
+  }
+  async function toggleLike(id: string | number) {
     const token = sessionStorage.getItem("vyra_access_token");
     if (!token) return;
     try {
