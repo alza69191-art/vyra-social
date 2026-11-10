@@ -18,7 +18,7 @@ class ProfileOut(BaseModel):
     is_private: bool
 
 class PostCreate(BaseModel):
-    body: str = Field(min_length=1, max_length=10000)
+    body: str | None = Field(default=None, max_length=10000)
     visibility: str = Field(default="public", pattern="^(public|followers|private)$")
 
 class PostOut(BaseModel):
