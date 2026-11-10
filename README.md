@@ -75,3 +75,7 @@ Email verification, password reset, server-side session revocation/logout, stori
 See `SECURITY.md`, `PERFORMANCE.md`, and `PROCESSING.md` for current controls, limitations and the next implementation steps.
 
 Render Free PostgreSQL expires after its stated trial period. Back up and migrate the database before expiry; do not rely on the free database as permanent storage.
+
+
+## Marketplace
+The authenticated `/market` page supports creating and browsing text-based listings, filtering by category, and marking the owner's listing as sold. Payments, checkout, product image galleries, orders, and dispute workflows are not included yet.
