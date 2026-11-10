@@ -38,11 +38,13 @@ Required for media uploads:
 - `CLOUDINARY_API_SECRET`
 
 AI providers (automatic fallback order):
-1. `GROQ_API_KEY` — primary provider; optional role-specific overrides: `GROQ_ASSISTANT_API_KEY`, `GROQ_AGENT_API_KEY`.
-2. `OPENROUTER_API_KEY` — free-model fallback; optional role-specific overrides: `OPENROUTER_ASSISTANT_API_KEY`, `OPENROUTER_AGENT_API_KEY`.
-3. Existing `HF_ASSISTANT_TOKEN` and `HF_AGENT_TOKEN` — final fallback.
+1. `CODIV_API_KEY` — primary text-generation provider; uses `https://api.codiv.ai/v1/chat/completions` and model `diffusiongemma-26b`.
+2. `GROQ_API_KEY` — fallback; optional role-specific overrides: `GROQ_ASSISTANT_API_KEY`, `GROQ_AGENT_API_KEY`.
+3. `OPENROUTER_API_KEY` — fallback; optional role-specific overrides: `OPENROUTER_ASSISTANT_API_KEY`, `OPENROUTER_AGENT_API_KEY`.
+4. Existing `HF_ASSISTANT_TOKEN` and `HF_AGENT_TOKEN` — final fallback.
 
 Optional model overrides:
+- `CODIV_MODEL` (default: `diffusiongemma-26b`)
 - `GROQ_MODEL` (default: `openai/gpt-oss-120b`)
 - `OPENROUTER_MODEL` (default: `openrouter/free`)
 - `HF_ASSISTANT_MODEL`
