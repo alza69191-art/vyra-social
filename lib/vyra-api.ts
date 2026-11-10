@@ -21,8 +21,8 @@ async function request<T>(path: string, init: RequestInit = {}, accessToken?: st
 export function getPublicPosts(limit = 20, offset = 0): Promise<VyraPost[]> {
   return request<VyraPost[]>(`/api/posts?limit=${limit}&offset=${offset}`);
 }
-export function saveProfile(accessToken: string, profile: { username: string; display_name: string; bio?: string | null; is_private?: boolean }) {
-  return request("/api/me", { method: "PUT", body: JSON.stringify(profile) }, accessToken);
+export function saveProfile(accessToken: string, profile: { username: string; display_name: string; bio?: string | null; is_private?: boolean }): Promise<VyraProfile> {
+  return request<VyraProfile>("/api/me", { method: "PUT", body: JSON.stringify(profile) }, accessToken);
 }
 export function createPost(accessToken: string, body: string, visibility: "public" | "followers" | "private" = "public") {
   return request<VyraPost>("/api/posts", { method: "POST", body: JSON.stringify({ body, visibility }) }, accessToken);
