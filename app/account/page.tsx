@@ -67,7 +67,10 @@ function AccountEditor() {
 
   return <main dir="rtl" style={{minHeight:"100vh",padding:"32px 18px",background:"#ffffff"}}>
     <section style={{maxWidth:620,margin:"0 auto",background:"#ffffff",border:"1px solid #000000",borderRadius:18,padding:24}}>
-      <Link href="/" style={{color:"#000000",textDecoration:"none"}}>← العودة إلى VYRA</Link>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+        <Link href="/" style={{color:"#000000",textDecoration:"none"}}>← العودة إلى VYRA</Link>
+        <button type="button" onClick={() => { sessionStorage.removeItem("vyra_access_token"); sessionStorage.removeItem("vyra_user"); router.replace("/login"); }} style={{border:"1px solid #000",borderRadius:9,padding:"9px 13px",background:"#fff",color:"#000"}}>تسجيل الخروج</button>
+      </div>
       <h1 style={{fontSize:25,margin:"24px 0 6px"}}>الملف الشخصي</h1>
       <p style={{color:"#000000",marginTop:0}}>عدّل معلومات حسابك واحفظها في قاعدة البيانات.</p>
       {profile && <div style={{display:"grid",gap:12,margin:"18px 0"}}>
