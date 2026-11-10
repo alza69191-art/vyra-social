@@ -9,6 +9,7 @@ export type VyraPost = {
   avatar_url?: string | null;
   likes_count?: number;
   comments_count?: number;
+  media?: Array<{ url: string; media_type: "image" | "video" }>;
 };
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "https://vyra-api-9pxl.onrender.com").replace(/\/$/, "");
