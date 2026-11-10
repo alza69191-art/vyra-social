@@ -77,7 +77,10 @@ function HomeFeed() {
       setTimeout(() => setNotice(""), 3500);
     }
   }
-  async function openComments(id: string | number) {\n    setCommentPost(String(id)); setComments([]);\n    try { setComments(await getComments(String(id))); } catch (error) { setNotice(error instanceof Error ? error.message : "تعذر تحميل التعليقات"); }\n  }\n  async function sendComment() {\n    const token = sessionStorage.getItem("vyra_access_token");\n    if (!token || !commentPost || !commentDraft.trim()) return;\n    try { const item = await createComment(token, commentPost, commentDraft.trim()); setComments(current => [...current, item]); setCommentDraft(""); }\n    catch (error) { setNotice(error instanceof Error ? error.message : "تعذر إضافة التعليق"); }\n  }\n  async function toggleLike(id: string | number) {
+  async function openComments(id: string | number) {
+    setCommentPost(String(id)); setComments([]);
+    try { setComments(await getComments(String(id))); } catch (error) { setNotice(error instanceof Error ? error.message : "تعذر تحميل التعليقات"); }
+  }\n  async function sendComment() {\n    const token = sessionStorage.getItem("vyra_access_token");\n    if (!token || !commentPost || !commentDraft.trim()) return;\n    try { const item = await createComment(token, commentPost, commentDraft.trim()); setComments(current => [...current, item]); setCommentDraft(""); }\n    catch (error) { setNotice(error instanceof Error ? error.message : "تعذر إضافة التعليق"); }\n  }\n  async function toggleLike(id: string | number) {
     const token = sessionStorage.getItem("vyra_access_token");
     if (!token) return;
     try {
