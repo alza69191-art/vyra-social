@@ -171,8 +171,7 @@ def delete_post(post_id: str, claims: dict = Depends(current_user), db: Session 
 
 @app.get("/api/posts/{post_id}/media")
 def list_post_media(post_id: str, db: Session = Depends(get_db)):
-    if db.get(models.Post, post_id) is None:
-        raise HTTPException(status_code=404, detail="Post not found")
+    require_public_post(db, post_id)
     rows = db.scalars(
         select(models.PostMedia).where(models.PostMedia.post_id == post_id)
         .order_by(models.PostMedia.created_at)
@@ -203,8 +202,7 @@ def create_comment(post_id: str, payload: CommentCreate, claims: dict = Depends(
 
 @app.put("/api/posts/{post_id}/reaction")
 def set_reaction(post_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
-    if db.get(models.Post, post_id) is None:
-        raise HTTPException(status_code=404, detail="Post not found")
+    require_public_post(db, post_id)
     if db.get(models.Profile, claims["sub"]) is None:
         raise HTTPException(status_code=409, detail="Profile not found")
     existing = db.scalar(select(models.Reaction).where(
@@ -312,8 +310,7 @@ def list_bookmarks(claims: dict = Depends(current_user), db: Session = Depends(g
 
 @app.put("/api/posts/{post_id}/bookmark")
 def toggle_bookmark(post_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
-    if db.get(models.Post, post_id) is None:
-        raise HTTPException(status_code=404, detail="Post not found")
+    require_public_post(db, post_id)
     existing = db.scalar(select(models.PostBookmark).where(
         models.PostBookmark.post_id == post_id,
         models.PostBookmark.user_id == claims["sub"]
