@@ -52,7 +52,7 @@ API docs: `/api/docs`.
 - Authenticated profile and social API routes require `Authorization: Bearer <token>`.
 - The browser stores the short-lived token in sessionStorage. This is a basic deployment foundation; harden session storage and add rate limiting before a production public launch.
 
-The SQLAlchemy schema includes users, profiles, sessions, email-verification and password-reset token records, posts, media metadata, comments, reactions, follows, friendships, blocks, stories, conversations, conversation members, direct messages, notifications, groups, group members, pages and page followers.
+The SQLAlchemy schema includes users, profiles, sessions, email-verification and password-reset token records, posts, media metadata, comments, reactions, follows, friendships, blocks, stories, conversations, conversation members, direct messages, notifications, groups, group members, pages, page followers and post bookmarks. A schema table is not proof that its product workflow is implemented.
 
 ## Implemented API routes
 
@@ -60,12 +60,18 @@ The SQLAlchemy schema includes users, profiles, sessions, email-verification and
 - `POST /api/auth/register`, `POST /api/auth/login`
 - `GET/PUT /api/me`
 - `GET/POST /api/posts`
-- `GET/POST /api/posts/{post_id}/comments`
-- `PUT /api/posts/{post_id}/reaction`
-- `POST /api/ai/chat`
+- `GET /api/posts/{post_id}/media`, `GET/POST /api/posts/{post_id}/comments`
+- `PUT /api/posts/{post_id}/reaction`, `DELETE /api/posts/{post_id}`
+- `GET /api/bookmarks`, `PUT /api/posts/{post_id}/bookmark`
+- `GET/POST /api/groups`, `POST /api/groups/{group_id}/join`
+- `GET/POST /api/pages`, `POST /api/pages/{page_id}/follow`
+- `POST /api/uploads` (Cloudinary; authenticated)
+- `POST /api/ai/chat`, `POST /api/ai/agent`
 
 ## Not yet implemented
 
-The database tables for email verification, password reset, sessions, stories, groups, pages and messaging are schema foundations; corresponding user-facing workflows and API endpoints are not all implemented yet. Email delivery, media object storage, private-account authorization, WebSocket messaging, rate limiting, Alembic migrations, backups and production security review are still required before a public production launch.
+Email verification, password reset, server-side session revocation/logout, stories, direct messaging, notifications, WebSocket updates, full private-account follow authorization, moderation, and admin workflows are not implemented. Email delivery, media malware scanning/signature validation, image re-encoding, video transcoding, background jobs, Redis-backed rate limiting, Alembic migrations, automated tests, backups and production security review remain necessary before a public production launch.
+
+See `SECURITY.md`, `PERFORMANCE.md`, and `PROCESSING.md` for current controls, limitations and the next implementation steps.
 
 Render Free PostgreSQL expires after its stated trial period. Back up and migrate the database before expiry; do not rely on the free database as permanent storage.
