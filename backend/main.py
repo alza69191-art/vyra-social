@@ -134,6 +134,17 @@ def create_post(payload: PostCreate, claims: dict = Depends(current_user), db: S
     return post
 
 
+@app.get("/api/posts/{post_id}/media")
+def list_post_media(post_id: str, db: Session = Depends(get_db)):
+    if db.get(models.Post, post_id) is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    rows = db.scalars(
+        select(models.PostMedia).where(models.PostMedia.post_id == post_id)
+        .order_by(models.PostMedia.created_at)
+    ).all()
+    return [{"url": row.media_url, "media_type": row.media_type} for row in rows]
+
+
 @app.get("/api/posts/{post_id}/comments", response_model=list[CommentOut])
 def list_comments(post_id: str, limit: int = Query(default=50, ge=1, le=100), db: Session = Depends(get_db)):
     if db.get(models.Post, post_id) is None:
