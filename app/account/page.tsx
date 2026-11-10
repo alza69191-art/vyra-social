@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AuthGate from "@/components/auth-gate";
-import { getMyProfile, saveProfile, type VyraProfile } from "@/lib/vyra-api";
+import { getMyProfile, saveProfile, uploadMedia, type VyraProfile } from "@/lib/vyra-api";
 
 export default function AccountPage() {
   return <AuthGate><AccountEditor /></AuthGate>;
@@ -19,6 +19,7 @@ function AccountEditor() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const token = sessionStorage.getItem("vyra_access_token");
@@ -32,6 +33,20 @@ function AccountEditor() {
     }).catch(error => setMessage(error instanceof Error ? error.message : "تعذر تحميل الحساب"))
       .finally(() => setBusy(false));
   }, []);
+
+  async function handleMediaUpload(file: File | undefined, purpose: "avatar" | "cover") {
+    if (!file) return;
+    const token = sessionStorage.getItem("vyra_access_token");
+    if (!token) { router.replace("/login"); return; }
+    setUploading(true); setMessage("");
+    try {
+      const result = await uploadMedia(token, file, purpose);
+      setProfile(current => current ? { ...current, ...(purpose === "avatar" ? { avatar_url: result.url } : { cover_url: result.url }) } : current);
+      setMessage(purpose === "avatar" ? "تم تحديث الصورة الشخصية." : "تم تحديث صورة الغلاف.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "تعذر رفع الصورة.");
+    } finally { setUploading(false); }
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -55,6 +70,17 @@ function AccountEditor() {
       <Link href="/" style={{color:"#000000",textDecoration:"none"}}>← العودة إلى VYRA</Link>
       <h1 style={{fontSize:25,margin:"24px 0 6px"}}>الملف الشخصي</h1>
       <p style={{color:"#000000",marginTop:0}}>عدّل معلومات حسابك واحفظها في قاعدة البيانات.</p>
+      {profile && <div style={{display:"grid",gap:12,margin:"18px 0"}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          {profile.avatar_url ? <img src={profile.avatar_url} alt="الصورة الشخصية" style={{width:76,height:76,objectFit:"cover",borderRadius:"50%",border:"1px solid #000"}}/> : <div style={{width:76,height:76,borderRadius:"50%",border:"1px solid #000",display:"grid",placeItems:"center"}}>VYRA</div>}
+          <label style={{display:"grid",gap:6}}>الصورة الشخصية<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploading} onChange={e=>{handleMediaUpload(e.target.files?.[0],"avatar");e.currentTarget.value="";}}/></label>
+        </div>
+        <div style={{display:"grid",gap:8}}>
+          {profile.cover_url && <img src={profile.cover_url} alt="صورة الغلاف" style={{width:"100%",maxHeight:150,objectFit:"cover",border:"1px solid #000",borderRadius:10}}/>}
+          <label style={{display:"grid",gap:6}}>صورة الغلاف<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploading} onChange={e=>{handleMediaUpload(e.target.files?.[0],"cover");e.currentTarget.value="";}}/></label>
+        </div>
+        {uploading && <p>جارٍ رفع الصورة...</p>}
+      </div> }
       {busy && !profile ? <p>جارٍ تحميل بيانات الحساب...</p> : <form onSubmit={submit} style={{display:"grid",gap:16,marginTop:24}}>
         <label style={{display:"grid",gap:7}}>اسم العرض<input required maxLength={80} value={displayName} onChange={e=>setDisplayName(e.target.value)} style={field}/></label>
         <label style={{display:"grid",gap:7}}>اسم المستخدم<input required minLength={3} maxLength={30} pattern="[A-Za-z0-9_.]+" value={username} onChange={e=>setUsername(e.target.value)} style={field}/></label>
