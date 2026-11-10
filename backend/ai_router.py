@@ -32,9 +32,8 @@ def _request(url: str, token: str, model: str, messages: list[dict], provider: s
         with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
             data = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        raw = exc.read(800).decode("utf-8", errors="replace")
-        # Do not expose provider responses or secrets to end users.
-        raise RuntimeError(f"{provider} returned HTTP {exc.code}: {raw[:180]}") from exc
+        # Keep upstream response bodies out of user-facing errors and logs.
+        raise RuntimeError(f"{provider} returned HTTP {exc.code}") from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"{provider} network error: {str(exc.reason)[:120]}") from exc
     choices = data.get("choices") or []
