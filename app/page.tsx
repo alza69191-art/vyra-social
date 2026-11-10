@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getPublicPosts, createPost, toggleReaction, getComments, createComment, uploadMedia, getPostMedia, toggleBookmark, type VyraComment } from "@/lib/vyra-api";
+import { getPublicPosts, createPost, toggleReaction, getComments, createComment, uploadMedia, getPostMedia, toggleBookmark, deletePost, type VyraComment } from "@/lib/vyra-api";
 import AuthGate from "@/components/auth-gate";
 import { Home, Compass, Clapperboard, Users, MessageCircle, Bell, Bookmark, Radio, Store, Gavel, UsersRound, Settings, Search, Plus, Image as ImageIcon, Video, Smile, MoreHorizontal, Heart, MessageSquare, Share2, Send, ChevronDown, Sparkles, PanelLeftClose, Menu, X, Check, TrendingUp, CircleHelp, WandSparkles, Hash } from "lucide-react";
 
@@ -62,12 +62,15 @@ function HomeFeed() {
     const body = draft.trim();
     const token = sessionStorage.getItem("vyra_access_token");
     if ((!body && selectedFiles.length === 0) || !token) return;
+    let createdPostId: string | null = null;
     try {
       const created = await createPost(token, body, "public");
+      createdPostId = created.id;
       const uploaded = await Promise.all(selectedFiles.map(file => uploadMedia(token, file, "post", created.id)));
       setPosts(current => [{ id: created.id, name: "أنت", handle: "@your.profile", avatar: "أ", time: "الآن", text: created.body || "", likes: 0, comments: 0, shares: 0, tag: "منشور جديد", liked: false, media: uploaded.map(item => ({ url: item.url, media_type: item.media_type })) }, ...current]);
       setDraft(""); setSelectedFiles([]); setNotice("تم نشر المنشور ورفع الوسائط"); setTimeout(() => setNotice(""), 2500);
     } catch (error) {
+      if (createdPostId) { try { await deletePost(token, createdPostId); } catch { /* Keep the original publish error visible. */ } }
       setNotice(error instanceof Error ? error.message : "تعذر نشر المنشور");
       setTimeout(() => setNotice(""), 3500);
     }
