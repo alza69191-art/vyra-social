@@ -49,6 +49,12 @@ def get_db():
 @app.on_event("startup")
 def initialize_schema():
     if engine is not None:
+        # Safe, idempotent migration for databases created before email verification.
+        # ALTER TABLE ... IF NOT EXISTS preserves all existing users and data.
+        with engine.begin() as connection:
+            connection.exec_driver_sql(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ"
+            )
         Base.metadata.create_all(bind=engine)
 
 
