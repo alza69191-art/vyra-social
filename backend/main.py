@@ -87,6 +87,16 @@ def health_database():
     return {"status": status, "database": result}
 
 
+def require_public_post(db: Session, post_id: str):
+    post = db.get(models.Post, post_id)
+    if post is None or post.visibility != "public":
+        raise HTTPException(status_code=404, detail="Post not found")
+    author = db.get(models.Profile, post.author_id)
+    if author is None or author.is_private:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return post
+
+
 @app.get("/api/me", response_model=ProfileOut)
 def get_my_profile(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     profile = db.get(models.Profile, claims["sub"])
@@ -172,8 +182,7 @@ def list_post_media(post_id: str, db: Session = Depends(get_db)):
 
 @app.get("/api/posts/{post_id}/comments", response_model=list[CommentOut])
 def list_comments(post_id: str, limit: int = Query(default=50, ge=1, le=100), db: Session = Depends(get_db)):
-    if db.get(models.Post, post_id) is None:
-        raise HTTPException(status_code=404, detail="Post not found")
+    require_public_post(db, post_id)
     return db.scalars(
         select(models.Comment).where(models.Comment.post_id == post_id)
         .order_by(models.Comment.created_at).limit(limit)
@@ -182,8 +191,7 @@ def list_comments(post_id: str, limit: int = Query(default=50, ge=1, le=100), db
 
 @app.post("/api/posts/{post_id}/comments", response_model=CommentOut, status_code=201)
 def create_comment(post_id: str, payload: CommentCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
-    if db.get(models.Post, post_id) is None:
-        raise HTTPException(status_code=404, detail="Post not found")
+    require_public_post(db, post_id)
     if db.get(models.Profile, claims["sub"]) is None:
         raise HTTPException(status_code=409, detail="Profile not found")
     comment = models.Comment(id=str(uuid4()), post_id=post_id, author_id=claims["sub"], body=payload.body)
