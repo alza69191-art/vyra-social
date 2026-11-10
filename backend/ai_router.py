@@ -8,8 +8,19 @@ TIMEOUT = 45
 def _post_json(url: str, headers: dict, payload: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers={**headers, "Content-Type": "application/json"}, method="POST")
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
-        return json.loads(response.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raw = exc.read(1200).decode("utf-8", errors="replace")
+        try:
+            parsed = json.loads(raw)
+            detail = parsed.get("error", {}).get("message") or parsed.get("message") or raw
+        except (ValueError, AttributeError):
+            detail = raw
+        raise RuntimeError(f"HTTP {exc.code}: {str(detail)[:300]}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Network error: {str(exc.reason)[:200]}") from exc
 
 def _openai_compatible(url: str, key: str, model: str, messages: list[dict]) -> str:
     result = _post_json(url, {"Authorization": f"Bearer {key}"}, {"model": model, "messages": messages, "temperature": 0.7})
@@ -17,7 +28,8 @@ def _openai_compatible(url: str, key: str, model: str, messages: list[dict]) -> 
 
 def _google(key: str, model: str, prompt: str) -> str:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-    result = _post_json(url, {}, {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"temperature": 0.7}})
+    # Gemini 3.8 Flash does not accept legacy sampling parameters such as temperature.
+    result = _post_json(url, {}, {"contents": [{"parts": [{"text": prompt}]}]})
     return result["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 def generate_reply(prompt: str, history: list[dict] | None = None) -> dict:
@@ -33,18 +45,18 @@ def generate_reply(prompt: str, history: list[dict] | None = None) -> dict:
     groq_key = os.getenv("GROQ_API_KEY")
     if groq_key:
         try:
-            answer = _openai_compatible("https://api.groq.com/openai/v1/chat/completions", groq_key, os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"), messages)
+            answer = _openai_compatible("https://api.groq.com/openai/v1/chat/completions", groq_key, os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"), messages)
             if answer: return {"reply": answer, "provider": "groq"}
         except Exception as exc:
-            failures.append(f"groq: {type(exc).__name__}")
+            failures.append(f"groq: {str(exc)[:300]}")
 
     google_key = os.getenv("GOOGLE_API_KEY")
     if google_key:
         try:
-            answer = _google(google_key, os.getenv("GOOGLE_AI_MODEL", "gemini-2.5-flash"), "\n\n".join(f"{m['role']}: {m['content']}" for m in messages))
+            answer = _google(google_key, os.getenv("GOOGLE_AI_MODEL", "gemini-3.8-flash"), "\n\n".join(f"{m['role']}: {m['content']}" for m in messages))
             if answer: return {"reply": answer, "provider": "google"}
         except Exception as exc:
-            failures.append(f"google: {type(exc).__name__}")
+            failures.append(f"google: {str(exc)[:300]}")
 
     hf_configured = False
     for index in range(1, 5):
@@ -57,7 +69,7 @@ def generate_reply(prompt: str, history: list[dict] | None = None) -> dict:
             answer = _openai_compatible("https://router.huggingface.co/v1/chat/completions", hf_key, model, messages)
             if answer: return {"reply": answer, "provider": f"huggingface:{model}"}
         except Exception as exc:
-            failures.append(f"hf{index}: {type(exc).__name__}")
+            failures.append(f"hf{index}: {str(exc)[:300]}")
 
     if not (groq_key or google_key or hf_configured):
         raise RuntimeError("لم تتم إضافة أي مفاتيح لمزودي الذكاء الاصطناعي في إعدادات الخادم.")
