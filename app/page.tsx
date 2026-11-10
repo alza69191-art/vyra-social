@@ -39,13 +39,13 @@ function HomeFeed() {
       if (!activeRequest) return;
       setPosts(enriched.map(({ row, media }) => ({
         id: row.id,
-        name: "عضو VYRA",
-        handle: "@member",
-        avatar: "V",
+        name: row.author_name || "عضو VYRA",
+        handle: "@" + (row.author_username || "member"),
+        avatar: row.avatar_url || "V",
         time: new Date(row.created_at).toLocaleString("ar"),
         text: row.body || "",
-        likes: 0,
-        comments: 0,
+        likes: row.likes_count || 0,
+        comments: row.comments_count || 0,
         shares: 0,
         tag: "منشور",
         liked: false,
