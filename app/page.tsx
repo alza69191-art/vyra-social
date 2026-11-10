@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getPublicPosts, createPost, toggleReaction, getComments, createComment, uploadMedia, getPostMedia, type VyraComment } from "@/lib/vyra-api";
+import { getPublicPosts, createPost, toggleReaction, getComments, createComment, uploadMedia, getPostMedia, toggleBookmark, type VyraComment } from "@/lib/vyra-api";
 import AuthGate from "@/components/auth-gate";
 import { Home, Compass, Clapperboard, Users, MessageCircle, Bell, Bookmark, Radio, Store, Gavel, UsersRound, Settings, Search, Plus, Image as ImageIcon, Video, Smile, MoreHorizontal, Heart, MessageSquare, Share2, Send, ChevronDown, Sparkles, PanelLeftClose, Menu, X, Check, TrendingUp, CircleHelp, WandSparkles, Hash } from "lucide-react";
 
@@ -10,8 +10,8 @@ const navigation = [
   { label: "استكشف", icon: Compass },
   { label: "VYRA Pulse", icon: Clapperboard, tag: "جديد" },
   { label: "الأصدقاء", icon: Users },
-  { label: "الرسائل", icon: MessageCircle, count: "3" },
-  { label: "الإشعارات", icon: Bell, count: "5" },
+  { label: "الرسائل", icon: MessageCircle, count: undefined },
+  { label: "الإشعارات", icon: Bell, count: undefined },
   { label: "القنوات", icon: Radio },
   { label: "المجتمعات", icon: UsersRound },
   { label: "الصفحات", icon: Compass },
@@ -96,6 +96,17 @@ function HomeFeed() {
     try { const item = await createComment(token, commentPost, commentDraft.trim()); setComments(current => [...current, item]); setCommentDraft(""); }
     catch (error) { setNotice(error instanceof Error ? error.message : "تعذر إضافة التعليق"); }
   }
+
+  async function savePost(id: string | number) {
+    const token = sessionStorage.getItem("vyra_access_token");
+    if (!token) return;
+    try {
+      const result = await toggleBookmark(token, String(id));
+      setNotice(result.saved ? "تم حفظ المنشور في المحفوظات." : "تمت إزالة المنشور من المحفوظات.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "تعذر حفظ المنشور.");
+    }
+  }
   async function toggleLike(id: string | number) {
     const token = sessionStorage.getItem("vyra_access_token");
     if (!token) return;
@@ -114,9 +125,9 @@ function HomeFeed() {
     </header>
     <aside className={mobileOpen ? "sidebar sidebar-open" : "sidebar"}>
       <div className="brand-row"><Brand/><button className="collapse-button" onClick={() => setFocus(!focus)} title="وضع التركيز"><PanelLeftClose size={18}/></button></div>
-      <button className="profile-switch" onClick={() => { window.location.href="/account"; }}><span className="avatar avatar-dark">أ</span><span className="profile-meta"><b>حسابك الشخصي</b><small>@your.profile</small></span><ChevronDown size={16}/></button>
+      <button className="profile-switch" onClick={() => { window.location.href="/account"; }}><span className="avatar avatar-dark">V</span><span className="profile-meta"><b>حسابك الشخصي</b><small>ملفك على VYRA</small></span><ChevronDown size={16}/></button>
       <div className="nav-caption">مساحتك</div>
-      <nav className="main-nav">{navigation.map(item => { const Icon = item.icon; return <button key={item.label} className={active === item.label ? "nav-item active" : "nav-item"} onClick={() => {if(item.label === "الذكاء الاصطناعي"){window.location.href="/ai";return;}if(item.label === "المجتمعات"){window.location.href="/groups";return;}if(item.label === "الصفحات"){window.location.href="/pages";return;}setActive(item.label);setMobileOpen(false);}}><Icon size={19}/><span>{item.label}</span>{item.tag && <em>{item.tag}</em>}{item.count && <small className="nav-count">{item.count}</small>}</button>; })}</nav>
+      <nav className="main-nav">{navigation.map(item => { const Icon = item.icon; return <button key={item.label} className={active === item.label ? "nav-item active" : "nav-item"} onClick={() => {if(item.label === "الذكاء الاصطناعي"){window.location.href="/ai";return;}if(item.label === "المجتمعات"){window.location.href="/groups";return;}if(item.label === "الصفحات"){window.location.href="/pages";return;}if(item.label === "المحفوظات"){window.location.href="/saved";return;}setActive(item.label);setMobileOpen(false);}}><Icon size={19}/><span>{item.label}</span>{item.tag && <em>{item.tag}</em>}{item.count && <small className="nav-count">{item.count}</small>}</button>; })}</nav>
       <div className="nav-caption secondary-caption">إدارة وتخصيص</div>
       <nav className="main-nav"><button className="nav-item" onClick={() => setActive("الإعدادات")}><Settings size={19}/><span>الإعدادات</span></button><button className="nav-item" onClick={() => setActive("مركز المساعدة")}><CircleHelp size={19}/><span>مركز المساعدة</span></button></nav>
       <div className="sidebar-bottom"><div className="online-dot"/><span>مساحتك جاهزة للإبداع</span></div>
@@ -128,20 +139,20 @@ function HomeFeed() {
       <div className="content-wrap">
         <div className="welcome-row"><div><div className="eyebrow"><Sparkles size={14}/> مساحتك الاجتماعية</div><h1>مرحباً بعودتك<span>.</span></h1><p>اكتشف الجديد، وشارك لحظاتك مع مجتمعك.</p></div><button className="black-button" onClick={() => document.getElementById("composer")?.scrollIntoView({behavior:"smooth"})}><Plus size={18}/> إنشاء منشور</button></div>
         <div className="content-grid"><div className="feed-column">
-          <section className="stories-panel"><div className="section-heading"><div><h2>اللحظات</h2><p>حكايات قصيرة من مجتمعك</p></div><button className="text-button" onClick={() => setActive("القصص")}>عرض الكل <span>←</span></button></div>
-            <div className="stories-row">{stories.map(s=><button className="story" key={s.name} onClick={()=>setNotice(s.own?"إضافة قصة ستتوفر قريباً":"عرض القصة قريباً")}><span className={s.own?"story-ring own-story":"story-ring"}><span className={s.own?"story-avatar own-avatar":"story-avatar "+s.tone}>{s.initials}</span></span><small>{s.name}</small></button>)}</div>
+          <section className="stories-panel"><div className="section-heading"><div><h2>اللحظات</h2><p>حكايات قصيرة من مجتمعك</p></div></div>
+            <div className="stories-row">{stories.map(s=><button className="story" key={s.name} onClick={()=>setNotice("ميزة القصص غير متاحة بعد، ولن نعرض محتوى تجريبياً.")}><span className={s.own?"story-ring own-story":"story-ring"}><span className={s.own?"story-avatar own-avatar":"story-avatar "+s.tone}>{s.initials}</span></span><small>{s.name}</small></button>)}</div>
           </section>
           <section className="composer-card" id="composer"><div className="composer-top"><span className="avatar avatar-dark">أ</span><button className="composer-input" onClick={()=>document.getElementById("post-input")?.focus()}>بماذا تفكر اليوم؟</button><button className="icon-button" aria-label="خيارات"><MoreHorizontal/></button></div>
             <textarea id="post-input" value={draft} onChange={e=>setDraft(e.target.value)} placeholder="اكتب شيئاً يستحق المشاركة..." rows={draft ? 3 : 1}/>{selectedFiles.length>0 && <div style={{display:"flex",gap:8,flexWrap:"wrap",padding:"8px 0"}}>{selectedFiles.map((file,index)=><span key={index} style={{border:"1px solid #000",padding:"5px 9px",borderRadius:8,fontSize:12}}>{file.name}<button type="button" onClick={()=>setSelectedFiles(items=>items.filter((_,i)=>i!==index))} style={{marginInlineStart:8}}>×</button></span>)}</div>}<input ref={mediaInput} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple hidden onChange={e=>{const next=Array.from(e.target.files||[]);setSelectedFiles(current=>[...current,...next].slice(0,5));e.currentTarget.value="";}}/>
             <div className="composer-footer"><div className="composer-tools"><button type="button" onClick={()=>mediaInput.current?.click()}><ImageIcon size={18}/> صورة / فيديو</button><button onClick={()=>setNotice("الاستطلاعات ستتوفر قريباً")}><TrendingUp size={18}/> استطلاع</button><button className="emoji-tool" onClick={()=>setDraft(draft+" ✨")}><Smile size={18}/></button></div><button className="publish-button" disabled={!draft.trim()} onClick={publish}>نشر <Send size={15}/></button></div>
           </section>
           <div className="feed-heading"><div><h2>آخر المنشورات</h2><span>من مجتمعك</span></div><button className="sort-button">الأحدث أولاً <ChevronDown size={15}/></button></div>
-          {filteredPosts.map(post=><article className="post-card" key={post.id}><div className="post-header"><span className="avatar avatar-soft">{post.avatar}</span><div className="post-author"><b>{post.name}</b><small>{post.handle} · {post.time}</small></div><button className="icon-button more-button" aria-label="المزيد"><MoreHorizontal/></button></div><p className="post-text">{post.text}</p>{post.media?.length ? <div style={{display:"grid",gap:8,margin:"12px 0"}}>{post.media.map((item,index)=>item.media_type==="video" ? <video key={index} src={item.url} controls playsInline style={{width:"100%",maxHeight:420,borderRadius:12}}/> : <img key={index} src={item.url} alt="وسائط المنشور" loading="lazy" style={{width:"100%",maxHeight:480,objectFit:"contain",borderRadius:12}}/>)}</div> : null}<div className="post-tag"><Hash size={13}/>{post.tag}</div><div className="post-stats"><span>{post.likes} إعجاب</span><span>{post.comments} تعليق · {post.shares} مشاركة</span></div><div className="post-actions"><button className={post.liked?"liked":""} onClick={()=>toggleLike(post.id)}><Heart size={18} fill={post.liked?"currentColor":"none"}/> إعجاب</button><button onClick={()=>openComments(post.id)}><MessageSquare size={18}/> تعليق</button><button onClick={()=>setNotice("المشاركة ستتوفر قريباً")}><Share2 size={18}/> مشاركة</button></div></article>)}
+          {filteredPosts.map(post=><article className="post-card" key={post.id}><div className="post-header"><span className="avatar avatar-soft">{post.avatar}</span><div className="post-author"><b>{post.name}</b><small>{post.handle} · {post.time}</small></div><button className="icon-button more-button" aria-label="حفظ المنشور" title="حفظ المنشور" onClick={()=>savePost(post.id)}><Bookmark/></button></div><p className="post-text">{post.text}</p>{post.media?.length ? <div style={{display:"grid",gap:8,margin:"12px 0"}}>{post.media.map((item,index)=>item.media_type==="video" ? <video key={index} src={item.url} controls playsInline style={{width:"100%",maxHeight:420,borderRadius:12}}/> : <img key={index} src={item.url} alt="وسائط المنشور" loading="lazy" style={{width:"100%",maxHeight:480,objectFit:"contain",borderRadius:12}}/>)}</div> : null}<div className="post-tag"><Hash size={13}/>{post.tag}</div><div className="post-stats"><span>{post.likes} إعجاب</span><span>{post.comments} تعليق · {post.shares} مشاركة</span></div><div className="post-actions"><button className={post.liked?"liked":""} onClick={()=>toggleLike(post.id)}><Heart size={18} fill={post.liked?"currentColor":"none"}/> إعجاب</button><button onClick={()=>openComments(post.id)}><MessageSquare size={18}/> تعليق</button><button onClick={()=>setNotice("المشاركة غير مفعّلة حالياً.")}><Share2 size={18}/> مشاركة</button></div></article>)}
           {filteredPosts.length===0 && <div className="empty-state">لا توجد منشورات تطابق بحثك.</div>}
         </div>
         <aside className="right-column">
-          <section className="side-card profile-card"><div className="side-card-title"><h3>ملفك الشخصي</h3><button className="subtle-link" onClick={()=>{window.location.href="/account";}}>عرض</button></div><div className="profile-summary"><span className="avatar avatar-dark large-avatar">أ</span><div><b>مرحباً بك في VYRA</b><small>أكمل ملفك الشخصي</small></div></div><div className="progress-label"><span>اكتمال الملف</span><b>40%</b></div><div className="progress-track"><span/></div><button className="outline-button" onClick={()=>{window.location.href="/account";}}>إكمال الملف الشخصي</button></section>
-          <section className="side-card pulse-card"><div className="side-card-title"><h3><TrendingUp size={17}/> رائج الآن</h3><span className="live-label">مباشر</span></div>{[["#تصميم_المستقبل","2.4 ألف منشور"],["#صناع_المحتوى","1.8 ألف منشور"],["#تقنية","960 منشور"]].map(([tag,count])=><button className="trend-row" key={tag} onClick={()=>setQuery(tag.replace("#",""))}><span><b>{tag}</b><small>{count}</small></span><MoreHorizontal size={17}/></button>)}</section>
+          <section className="side-card profile-card"><div className="side-card-title"><h3>ملفك الشخصي</h3><button className="subtle-link" onClick={()=>{window.location.href="/account";}}>عرض</button></div><div className="profile-summary"><span className="avatar avatar-dark large-avatar">أ</span><div><b>مرحباً بك في VYRA</b><small>أكمل ملفك الشخصي</small></div></div><div className="progress-label"><span>حالة الملف الشخصي</span><b>قيد الإكمال</b></div><div className="progress-track"><span/></div><button className="outline-button" onClick={()=>{window.location.href="/account";}}>إكمال الملف الشخصي</button></section>
+          <section className="side-card pulse-card"><div className="side-card-title"><h3><TrendingUp size={17}/> رائج الآن</h3><span className="live-label">مباشر</span></div>{[["#تصميم_المستقبل","موضوع شائع"],["#صناع_المحتوى","موضوع شائع"],["#تقنية","موضوع شائع"]].map(([tag,count])=><button className="trend-row" key={tag} onClick={()=>setQuery(tag.replace("#",""))}><span><b>{tag}</b><small>{count}</small></span><MoreHorizontal size={17}/></button>)}</section>
           <section className="side-card quick-card"><div className="side-card-title"><h3>مساحات سريعة</h3><WandSparkles size={17}/></div><button onClick={()=>setActive("إنشاء قناة")}><span className="quick-icon"><Radio size={17}/></span><span><b>أنشئ قناتك</b><small>شارك فيديوهاتك وأفكارك</small></span><Plus size={17}/></button><button onClick={()=>setActive("إنشاء مجتمع")}><span className="quick-icon"><UsersRound size={17}/></span><span><b>ابدأ مجتمعاً</b><small>اجمع الأشخاص حول اهتمام</small></span><Plus size={17}/></button><button onClick={()=>setActive("إنشاء صفحة")}><span className="quick-icon"><Sparkles size={17}/></span><span><b>أنشئ صفحة</b><small>ابنِ حضورك العام</small></span><Plus size={17}/></button></section>
           <div className="footer-links"><span>حول VYRA</span><span>الخصوصية</span><span>الشروط</span><span>المساعدة</span><small>© 2026 VYRA</small></div>
         </aside></div>
