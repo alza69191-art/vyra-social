@@ -32,7 +32,7 @@ export default function HomePage() { return <AuthGate><HomeFeed /></AuthGate>; }
 
 function HomeFeed() {
   const [active, setActive] = useState("الرئيسية");
-  const [posts, setPosts] = useState<Array<{ id: string | number; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean }>>(initialPosts);
+  const [posts, setPosts] = useState<Array<{ id: string | number; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean; media?: Array<{ url: string; media_type: string }> }>>(initialPosts);
   const [draft, setDraft] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const mediaInput = useRef<HTMLInputElement>(null);
