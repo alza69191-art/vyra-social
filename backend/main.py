@@ -266,6 +266,38 @@ def follow_page(page_id: str, claims: dict = Depends(current_user), db: Session 
     return {"following": True}
 
 
+@app.get("/api/bookmarks", response_model=list[PostOut])
+def list_bookmarks(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    return db.scalars(
+        select(models.Post)
+        .join(models.PostBookmark, models.PostBookmark.post_id == models.Post.id)
+        .where(models.PostBookmark.user_id == claims["sub"])
+        .order_by(desc(models.PostBookmark.created_at))
+        .limit(100)
+    ).all()
+
+
+@app.put("/api/posts/{post_id}/bookmark")
+def toggle_bookmark(post_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    if db.get(models.Post, post_id) is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    existing = db.scalar(select(models.PostBookmark).where(
+        models.PostBookmark.post_id == post_id,
+        models.PostBookmark.user_id == claims["sub"]
+    ))
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"saved": False}
+    db.add(models.PostBookmark(id=str(uuid4()), post_id=post_id, user_id=claims["sub"]))
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        return {"saved": True}
+    return {"saved": True}
+
+
 class AIMessage(BaseModel):
     prompt: str = Field(min_length=1, max_length=12000)
     history: list[dict] = Field(default_factory=list, max_length=12)
