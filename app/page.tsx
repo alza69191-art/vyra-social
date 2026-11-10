@@ -51,8 +51,9 @@ function HomeFeed() {
         liked: false,
         media,
       })));
-    }).catch(() => {
+    }).catch((error) => {
       setPosts([]);
+      setNotice(error instanceof Error ? error.message : "تعذر تحميل المنشورات.");
     });
     return () => { activeRequest = false; };
   }, []);
@@ -78,7 +79,7 @@ function HomeFeed() {
   async function sendComment() {
     const token = sessionStorage.getItem("vyra_access_token");
     if (!token || !commentPost || !commentDraft.trim()) return;
-    try { const item = await createComment(token, commentPost, commentDraft.trim()); setComments(current => [...current, item]); setCommentDraft(""); }
+    try { const item = await createComment(token, commentPost, commentDraft.trim()); setComments(current => [...current, item]); setPosts(current => current.map(post => String(post.id) === commentPost ? { ...post, comments: post.comments + 1 } : post)); setCommentDraft(""); }
     catch (error) { setNotice(error instanceof Error ? error.message : "تعذر إضافة التعليق"); }
   }
 
@@ -132,7 +133,7 @@ function HomeFeed() {
             <div className="composer-footer"><div className="composer-tools"><button type="button" onClick={()=>mediaInput.current?.click()}><ImageIcon size={18}/> صورة / فيديو</button><button onClick={()=>setNotice("الاستطلاعات ستتوفر قريباً")}><TrendingUp size={18}/> استطلاع</button><button className="emoji-tool" onClick={()=>setDraft(draft+" ✨")}><Smile size={18}/></button></div><button className="publish-button" disabled={!draft.trim() && selectedFiles.length === 0} onClick={publish}>نشر <Send size={15}/></button></div>
           </section>
           <div className="feed-heading"><div><h2>آخر المنشورات</h2><span>من مجتمعك</span></div><button className="sort-button">الأحدث أولاً <ChevronDown size={15}/></button></div>
-          {filteredPosts.map(post=><article className="post-card" key={post.id}><div className="post-header"><span className="avatar avatar-soft">{post.avatar}</span><div className="post-author"><b>{post.name}</b><small>{post.handle} · {post.time}</small></div><button className="icon-button more-button" aria-label="حفظ المنشور" title="حفظ المنشور" onClick={()=>savePost(post.id)}><Bookmark/></button></div><p className="post-text">{post.text}</p>{post.media?.length ? <div style={{display:"grid",gap:8,margin:"12px 0"}}>{post.media.map((item,index)=>item.media_type==="video" ? <video key={index} src={item.url} controls playsInline style={{width:"100%",maxHeight:420,borderRadius:12}}/> : <img key={index} src={item.url} alt="وسائط المنشور" loading="lazy" style={{width:"100%",maxHeight:480,objectFit:"contain",borderRadius:12}}/>)}</div> : null}<div className="post-tag"><Hash size={13}/>{post.tag}</div><div className="post-stats"><span>{post.likes} إعجاب</span><span>{post.comments} تعليق · {post.shares} مشاركة</span></div><div className="post-actions"><button className={post.liked?"liked":""} onClick={()=>toggleLike(post.id)}><Heart size={18} fill={post.liked?"currentColor":"none"}/> إعجاب</button><button onClick={()=>openComments(post.id)}><MessageSquare size={18}/> تعليق</button></div></article>)}
+          {filteredPosts.map(post=><article className="post-card" key={post.id}><div className="post-header">{post.avatar.startsWith("http") ? <img className="avatar avatar-soft" src={post.avatar} alt="" style={{objectFit:"cover"}}/> : <span className="avatar avatar-soft">{post.avatar}</span>}<div className="post-author"><b>{post.name}</b><small>{post.handle} · {post.time}</small></div><button className="icon-button more-button" aria-label="حفظ المنشور" title="حفظ المنشور" onClick={()=>savePost(post.id)}><Bookmark/></button></div><p className="post-text">{post.text}</p>{post.media?.length ? <div style={{display:"grid",gap:8,margin:"12px 0"}}>{post.media.map((item,index)=>item.media_type==="video" ? <video key={index} src={item.url} controls playsInline style={{width:"100%",maxHeight:420,borderRadius:12}}/> : <img key={index} src={item.url} alt="وسائط المنشور" loading="lazy" style={{width:"100%",maxHeight:480,objectFit:"contain",borderRadius:12}}/>)}</div> : null}<div className="post-tag"><Hash size={13}/>{post.tag}</div><div className="post-stats"><span>{post.likes} إعجاب</span><span>{post.comments} تعليق · {post.shares} مشاركة</span></div><div className="post-actions"><button className={post.liked?"liked":""} onClick={()=>toggleLike(post.id)}><Heart size={18} fill={post.liked?"currentColor":"none"}/> إعجاب</button><button onClick={()=>openComments(post.id)}><MessageSquare size={18}/> تعليق</button></div></article>)}
           {filteredPosts.length===0 && <div className="empty-state">لا توجد منشورات تطابق بحثك.</div>}
         </div>
         <aside className="right-column">
