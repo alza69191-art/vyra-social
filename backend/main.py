@@ -55,6 +55,9 @@ def initialize_schema():
             connection.exec_driver_sql(
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ"
             )
+            connection.exec_driver_sql(
+                "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS cover_url TEXT"
+            )
         Base.metadata.create_all(bind=engine)
 
 
