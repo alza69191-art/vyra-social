@@ -33,3 +33,27 @@ export function createComment(accessToken: string, postId: string, body: string)
 export function toggleReaction(accessToken: string, postId: string) {
   return request<{ reacted: boolean }>(`/api/posts/${encodeURIComponent(postId)}/reaction`, { method: "PUT" }, accessToken);
 }
+
+export type VyraComment = {
+  id: string;
+  post_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+};
+
+export type VyraProfile = {
+  id: string;
+  username: string;
+  display_name: string;
+  bio: string | null;
+  avatar_url: string | null;
+  is_private: boolean;
+};
+
+export function getMyProfile(accessToken: string): Promise<VyraProfile> {
+  return request<VyraProfile>("/api/me", {}, accessToken);
+}
+export function getComments(postId: string): Promise<VyraComment[]> {
+  return request<VyraComment[]>(`/api/posts/${encodeURIComponent(postId)}/comments`);
+}
