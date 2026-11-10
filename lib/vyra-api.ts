@@ -78,3 +78,10 @@ export async function uploadMedia(accessToken: string, file: File, purpose: "ava
 export function getPostMedia(postId: string): Promise<Array<{ url: string; media_type: "image" | "video" }>> {
   return request<Array<{ url: string; media_type: "image" | "video" }>>(`/api/posts/${encodeURIComponent(postId)}/media`);
 }
+
+export function toggleBookmark(accessToken: string, postId: string): Promise<{ saved: boolean }> {
+  return request<{ saved: boolean }>(`/api/posts/${encodeURIComponent(postId)}/bookmark`, { method: "PUT" }, accessToken);
+}
+export function getSavedPosts(accessToken: string): Promise<VyraPost[]> {
+  return request<VyraPost[]>("/api/bookmarks", {}, accessToken);
+}
