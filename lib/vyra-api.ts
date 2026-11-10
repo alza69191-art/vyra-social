@@ -48,6 +48,7 @@ export type VyraProfile = {
   display_name: string;
   bio: string | null;
   avatar_url: string | null;
+  cover_url?: string | null;
   is_private: boolean;
 };
 
@@ -56,4 +57,20 @@ export function getMyProfile(accessToken: string): Promise<VyraProfile> {
 }
 export function getComments(postId: string): Promise<VyraComment[]> {
   return request<VyraComment[]>(`/api/posts/${encodeURIComponent(postId)}/comments`);
+}
+
+export async function uploadMedia(accessToken: string, file: File, purpose: "avatar" | "cover" | "post" = "post", postId?: string) {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("purpose", purpose);
+  if (postId) form.append("post_id", postId);
+  const response = await fetch(`${API_BASE}/api/uploads`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: form,
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(typeof payload.detail === "string" ? payload.detail : "تعذر رفع الملف.");
+  return payload as { url: string; media_type: "image" | "video"; purpose: string; post_id: string | null };
 }
