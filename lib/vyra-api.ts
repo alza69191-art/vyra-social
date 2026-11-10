@@ -27,8 +27,8 @@ export function saveProfile(accessToken: string, profile: { username: string; di
 export function createPost(accessToken: string, body: string, visibility: "public" | "followers" | "private" = "public") {
   return request<VyraPost>("/api/posts", { method: "POST", body: JSON.stringify({ body, visibility }) }, accessToken);
 }
-export function createComment(accessToken: string, postId: string, body: string) {
-  return request(`/api/posts/${encodeURIComponent(postId)}/comments`, { method: "POST", body: JSON.stringify({ body }) }, accessToken);
+export function createComment(accessToken: string, postId: string, body: string): Promise<VyraComment> {
+  return request<VyraComment>(`/api/posts/${encodeURIComponent(postId)}/comments`, { method: "POST", body: JSON.stringify({ body }) }, accessToken);
 }
 export function toggleReaction(accessToken: string, postId: string) {
   return request<{ reacted: boolean }>(`/api/posts/${encodeURIComponent(postId)}/reaction`, { method: "PUT" }, accessToken);
