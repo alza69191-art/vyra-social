@@ -17,6 +17,7 @@ const button = { padding: "11px 16px", background: "#111", color: "#fff", border
 export default function MarketPage() { return <AuthGate><Market /></AuthGate>; }
 function Market() {
   const [items, setItems] = useState<Listing[]>([]);
+  const [myUserId, setMyUserId] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
@@ -27,7 +28,12 @@ function Market() {
     if (!response.ok) throw new Error("تعذر تحميل السوق حالياً");
     setItems(await response.json());
   }
-  useEffect(() => { load().catch(error => setNotice(error.message)); }, []);
+  useEffect(() => {
+    load().catch(error => setNotice(error.message));
+    const token = sessionStorage.getItem("vyra_access_token");
+    if (token) fetch(API + "/api/me", { headers: { Authorization: "Bearer " + token }, cache: "no-store" })
+      .then(response => response.ok ? response.json() : null).then(profile => { if (profile?.id) setMyUserId(profile.id); }).catch(() => undefined);
+  }, []);
   const categories = ["الكل", ...Array.from(new Set(items.map(item => item.category)))];
   const visible = categoryFilter === "الكل" ? items : items.filter(item => item.category === categoryFilter);
   async function createListing(event: FormEvent) {
@@ -85,7 +91,7 @@ function Market() {
           <h3 style={{ margin: "14px 0 8px" }}>{item.title}</h3><p style={{ color: "#666", lineHeight: 1.7, whiteSpace: "pre-wrap", flex: 1 }}>{item.description}</p>
           <strong style={{ fontSize: 22 }}>{item.price.toLocaleString("en-US")} {item.currency}</strong>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 12, color: "#777", fontSize: 12 }}><span>{item.seller_name}</span><span>{item.location ? <><MapPin size={12} style={{ verticalAlign: "middle" }}/> {item.location}</> : "VYRA"}</span></div>
-          {item.owner_id === (typeof window !== "undefined" ? sessionStorage.getItem("vyra_user_id") : null) && <button onClick={() => markSold(item.id)} style={{ ...button, marginTop: 12 }}>تم البيع</button>}
+          {item.owner_id === myUserId && <button onClick={() => markSold(item.id)} style={{ ...button, marginTop: 12 }}>تم البيع</button>}
         </article>)}</div>}
       {notice && <p role="status" style={{ position: "fixed", bottom: 20, right: 20, background: "#111", color: "#fff", padding: "12px 18px", borderRadius: 10 }}>{notice}<button onClick={() => setNotice("")} style={{ color: "#fff", marginRight: 12 }}>×</button></p>}
     </section>
