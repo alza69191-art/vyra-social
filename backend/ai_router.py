@@ -3,17 +3,15 @@ import os
 import urllib.error
 import urllib.request
 
-TIMEOUT = 60
+TIMEOUT = 90
 HF_CHAT_URL = "https://router.huggingface.co/v1/chat/completions"
-DEFAULT_MODEL = "openai/gpt-oss-120b:fastest"
+
+ASSISTANT_DEFAULT_MODEL = "zai-org/GLM-5.3:fastest"
+AGENT_DEFAULT_MODEL = "openai/gpt-oss-120b:fastest"
 
 
 def _huggingface_chat(token: str, model: str, messages: list[dict]) -> str:
-    payload = {
-        "model": model,
-        "messages": messages,
-        "temperature": 0.7,
-    }
+    payload = {"model": model, "messages": messages, "temperature": 0.6}
     request = urllib.request.Request(
         HF_CHAT_URL,
         data=json.dumps(payload).encode("utf-8"),
@@ -30,12 +28,14 @@ def _huggingface_chat(token: str, model: str, messages: list[dict]) -> str:
         raw = exc.read(1200).decode("utf-8", errors="replace")
         try:
             parsed = json.loads(raw)
-            detail = parsed.get("error", {}).get("message") or parsed.get("error") or parsed.get("message") or raw
+            error = parsed.get("error")
+            detail = error.get("message") if isinstance(error, dict) else error
+            detail = detail or parsed.get("message") or raw
         except (ValueError, AttributeError):
             detail = raw
-        raise RuntimeError(f"HTTP {exc.code}: {str(detail)[:300]}") from exc
+        raise RuntimeError(f"Hugging Face HTTP {exc.code}: {str(detail)[:300]}") from exc
     except urllib.error.URLError as exc:
-        raise RuntimeError(f"Network error: {str(exc.reason)[:200]}") from exc
+        raise RuntimeError(f"Hugging Face network error: {str(exc.reason)[:200]}") from exc
 
     choices = result.get("choices") or []
     if not choices:
@@ -51,49 +51,56 @@ def _huggingface_chat(token: str, model: str, messages: list[dict]) -> str:
     return answer.strip()
 
 
-def generate_reply(prompt: str, history: list[dict] | None = None) -> dict:
-    messages = [{
-        "role": "system",
-        "content": "أنت مساعد VYRA الذكي. أجب بدقة وباللغة التي يستخدمها المستخدم، وصرّح بوضوح عندما لا تعرف."
-    }]
+def _build_messages(system_prompt: str, prompt: str, history: list[dict] | None) -> list[dict]:
+    messages = [{"role": "system", "content": system_prompt}]
     for item in (history or [])[-12:]:
+        if not isinstance(item, dict):
+            continue
         role = item.get("role")
         content = item.get("content")
         if role in ("user", "assistant") and isinstance(content, str):
             messages.append({"role": role, "content": content[:6000]})
-    messages.append({"role": "user", "content": prompt})
+    messages.append({"role": "user", "content": prompt[:12000]})
+    return messages
 
-    failures = []
-    configured = []
-    for index in range(1, 5):
-        token = (
-            os.getenv(f"HF_TOKEN_{index}")
-            or os.getenv(f"HUGGINGFACE_API_TOKEN_{index}")
-            or os.getenv(f"HF_API_KEY_{index}")
-        )
-        if token and token not in [entry[1] for entry in configured]:
-            model = os.getenv(f"HF_MODEL_{index}") or DEFAULT_MODEL
-            configured.append((index, token, model))
 
-    # Backward-compatible single-token names.
-    if not configured:
-        token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_API_TOKEN") or os.getenv("HUGGINGFACE_API_KEY")
-        if token:
-            configured.append((1, token, os.getenv("HF_MODEL_1") or DEFAULT_MODEL))
-
-    if not configured:
+def _run_role(token_name: str, model_name: str, default_model: str,
+              system_prompt: str, prompt: str, history: list[dict] | None,
+              role_label: str) -> dict:
+    token = os.getenv(token_name, "").strip()
+    if not token:
         raise RuntimeError(
-            "لم يتم العثور على مفاتيح Hugging Face. أضف HF_TOKEN_1 إلى HF_TOKEN_4 في إعدادات Render."
+            f"مفتاح {role_label} غير مضبوط. أضف المتغير {token_name} في Render."
         )
+    model = os.getenv(model_name, default_model).strip() or default_model
+    messages = _build_messages(system_prompt, prompt, history)
+    answer = _huggingface_chat(token, model, messages)
+    return {"reply": answer, "provider": f"huggingface:{model}", "role": role_label}
 
-    for index, token, model in configured:
-        try:
-            answer = _huggingface_chat(token, model, messages)
-            return {"reply": answer, "provider": f"huggingface:{model}", "key_slot": index}
-        except Exception as exc:
-            failures.append(f"HF key {index} ({model}): {str(exc)[:300]}")
 
-    raise RuntimeError(
-        "تعذر الوصول إلى Hugging Face باستخدام المفاتيح الأربعة. "
-        + " | ".join(failures)
+def generate_reply(prompt: str, history: list[dict] | None = None) -> dict:
+    return _run_role(
+        "HF_ASSISTANT_TOKEN",
+        "HF_ASSISTANT_MODEL",
+        ASSISTANT_DEFAULT_MODEL,
+        "أنت مساعد VYRA الذكي. مهمتك الإجابة عن الأسئلة وشرح المعلومات وتقديم اقتراحات واضحة. "
+        "لا تدّع تنفيذ أي إجراء داخل المنصة. أجب بلغة المستخدم وباختصار ودقة، واذكر حدود معرفتك.",
+        prompt,
+        history,
+        "assistant",
+    )
+
+
+def generate_agent_reply(prompt: str, history: list[dict] | None = None) -> dict:
+    return _run_role(
+        "HF_AGENT_TOKEN",
+        "HF_AGENT_MODEL",
+        AGENT_DEFAULT_MODEL,
+        "أنت وكيل VYRA الذكي. حلّل هدف المستخدم، قسّم العمل إلى خطوات عملية مرتبة، "
+        "حدّد المتطلبات والمخاطر، واقترح الإجراء التالي بوضوح. لا تدّع أنك نفذت تغييرات "
+        "أو اتصلت بخدمات أو استخدمت أدوات غير متاحة لك. اطلب تأكيد المستخدم قبل أي إجراء "
+        "خارجي أو مؤثر. أجب بلغة المستخدم وكن دقيقاً.",
+        prompt,
+        history,
+        "agent",
     )
