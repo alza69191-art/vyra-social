@@ -14,6 +14,7 @@ class ProfileOut(BaseModel):
     display_name: str
     bio: str | None
     avatar_url: str | None
+    cover_url: str | None = None
     is_private: bool
 
 class PostCreate(BaseModel):
