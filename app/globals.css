@@ -26,3 +26,23 @@
 .auth-message{background:#fafafa;color:#333;border:1px solid #eee}
 .auth-loading{align-content:center;gap:14px;color:#555}
 .auth-loading p{font-size:13px}
+
+
+/* VYRA strict monochrome visual system */
+:root{--black:#000;--ink:#000;--muted:#000;--line:#000;--paper:#fff;--canvas:#fff;--soft:#fff}
+html,body{background:#fff!important;color:#000!important}
+body{color-scheme:light}
+.sidebar,.topbar,.stories-panel,.composer-card,.post-card,.side-card,.profile-switch,.search-box,.composer-input,.sort-button,.outline-button{background:#fff!important;color:#000!important;border-color:#000!important}
+.main-area,.content-wrap,.feed-column,.right-column{background:#fff!important}
+.nav-item{color:#000!important}
+.nav-item.active,.black-button,.publish-button,.brand-mark,.avatar-dark,.post-actions button.liked{background:#000!important;color:#fff!important}
+.nav-item:hover,.icon-button:hover,.post-actions button:hover,.trend-row:hover,.quick-card button:hover{background:#000!important;color:#fff!important}
+.nav-caption,.profile-meta small,.breadcrumb,.breadcrumb b,.eyebrow,.welcome-row p,.section-heading p,.feed-heading span,.story small,.post-author small,.post-stats,.footer-links,.profile-summary small,.progress-label,.composer-tools button,.post-actions button,.post-text,.text-button,.subtle-link,.sidebar-bottom,.search-box,.search-box input,.post-tag,.composer-input,.composer-card textarea,.sort-button,.outline-button{color:#000!important}
+.post-tag,.nav-count,.quick-icon,.own-avatar,.avatar-soft,.story-a,.story-b,.story-c,.story-d,.story-e{background:#fff!important;color:#000!important;border:1px solid #000!important}
+.progress-track,.composer-footer,.post-stats,.post-actions{border-color:#000!important;background:#fff!important}
+.progress-track span{background:#000!important}
+button:disabled{opacity:.55!important}
+input,textarea,select{background:#fff!important;color:#000!important;border-color:#000!important}
+::placeholder{color:#000!important;opacity:.65}
+.toast{background:#000!important;color:#fff!important;border:1px solid #000!important}
+@media(prefers-color-scheme:dark){html,body{background:#fff!important;color:#000!important}}
