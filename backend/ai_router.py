@@ -3,74 +3,97 @@ import os
 import urllib.error
 import urllib.request
 
-TIMEOUT = 45
+TIMEOUT = 60
+HF_CHAT_URL = "https://router.huggingface.co/v1/chat/completions"
+DEFAULT_MODEL = "openai/gpt-oss-120b:fastest"
 
-def _post_json(url: str, headers: dict, payload: dict) -> dict:
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers={**headers, "Content-Type": "application/json"}, method="POST")
+
+def _huggingface_chat(token: str, model: str, messages: list[dict]) -> str:
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.7,
+    }
+    request = urllib.request.Request(
+        HF_CHAT_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
-            return json.loads(response.read().decode("utf-8"))
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            result = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         raw = exc.read(1200).decode("utf-8", errors="replace")
         try:
             parsed = json.loads(raw)
-            detail = parsed.get("error", {}).get("message") or parsed.get("message") or raw
+            detail = parsed.get("error", {}).get("message") or parsed.get("error") or parsed.get("message") or raw
         except (ValueError, AttributeError):
             detail = raw
         raise RuntimeError(f"HTTP {exc.code}: {str(detail)[:300]}") from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"Network error: {str(exc.reason)[:200]}") from exc
 
-def _openai_compatible(url: str, key: str, model: str, messages: list[dict]) -> str:
-    result = _post_json(url, {"Authorization": f"Bearer {key}"}, {"model": model, "messages": messages, "temperature": 0.7})
-    return result["choices"][0]["message"]["content"].strip()
+    choices = result.get("choices") or []
+    if not choices:
+        raise RuntimeError("Hugging Face returned no completion choices")
+    message = choices[0].get("message") or {}
+    answer = message.get("content")
+    if isinstance(answer, list):
+        answer = "".join(
+            part.get("text", "") for part in answer if isinstance(part, dict)
+        )
+    if not isinstance(answer, str) or not answer.strip():
+        raise RuntimeError("Hugging Face returned an empty response")
+    return answer.strip()
 
-def _google(key: str, model: str, prompt: str) -> str:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-    # Gemini 3.8 Flash does not accept legacy sampling parameters such as temperature.
-    result = _post_json(url, {}, {"contents": [{"parts": [{"text": prompt}]}]})
-    return result["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 def generate_reply(prompt: str, history: list[dict] | None = None) -> dict:
-    messages = [{"role": "system", "content": "أنت مساعد VYRA الذكي. أجب بدقة وباللغة التي يستخدمها المستخدم، وصرّح بوضوح عندما لا تعرف."}]
+    messages = [{
+        "role": "system",
+        "content": "أنت مساعد VYRA الذكي. أجب بدقة وباللغة التي يستخدمها المستخدم، وصرّح بوضوح عندما لا تعرف."
+    }]
     for item in (history or [])[-12:]:
         role = item.get("role")
         content = item.get("content")
         if role in ("user", "assistant") and isinstance(content, str):
             messages.append({"role": role, "content": content[:6000]})
     messages.append({"role": "user", "content": prompt})
+
     failures = []
-
-    groq_key = os.getenv("GROQ_API_KEY")
-    if groq_key:
-        try:
-            answer = _openai_compatible("https://api.groq.com/openai/v1/chat/completions", groq_key, os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"), messages)
-            if answer: return {"reply": answer, "provider": "groq"}
-        except Exception as exc:
-            failures.append(f"groq: {str(exc)[:300]}")
-
-    google_key = os.getenv("GOOGLE_API_KEY")
-    if google_key:
-        try:
-            answer = _google(google_key, os.getenv("GOOGLE_AI_MODEL", "gemini-3.8-flash"), "\n\n".join(f"{m['role']}: {m['content']}" for m in messages))
-            if answer: return {"reply": answer, "provider": "google"}
-        except Exception as exc:
-            failures.append(f"google: {str(exc)[:300]}")
-
-    hf_configured = False
+    configured = []
     for index in range(1, 5):
-        hf_key = os.getenv(f"HF_TOKEN_{index}") or (os.getenv("HF_TOKEN") if index == 1 else None)
-        model = os.getenv(f"HF_MODEL_{index}")
-        if not hf_key or not model:
-            continue
-        hf_configured = True
-        try:
-            answer = _openai_compatible("https://router.huggingface.co/v1/chat/completions", hf_key, model, messages)
-            if answer: return {"reply": answer, "provider": f"huggingface:{model}"}
-        except Exception as exc:
-            failures.append(f"hf{index}: {str(exc)[:300]}")
+        token = (
+            os.getenv(f"HF_TOKEN_{index}")
+            or os.getenv(f"HUGGINGFACE_API_TOKEN_{index}")
+            or os.getenv(f"HF_API_KEY_{index}")
+        )
+        if token and token not in [entry[1] for entry in configured]:
+            model = os.getenv(f"HF_MODEL_{index}") or DEFAULT_MODEL
+            configured.append((index, token, model))
 
-    if not (groq_key or google_key or hf_configured):
-        raise RuntimeError("لم تتم إضافة أي مفاتيح لمزودي الذكاء الاصطناعي في إعدادات الخادم.")
-    raise RuntimeError("تعذر الوصول إلى جميع مزودي الذكاء الاصطناعي. تحقق من المفاتيح وأسماء النماذج والحصص. " + ", ".join(failures))
+    # Backward-compatible single-token names.
+    if not configured:
+        token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_API_TOKEN") or os.getenv("HUGGINGFACE_API_KEY")
+        if token:
+            configured.append((1, token, os.getenv("HF_MODEL_1") or DEFAULT_MODEL))
+
+    if not configured:
+        raise RuntimeError(
+            "لم يتم العثور على مفاتيح Hugging Face. أضف HF_TOKEN_1 إلى HF_TOKEN_4 في إعدادات Render."
+        )
+
+    for index, token, model in configured:
+        try:
+            answer = _huggingface_chat(token, model, messages)
+            return {"reply": answer, "provider": f"huggingface:{model}", "key_slot": index}
+        except Exception as exc:
+            failures.append(f"HF key {index} ({model}): {str(exc)[:300]}")
+
+    raise RuntimeError(
+        "تعذر الوصول إلى Hugging Face باستخدام المفاتيح الأربعة. "
+        + " | ".join(failures)
+    )
