@@ -2,7 +2,7 @@ import os
 from uuid import uuid4
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
@@ -186,6 +186,84 @@ def set_reaction(post_id: str, claims: dict = Depends(current_user), db: Session
     ))
     db.commit()
     return {"reacted": True}
+
+
+class SocialSpaceCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    description: str | None = Field(default=None, max_length=2000)
+    privacy: str = Field(default="public", pattern="^(public|private)$")
+    category: str | None = Field(default=None, max_length=60)
+
+
+@app.get("/api/groups")
+def list_groups(db: Session = Depends(get_db)):
+    groups = db.scalars(select(models.SocialGroup).where(models.SocialGroup.privacy == "public").order_by(desc(models.SocialGroup.created_at)).limit(100)).all()
+    return [{"id": g.id, "name": g.name, "description": g.description, "privacy": g.privacy,
+             "owner_id": g.owner_id,
+             "members": db.scalar(select(func.count(models.GroupMember.id)).where(models.GroupMember.group_id == g.id)) or 0}
+            for g in groups]
+
+
+@app.post("/api/groups", status_code=201)
+def create_group(payload: SocialSpaceCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    if db.get(models.Profile, claims["sub"]) is None:
+        raise HTTPException(status_code=409, detail="Profile not found")
+    group = models.SocialGroup(id=str(uuid4()), owner_id=claims["sub"], name=payload.name.strip(),
+                               description=payload.description, privacy=payload.privacy)
+    db.add(group)
+    db.flush()
+    db.add(models.GroupMember(id=str(uuid4()), group_id=group.id, user_id=claims["sub"], role="owner", status="active"))
+    db.commit()
+    db.refresh(group)
+    return {"id": group.id, "name": group.name, "description": group.description, "privacy": group.privacy, "owner_id": group.owner_id, "members": 1}
+
+
+@app.post("/api/groups/{group_id}/join")
+def join_group(group_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    group = db.get(models.SocialGroup, group_id)
+    if group is None or group.privacy != "public":
+        raise HTTPException(status_code=404, detail="Public group not found")
+    existing = db.scalar(select(models.GroupMember).where(models.GroupMember.group_id == group_id, models.GroupMember.user_id == claims["sub"]))
+    if existing:
+        return {"joined": existing.status == "active"}
+    db.add(models.GroupMember(id=str(uuid4()), group_id=group_id, user_id=claims["sub"], role="member", status="active"))
+    db.commit()
+    return {"joined": True}
+
+
+@app.get("/api/pages")
+def list_pages(db: Session = Depends(get_db)):
+    pages = db.scalars(select(models.SocialPage).order_by(desc(models.SocialPage.created_at)).limit(100)).all()
+    return [{"id": p.id, "name": p.name, "description": p.description, "category": p.category,
+             "owner_id": p.owner_id,
+             "followers": db.scalar(select(func.count(models.PageFollower.id)).where(models.PageFollower.page_id == p.id)) or 0}
+            for p in pages]
+
+
+@app.post("/api/pages", status_code=201)
+def create_page(payload: SocialSpaceCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    if db.get(models.Profile, claims["sub"]) is None:
+        raise HTTPException(status_code=409, detail="Profile not found")
+    page = models.SocialPage(id=str(uuid4()), owner_id=claims["sub"], name=payload.name.strip(),
+                             description=payload.description, category=payload.category)
+    db.add(page)
+    db.commit()
+    db.refresh(page)
+    return {"id": page.id, "name": page.name, "description": page.description, "category": page.category, "owner_id": page.owner_id, "followers": 0}
+
+
+@app.post("/api/pages/{page_id}/follow")
+def follow_page(page_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    if db.get(models.SocialPage, page_id) is None:
+        raise HTTPException(status_code=404, detail="Page not found")
+    existing = db.scalar(select(models.PageFollower).where(models.PageFollower.page_id == page_id, models.PageFollower.user_id == claims["sub"]))
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"following": False}
+    db.add(models.PageFollower(id=str(uuid4()), page_id=page_id, user_id=claims["sub"]))
+    db.commit()
+    return {"following": True}
 
 
 class AIMessage(BaseModel):
