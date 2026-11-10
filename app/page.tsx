@@ -14,6 +14,7 @@ const navigation = [
   { label: "الإشعارات", icon: Bell, count: "5" },
   { label: "القنوات", icon: Radio },
   { label: "المجتمعات", icon: UsersRound },
+  { label: "الصفحات", icon: Compass },
   { label: "السوق", icon: Store },
   { label: "المزادات", icon: Gavel },
   { label: "المحفوظات", icon: Bookmark },
@@ -109,7 +110,7 @@ function HomeFeed() {
       <div className="brand-row"><Brand/><button className="collapse-button" onClick={() => setFocus(!focus)} title="وضع التركيز"><PanelLeftClose size={18}/></button></div>
       <button className="profile-switch" onClick={() => { window.location.href="/account"; }}><span className="avatar avatar-dark">أ</span><span className="profile-meta"><b>حسابك الشخصي</b><small>@your.profile</small></span><ChevronDown size={16}/></button>
       <div className="nav-caption">مساحتك</div>
-      <nav className="main-nav">{navigation.map(item => { const Icon = item.icon; return <button key={item.label} className={active === item.label ? "nav-item active" : "nav-item"} onClick={() => {if(item.label === "الذكاء الاصطناعي"){window.location.href="/ai";return;}setActive(item.label);setMobileOpen(false);}}><Icon size={19}/><span>{item.label}</span>{item.tag && <em>{item.tag}</em>}{item.count && <small className="nav-count">{item.count}</small>}</button>; })}</nav>
+      <nav className="main-nav">{navigation.map(item => { const Icon = item.icon; return <button key={item.label} className={active === item.label ? "nav-item active" : "nav-item"} onClick={() => {if(item.label === "الذكاء الاصطناعي"){window.location.href="/ai";return;}if(item.label === "المجتمعات"){window.location.href="/groups";return;}if(item.label === "الصفحات"){window.location.href="/pages";return;}setActive(item.label);setMobileOpen(false);}}><Icon size={19}/><span>{item.label}</span>{item.tag && <em>{item.tag}</em>}{item.count && <small className="nav-count">{item.count}</small>}</button>; })}</nav>
       <div className="nav-caption secondary-caption">إدارة وتخصيص</div>
       <nav className="main-nav"><button className="nav-item" onClick={() => setActive("الإعدادات")}><Settings size={19}/><span>الإعدادات</span></button><button className="nav-item" onClick={() => setActive("مركز المساعدة")}><CircleHelp size={19}/><span>مركز المساعدة</span></button></nav>
       <div className="sidebar-bottom"><div className="online-dot"/><span>مساحتك جاهزة للإبداع</span></div>
