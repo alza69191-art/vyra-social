@@ -4,16 +4,16 @@ import urllib.error
 import urllib.request
 
 TIMEOUT = 90
-HF_CHAT_URL = "https://router.huggingface.co/v1/chat/completions"
+GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-ASSISTANT_DEFAULT_MODEL = "zai-org/GLM-5.3:fastest"
-AGENT_DEFAULT_MODEL = "openai/gpt-oss-120b:fastest"
+ASSISTANT_DEFAULT_MODEL = "openai/gpt-oss-20b"
+AGENT_DEFAULT_MODEL = "openai/gpt-oss-120b"
 
 
-def _huggingface_chat(token: str, model: str, messages: list[dict]) -> str:
+def _groq_chat(token: str, model: str, messages: list[dict]) -> str:
     payload = {"model": model, "messages": messages, "temperature": 0.6}
     request = urllib.request.Request(
-        HF_CHAT_URL,
+        GROQ_CHAT_URL,
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {token}",
@@ -33,13 +33,13 @@ def _huggingface_chat(token: str, model: str, messages: list[dict]) -> str:
             detail = detail or parsed.get("message") or raw
         except (ValueError, AttributeError):
             detail = raw
-        raise RuntimeError(f"Hugging Face HTTP {exc.code}: {str(detail)[:300]}") from exc
+        raise RuntimeError(f"Groq HTTP {exc.code}: {str(detail)[:300]}") from exc
     except urllib.error.URLError as exc:
-        raise RuntimeError(f"Hugging Face network error: {str(exc.reason)[:200]}") from exc
+        raise RuntimeError(f"Groq network error: {str(exc.reason)[:200]}") from exc
 
     choices = result.get("choices") or []
     if not choices:
-        raise RuntimeError("Hugging Face returned no completion choices")
+        raise RuntimeError("Groq returned no completion choices")
     message = choices[0].get("message") or {}
     answer = message.get("content")
     if isinstance(answer, list):
@@ -47,7 +47,7 @@ def _huggingface_chat(token: str, model: str, messages: list[dict]) -> str:
             part.get("text", "") for part in answer if isinstance(part, dict)
         )
     if not isinstance(answer, str) or not answer.strip():
-        raise RuntimeError("Hugging Face returned an empty response")
+        raise RuntimeError("Groq returned an empty response")
     return answer.strip()
 
 
@@ -74,14 +74,14 @@ def _run_role(token_name: str, model_name: str, default_model: str,
         )
     model = os.getenv(model_name, default_model).strip() or default_model
     messages = _build_messages(system_prompt, prompt, history)
-    answer = _huggingface_chat(token, model, messages)
-    return {"reply": answer, "provider": f"huggingface:{model}", "role": role_label}
+    answer = _groq_chat(token, model, messages)
+    return {"reply": answer, "provider": f"groq:{model}", "role": role_label}
 
 
 def generate_reply(prompt: str, history: list[dict] | None = None) -> dict:
     return _run_role(
-        "HF_ASSISTANT_TOKEN",
-        "HF_ASSISTANT_MODEL",
+        "GROQ_ASSISTANT_API_KEY",
+        "GROQ_ASSISTANT_MODEL",
         ASSISTANT_DEFAULT_MODEL,
         "أنت مساعد VYRA الذكي. مهمتك الإجابة عن الأسئلة وشرح المعلومات وتقديم اقتراحات واضحة. "
         "لا تدّع تنفيذ أي إجراء داخل المنصة. أجب بلغة المستخدم وباختصار ودقة، واذكر حدود معرفتك.",
@@ -93,8 +93,8 @@ def generate_reply(prompt: str, history: list[dict] | None = None) -> dict:
 
 def generate_agent_reply(prompt: str, history: list[dict] | None = None) -> dict:
     return _run_role(
-        "HF_AGENT_TOKEN",
-        "HF_AGENT_MODEL",
+        "GROQ_AGENT_API_KEY",
+        "GROQ_AGENT_MODEL",
         AGENT_DEFAULT_MODEL,
         "أنت وكيل VYRA الذكي. حلّل هدف المستخدم، قسّم العمل إلى خطوات عملية مرتبة، "
         "حدّد المتطلبات والمخاطر، واقترح الإجراء التالي بوضوح. لا تدّع أنك نفذت تغييرات "
