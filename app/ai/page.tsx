@@ -50,7 +50,7 @@ function AIChat() {
       <span className="ai-status">متعدد المزودات</span>
     </header>
     <section className="ai-chat">
-      <div className="ai-intro"><span className="ai-logo"><Sparkles size={28}/></span><h1>مساعد VYRA الذكي</h1><p>محادثة موحدة مع تحويل تلقائي بين مزودي الذكاء الاصطناعي عند تعطل أحدهم.</p></div>
+      <div className="ai-intro"><span className="ai-logo"><Sparkles size={28}/></span><h1>مساعد VYRA الذكي</h1><p>محادثة ذكية تعمل عبر Hugging Face مع تجربة اتصال مستقرة.</p></div>
       <div className="ai-messages">
         {messages.map((message, index) => <div className={message.role === "user" ? "ai-message user-message" : "ai-message bot-message"} key={index}><b>{message.role === "user" ? "أنت" : "VYRA AI"}</b><p>{message.content}</p></div>)}
         {busy && <div className="ai-loading"><LoaderCircle size={17}/> يفكر الآن...</div>}
