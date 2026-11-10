@@ -13,6 +13,7 @@ from backend.security import current_user
 from backend.auth import router as auth_router
 from backend.ai_router import generate_reply, generate_agent_reply
 from backend.cloudinary_uploads import router as uploads_router
+from backend.security_controls import SecurityControlsMiddleware
 
 app = FastAPI(
     title="VYRA API",
@@ -40,6 +41,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
 )
+
+app.add_middleware(SecurityControlsMiddleware)
 
 app.include_router(auth_router)
 app.include_router(uploads_router)
@@ -125,28 +128,37 @@ def update_my_profile(payload: ProfileUpdate, claims: dict = Depends(current_use
 
 @app.get("/api/posts", response_model=list[PostFeedOut])
 def list_posts(limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db)):
-    posts = db.scalars(
-        select(models.Post)
+    rows = db.execute(
+        select(models.Post, models.Profile)
         .join(models.Profile, models.Profile.id == models.Post.author_id)
         .where(models.Post.visibility == "public", models.Profile.is_private.is_(False))
         .order_by(desc(models.Post.created_at)).limit(limit).offset(offset)
     ).all()
-    result = []
-    for post in posts:
-        profile = db.get(models.Profile, post.author_id)
-        result.append({
-            "id": post.id,
-            "author_id": post.author_id,
-            "author_name": profile.display_name if profile else "عضو VYRA",
-            "author_username": profile.username if profile else "member",
-            "avatar_url": profile.avatar_url if profile else None,
-            "body": post.body,
-            "visibility": post.visibility,
-            "created_at": post.created_at,
-            "likes_count": db.scalar(select(func.count(models.Reaction.id)).where(models.Reaction.post_id == post.id)) or 0,
-            "comments_count": db.scalar(select(func.count(models.Comment.id)).where(models.Comment.post_id == post.id)) or 0,
-        })
-    return result
+    post_ids = [post.id for post, _profile in rows]
+    if not post_ids:
+        return []
+    likes = dict(db.execute(
+        select(models.Reaction.post_id, func.count(models.Reaction.id))
+        .where(models.Reaction.post_id.in_(post_ids))
+        .group_by(models.Reaction.post_id)
+    ).all())
+    comments = dict(db.execute(
+        select(models.Comment.post_id, func.count(models.Comment.id))
+        .where(models.Comment.post_id.in_(post_ids))
+        .group_by(models.Comment.post_id)
+    ).all())
+    return [{
+        "id": post.id,
+        "author_id": post.author_id,
+        "author_name": profile.display_name,
+        "author_username": profile.username,
+        "avatar_url": profile.avatar_url,
+        "body": post.body,
+        "visibility": post.visibility,
+        "created_at": post.created_at,
+        "likes_count": likes.get(post.id, 0),
+        "comments_count": comments.get(post.id, 0),
+    } for post, profile in rows]
 
 @app.post("/api/posts", response_model=PostOut, status_code=201)
 def create_post(payload: PostCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
