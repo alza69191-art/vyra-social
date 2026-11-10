@@ -39,3 +39,16 @@ class CommentOut(BaseModel):
     author_id: str
     body: str
     created_at: datetime
+
+
+class PostFeedOut(BaseModel):
+    id: str
+    author_id: str
+    author_name: str
+    author_username: str
+    avatar_url: str | None = None
+    body: str | None
+    visibility: str
+    created_at: datetime
+    likes_count: int = 0
+    comments_count: int = 0
