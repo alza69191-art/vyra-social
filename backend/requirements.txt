@@ -6,3 +6,5 @@ PyJWT[crypto]==2.10.1
 pwdlib[argon2]==0.2.1
 cloudinary==1.44.1
 python-multipart==0.0.20
+PyMySQL==1.1.1
+certifi==2025.1.31
