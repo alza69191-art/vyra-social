@@ -32,11 +32,11 @@ function Messenger(){
    const candidates=["audio/webm;codecs=opus","audio/ogg;codecs=opus","audio/mp4","audio/webm"];
    const mimeType=candidates.find(type=>MediaRecorder.isTypeSupported(type));
    const rec=mimeType?new MediaRecorder(stream,{mimeType}):new MediaRecorder(stream);
-   const chunks:BlobPart[]=[];
+   const chunks:Blob[]=[];
    rec.ondataavailable=e=>{if(e.data&&e.data.size>0)chunks.push(e.data)};
    rec.onerror=()=>{setNotice("حدث خطأ أثناء التسجيل. تحقق من إذن الميكروفون ثم حاول مجدداً.");setRecording(false);stream.getTracks().forEach(t=>t.stop());streamRef.current=null;};
    rec.onstop=()=>{
-    const type=(rec.mimeType||chunks.find(c=>c instanceof Blob && c.type)?.type||"audio/webm").split(";")[0].trim();
+    const type=(rec.mimeType||chunks.find(c=>c.type)?.type||"audio/webm").split(";")[0].trim();
     const ext=type==="audio/mp4"?"m4a":type==="audio/ogg"?"ogg":type==="audio/mpeg"?"mp3":"webm";
     const blob=new Blob(chunks,{type});
     if(blob.size===0){setNotice("لم يلتقط التسجيل أي صوت. تحقق من الميكروفون وحاول مجدداً.");}
