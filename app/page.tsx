@@ -37,7 +37,7 @@ function HomeFeed() {
   const [accountMenu, setAccountMenu] = useState(false);
   const [notice, setNotice] = useState("");
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  useEffect(() => { const token=sessionStorage.getItem("vyra_access_token"); if(!token)return; const load=()=>fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/$/,"")+"/api/notifications",{headers:{Authorization:"Bearer "+token},cache:"no-store"}).then(r=>r.ok?r.json():[]).then(rows=>setUnreadNotifications(rows.filter((n:any)=>!n.read).length)).catch(()=>undefined); load(); const timer=setInterval(load,20000); return()=>clearInterval(timer); },[]);
+  useEffect(() => { const token=sessionStorage.getItem("vyra_access_token"); if(!token)return; const load=()=>fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/$/,"")+"/api/notifications",{headers:{Authorization:"Bearer "+token},cache:"no-store"}).then(r=>r.ok?r.json():[]).then(rows=>setUnreadNotifications(rows.filter((n:any)=>!n.read).length)).catch(()=>undefined); load(); const timer=setInterval(load,20000); return()=>clearInterval(timer); },[]);
   const [query, setQuery] = useState("");
   const [focus, setFocus] = useState(false);
   const [commentPost, setCommentPost] = useState<string | null>(null);
