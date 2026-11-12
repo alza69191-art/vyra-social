@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Github } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -14,6 +14,10 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("oauth_error");
+    if (code) setError(code === "provider_not_configured" ? "تسجيل الدخول الاجتماعي غير مهيأ بعد على الخادم." : code === "account_link_conflict" ? "تعذر ربط هذا الحساب. تواصل مع الدعم." : "فشل تسجيل الدخول عبر المزود. حاول مرة أخرى.");
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
