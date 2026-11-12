@@ -10,7 +10,7 @@ const API = (process.env.NEXT_PUBLIC_API_URL || "https://vyra-api-9pxl.onrender.
 type Listing = {
   id: string; title: string; description: string; price: number; currency: "USD" | "ILS" | "EUR";
   category: string; condition: "new" | "used" | "refurbished"; location: string | null;
-  status: string; owner_id: string; seller_name: string; seller_username: string; created_at: string;
+  status: string; media_url?: string | null; media_type?: "image" | "video" | null; owner_id: string; seller_name: string; seller_username: string; created_at: string;
 };
 const field = { width: "100%", padding: 12, border: "1px solid #ddd", borderRadius: 10, background: "#fff", color: "#111", font: "inherit" } as const;
 const button = { padding: "11px 16px", background: "#111", color: "#fff", border: 0, borderRadius: 10, cursor: "pointer", font: "inherit" } as const;
@@ -29,6 +29,7 @@ function Market() {
   const [notice, setNotice] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("الكل");
   const [form, setForm] = useState({ title: "", description: "", price: "", currency: "USD", category: "إلكترونيات", condition: "new", location: "" });
+  const [listingMedia,setListingMedia]=useState<File|null>(null),[listingPreview,setListingPreview]=useState("");
   async function load() {
     const response = await fetch(API + "/api/market/listings?limit=60", { cache: "no-store" });
     if (!response.ok) throw new Error("تعذر تحميل السوق حالياً");
@@ -49,16 +50,18 @@ function Market() {
     if (!token) return;
     setBusy(true);
     try {
+      let media_url:string|undefined,media_type:string|undefined;
+      if(listingMedia){const uploaded=await uploadMedia(token,listingMedia,"market");media_url=uploaded.url;media_type=uploaded.media_type;}
       const response = await fetch(API + "/api/market/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-        body: JSON.stringify({ ...form, price: Number(form.price) }),
+        body: JSON.stringify({ ...form, price: Number(form.price), media_url, media_type }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || "تعذر نشر الإعلان");
       setItems(current => [data, ...current]);
       setForm({ title: "", description: "", price: "", currency: "USD", category: "إلكترونيات", condition: "new", location: "" });
-      setShowForm(false);
+      setShowForm(false);setListingMedia(null);setListingPreview("");
       setNotice("تم نشر إعلانك في السوق");
     } catch (error) { setNotice(error instanceof Error ? error.message : "حدث خطأ"); }
     finally { setBusy(false); }
@@ -103,17 +106,17 @@ function Market() {
         <input required maxLength={60} placeholder="التصنيف" style={field} value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}/>
         <select style={field} value={form.condition} onChange={e => setForm({ ...form, condition: e.target.value })}><option value="new">جديد</option><option value="used">مستعمل</option><option value="refurbished">مجدّد</option></select>
         <input maxLength={120} placeholder="المدينة / المنطقة (اختياري)" style={field} value={form.location} onChange={e => setForm({ ...form, location: e.target.value })}/>
-        <textarea required minLength={5} maxLength={4000} placeholder="تفاصيل الإعلان" style={{ ...field, gridColumn: "1/-1", minHeight: 100 }} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}/>
+        <label style={{gridColumn:"1/-1",border:"1px dashed #c9a16b",borderRadius:12,padding:14,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}><ImagePlus size={22}/><span><b>إضافة صورة أو فيديو للإعلان</b><small style={{display:"block",color:"#777"}}>صورة أو مقطع فيديو واحد — اختياري</small></span><input type="file" accept="image/*,video/mp4,video/webm,video/quicktime" hidden onChange={e=>{const f=e.target.files?.[0];if(f){setListingMedia(f);setListingPreview(URL.createObjectURL(f))}}}/></label>{listingPreview&&(listingMedia?.type.startsWith("video/")?<video src={listingPreview} controls style={{gridColumn:"1/-1",width:"100%",maxHeight:260,borderRadius:12}}/>:<img src={listingPreview} alt="معاينة الإعلان" style={{gridColumn:"1/-1",maxWidth:"100%",maxHeight:260,objectFit:"contain",borderRadius:12}}/>)}<textarea required minLength={5} maxLength={4000} placeholder="تفاصيل الإعلان" style={{ ...field, gridColumn: "1/-1", minHeight: 100 }} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}/>
         <button disabled={busy} style={{ ...button, gridColumn: "1/-1", opacity: busy ? .6 : 1 }}>{busy ? "جارٍ النشر..." : "نشر الإعلان"}</button>
       </form>}
       <nav style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>{categories.map(category => <button key={category} onClick={() => setCategoryFilter(category)} style={{ border: categoryFilter === category ? "1px solid #111" : "1px solid #ddd", background: categoryFilter === category ? "#111" : "#fff", color: categoryFilter === category ? "#fff" : "#111", borderRadius: 30, padding: "8px 14px", cursor: "pointer" }}>{category}</button>)}</nav>
       {visible.length === 0 ? <div style={{ textAlign: "center", padding: 50, background: "#fff", borderRadius: 16, border: "1px solid #eee" }}><ShoppingBag size={34}/><h2>السوق جاهز لإعلاناتك</h2><p style={{ color: "#777" }}>لا توجد إعلانات في هذا التصنيف بعد. كن أول من ينشر إعلاناً.</p><button style={button} onClick={() => setShowForm(true)}>أضف أول إعلان</button></div> :
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 14 }}>{visible.map(item => <article key={item.id} style={{ background: "#fff", border: "1px solid #e8e8e8", borderRadius: 16, padding: 18, display: "flex", flexDirection: "column", minHeight: 230 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span style={{ color: "#b45309", fontSize: 12, fontWeight: 700 }}><Tag size={13} style={{ verticalAlign: "middle", marginLeft: 4 }}/>{item.category}</span><small style={{ color: "#777" }}>{item.condition === "new" ? "جديد" : item.condition === "used" ? "مستعمل" : "مجدّد"}</small></div>
-          <h3 style={{ margin: "14px 0 8px" }}>{item.title}</h3><p style={{ color: "#666", lineHeight: 1.7, whiteSpace: "pre-wrap", flex: 1 }}>{item.description}</p>
+          <h3 style={{ margin: "14px 0 8px" }}>{item.title}</h3>{item.media_url&&item.media_type==="image"&&<img src={item.media_url} alt={item.title} style={{width:"100%",maxHeight:220,objectFit:"cover",borderRadius:12,marginBottom:10}}/>}{item.media_url&&item.media_type==="video"&&<video src={item.media_url} controls style={{width:"100%",maxHeight:220,borderRadius:12,marginBottom:10}}/>}<p style={{ color: "#666", lineHeight: 1.7, whiteSpace: "pre-wrap", flex: 1 }}>{item.description}</p>
           <strong style={{ fontSize: 22 }}>{item.price.toLocaleString("en-US")} {item.currency}</strong>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 12, color: "#777", fontSize: 12 }}><span>{item.seller_name}</span><span>{item.location ? <><MapPin size={12} style={{ verticalAlign: "middle" }}/> {item.location}</> : "VYRA"}</span></div>
-          <div style={{display:"flex",gap:8,marginTop:12}}>{item.owner_id !== myUserId && <button onClick={()=>location.href="/messages?userId="+item.owner_id+"&sellerName="+encodeURIComponent(item.seller_name)} style={{...button,flex:1}}>مراسلة البائع</button>}{item.owner_id === myUserId && <button onClick={() => markSold(item.id)} style={{ ...button, marginTop: 12 }}>تم البيع</button>}</div>
+          <div style={{display:"flex",gap:8,marginTop:12}}>{item.owner_id !== myUserId && <button onClick={()=>location.href="/messages?userId="+item.owner_id+"&sellerName="+encodeURIComponent(item.seller_name)+"&offer="+encodeURIComponent(item.title)+"&price="+item.price+"&currency="+item.currency} style={{...button,flex:1}}>قدم عرض</button>}</div>
         </article>)}</div>}
       {storeWizard&&<div style={{position:"fixed",inset:0,zIndex:100,background:"#0008",display:"grid",placeItems:"center",padding:16}} onClick={()=>setStoreWizard(false)}><section dir="rtl" onClick={e=>e.stopPropagation()} style={{width:"min(560px,100%)",maxHeight:"90vh",overflow:"auto",background:"#fff",borderRadius:20,padding:22,boxShadow:"0 25px 80px #0004"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><small style={{color:"#b77932",fontWeight:800}}>VYRA MARKET STUDIO</small><h2 style={{margin:"5px 0"}}>إنشاء واجهة سوق جديدة</h2><p style={{color:"#777",margin:0}}>اختر هوية السوق وجمهوره قبل الإنشاء.</p></div><button onClick={()=>setStoreWizard(false)}>×</button></div><form onSubmit={createStore} style={{display:"grid",gap:12,marginTop:18}}><label>اسم السوق<input required minLength={2} maxLength={120} style={field} value={storeForm.name} onChange={e=>setStoreForm({...storeForm,name:e.target.value})} placeholder="اسم متجرك"/></label><label>الفئة<input required maxLength={60} style={field} value={storeForm.category} onChange={e=>setStoreForm({...storeForm,category:e.target.value})} placeholder="إلكترونيات، أزياء، خدمات..."/></label><label>الوصف<textarea rows={3} maxLength={2000} style={field} value={storeForm.description} onChange={e=>setStoreForm({...storeForm,description:e.target.value})} placeholder="عرّف الزوار بما يقدمه سوقك"/></label><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><label style={{border:"1px dashed #bbb",padding:12,borderRadius:12,textAlign:"center",cursor:"pointer"}}>{storePreview?<img src={storePreview} alt="" style={{width:55,height:55,objectFit:"cover",borderRadius:12}}/>:<ImagePlus/>}<b style={{display:"block"}}>صورة السوق</b><input hidden type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setStoreAvatar(f);setStorePreview(URL.createObjectURL(f))}}}/></label><label style={{border:"1px dashed #bbb",padding:12,borderRadius:12,textAlign:"center",cursor:"pointer"}}>{coverPreview?<img src={coverPreview} alt="" style={{width:"100%",height:55,objectFit:"cover",borderRadius:10}}/>:<ImagePlus/>}<b style={{display:"block"}}>غلاف السوق</b><input hidden type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setStoreCover(f);setCoverPreview(URL.createObjectURL(f))}}}/></label></div><label>الجمهور<select style={field} value={storeForm.audience} onChange={e=>setStoreForm({...storeForm,audience:e.target.value})}><option value="public">عام — ظاهر للجميع</option><option value="private">خاص</option></select></label><button disabled={busy} style={{...button,marginTop:5}}>{busy?"جارٍ الإنشاء...":"إنشاء السوق وفتح واجهته"}</button></form></section></div>}
       {notice && <p role="status" style={{ position: "fixed", bottom: 20, right: 20, background: "#111", color: "#fff", padding: "12px 18px", borderRadius: 10 }}>{notice}<button onClick={() => setNotice("")} style={{ color: "#fff", marginRight: 12 }}>×</button></p>}
