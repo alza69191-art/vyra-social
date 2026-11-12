@@ -67,6 +67,7 @@ def initialize_schema():
             "social_groups": {"category": "VARCHAR(60) NULL", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
             "social_pages": {"privacy": "VARCHAR(16) NOT NULL DEFAULT 'public'", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
             "direct_messages": {"media_type": "VARCHAR(16) NULL"},
+            "conversations": {"context_type": "VARCHAR(16) NULL", "context_id": "VARCHAR(36) NULL"},
         }
         with engine.begin() as connection:
             for table_name, columns in migrations.items():
@@ -508,6 +509,79 @@ def search_people(q: str = Query(default="", max_length=80), claims: dict = Depe
     return [{"id": p.id, "username": p.username, "display_name": p.display_name, "avatar_url": p.avatar_url} for p in rows]
 
 
+
+class SpaceConversationCreate(BaseModel):
+    space_type: str = Field(pattern="^(group|page|market)$")
+    space_id: str = Field(min_length=1, max_length=36)
+
+
+@app.post("/api/conversations/space", status_code=201)
+def create_space_conversation(payload: SpaceConversationCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    user_id = claims["sub"]
+    member_ids: list[str] = []
+    title = "محادثة المساحة"
+    if payload.space_type == "group":
+        space = db.get(models.SocialGroup, payload.space_id)
+        membership = db.scalar(select(models.GroupMember).where(
+            models.GroupMember.group_id == payload.space_id,
+            models.GroupMember.user_id == user_id,
+            models.GroupMember.status == "active",
+        ))
+        if space is None or membership is None:
+            raise HTTPException(status_code=403, detail="انضم إلى المجتمع أولاً")
+        title = space.name
+        member_ids = db.scalars(select(models.GroupMember.user_id).where(
+            models.GroupMember.group_id == payload.space_id,
+            models.GroupMember.status == "active",
+        )).all()
+    elif payload.space_type == "page":
+        space = db.get(models.SocialPage, payload.space_id)
+        if space is None:
+            raise HTTPException(status_code=404, detail="الصفحة غير موجودة")
+        follower = db.scalar(select(models.PageFollower).where(
+            models.PageFollower.page_id == payload.space_id,
+            models.PageFollower.user_id == user_id,
+        ))
+        if space.owner_id != user_id and follower is None:
+            raise HTTPException(status_code=403, detail="تابع الصفحة أولاً للوصول إلى محادثتها")
+        title = space.name
+        member_ids = [space.owner_id] + db.scalars(select(models.PageFollower.user_id).where(
+            models.PageFollower.page_id == payload.space_id,
+        )).all()
+    else:
+        space = db.get(models.MarketStore, payload.space_id)
+        if space is None:
+            raise HTTPException(status_code=404, detail="السوق غير موجود")
+        if space.owner_id != user_id:
+            raise HTTPException(status_code=403, detail="محادثة السوق متاحة لمالك السوق حالياً")
+        title = space.name + " · دعم السوق"
+        member_ids = [space.owner_id]
+    member_ids = list(dict.fromkeys(member_ids))
+    conversation = db.scalar(select(models.Conversation).where(
+        models.Conversation.context_type == payload.space_type,
+        models.Conversation.context_id == payload.space_id,
+    ))
+    if conversation is None:
+        conversation = models.Conversation(
+            id=str(uuid4()), is_group=True, title=title, created_by=user_id,
+            context_type=payload.space_type, context_id=payload.space_id,
+        )
+        db.add(conversation)
+        db.flush()
+        for member_id in member_ids:
+            db.add(models.ConversationMember(id=str(uuid4()), conversation_id=conversation.id, user_id=member_id))
+        db.commit()
+    else:
+        existing = set(db.scalars(select(models.ConversationMember.user_id).where(
+            models.ConversationMember.conversation_id == conversation.id,
+        )).all())
+        for member_id in member_ids:
+            if member_id not in existing:
+                db.add(models.ConversationMember(id=str(uuid4()), conversation_id=conversation.id, user_id=member_id))
+        db.commit()
+    return {"id": conversation.id, "is_group": True, "title": conversation.title, "context_type": payload.space_type, "context_id": payload.space_id}
+
+
 @app.post("/api/conversations/direct", status_code=201)
 def create_direct_conversation(payload: DirectConversationCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     if payload.recipient_id == claims["sub"] or db.get(models.Profile, payload.recipient_id) is None:
@@ -538,6 +612,7 @@ def list_conversations(claims: dict = Depends(current_user), db: Session = Depen
         other = db.get(models.Profile, other_ids[0]) if other_ids else None
         last = db.scalar(select(models.DirectMessage).where(models.DirectMessage.conversation_id == conversation.id).order_by(desc(models.DirectMessage.created_at)).limit(1))
         output.append({"id": conversation.id, "is_group": conversation.is_group,
+            "context_type": conversation.context_type, "context_id": conversation.context_id,
             "title": conversation.title or (other.display_name if other else "محادثة"),
             "other_user_id": other.id if other else None, "avatar_url": other.avatar_url if other else None,
             "last_message": last.body if last else "", "last_media_type": last.media_type if last else None,
