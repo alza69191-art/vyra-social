@@ -39,6 +39,8 @@ function HomeFeed() {
   const [comments, setComments] = useState<VyraComment[]>([]);
   const [commentDraft, setCommentDraft] = useState("");
   useEffect(() => {
+    const token = sessionStorage.getItem("vyra_access_token");
+    if (token) getMyProfile(token).then(profile => setCurrentUserId(profile.id)).catch(() => undefined);
     let activeRequest = true;
     getPublicPosts(30, 0).then(rows => {
       if (!activeRequest) return;
