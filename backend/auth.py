@@ -1,3 +1,4 @@
+import logging
 import re
 from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,6 +11,7 @@ from backend.database import SessionLocal
 from backend import models
 from backend.security import create_access_token
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
 password_hasher = PasswordHash.recommended()
 
@@ -22,7 +24,7 @@ class Credentials(BaseModel):
     @classmethod
     def normalize_email(cls, value: str) -> str:
         value = value.strip().lower()
-        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value):
+        if not re.fullmatch(r"[^\\s@]+@[^\\s@]+\\.[^\\s@]+", value):
             raise ValueError("Enter a valid email address")
         return value
 
@@ -76,7 +78,8 @@ def register(payload: Credentials, db: Session = Depends(get_db)):
         db.refresh(profile)
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="تعذر إنشاء الحساب بهذه البيانات.")
+        logger.exception("Registration failed: database integrity constraint rejected user/profile insert")
+        raise HTTPException(status_code=409, detail="تعذر إنشاء الحساب بهذه البيانات. راجع سجلات الخادم لمعرفة سبب قاعدة البيانات.")
     return auth_result(user, profile)
 
 
