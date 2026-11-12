@@ -28,13 +28,14 @@ function Messenger(){
   const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);
   const room="vyra-"+Array.from(bytes).map(v=>v.toString(16).padStart(2,"0")).join("");
   const callUrl=window.location.origin+"/call/"+room;
+  const callWindow=window.open("about:blank","_blank");
   setBusy(true);
   try{
    const r=await fetch(API+"/api/conversations/"+active.id+"/messages",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token()},body:JSON.stringify({body:"📞 دعوة "+(active.is_group?"مكالمة جماعية":"مكالمة صوتية ومرئية")+" عبر VYRA: "+callUrl})});
    const data=await r.json().catch(()=>({}));
    if(!r.ok)throw new Error(data.detail||"تعذر إرسال دعوة المكالمة.");
-   setMessages(v=>[...v,data]);window.open(callUrl,"_blank","noopener,noreferrer");
-  }catch(e){setNotice(e instanceof Error?e.message:"تعذر بدء المكالمة.");}
+   setMessages(v=>[...v,data]);if(callWindow)callWindow.location.href=callUrl;else setNotice("تم إرسال دعوة المكالمة. افتح رابطها من المحادثة إذا لم تفتح النافذة.");
+  }catch(e){callWindow?.close();setNotice(e instanceof Error?e.message:"تعذر بدء المكالمة.");}
   finally{setBusy(false);}
  }
  async function sendMessage(event?:FormEvent){event?.preventDefault();if(!active||(!draft.trim()&&!attachment&&!voiceFile)||busy)return;setBusy(true);try{let media_url:string|undefined,media_type:string|undefined;const file=voiceFile||attachment;if(file){const uploaded=await uploadMedia(token(),file,"message");media_url=uploaded.url;media_type=uploaded.media_type;}const r=await fetch(API+"/api/conversations/"+active.id+"/messages",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token()},body:JSON.stringify({body:draft.trim(),media_url,media_type})});const d=await r.json();if(!r.ok)throw new Error(d.detail||"تعذر إرسال الرسالة");setMessages(v=>[...v,d]);setDraft("");setAttachment(null);setVoiceFile(null);await loadConversations()}catch(e){setNotice(e instanceof Error?e.message:"تعذر إرسال الرسالة")}finally{setBusy(false)}}
