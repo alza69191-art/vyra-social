@@ -135,6 +135,8 @@ def _get_or_create_user(db: Session, provider: str, subject: str, email: str, di
         db.add(profile)
         db.flush()
     else:
+        if user.email_verified_at is None:
+            user.email_verified_at = datetime.now(timezone.utc)
         profile = db.get(models.Profile, user.id)
         if profile is None:
             raise ValueError("VYRA profile is incomplete")
