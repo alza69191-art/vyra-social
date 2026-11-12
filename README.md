@@ -1,6 +1,6 @@
 # VYRA Social
 
-Arabic RTL social-platform foundation built with Next.js 15, TypeScript, FastAPI and Render PostgreSQL.
+Arabic RTL social-platform foundation built with Next.js 15, TypeScript, FastAPI and TiDB Cloud (MySQL protocol).
 
 ## Render deployment
 
@@ -8,16 +8,16 @@ The repository's `render.yaml` describes:
 - `vyra-api`: FastAPI backend.
 - `vyra-web`: Next.js frontend.
 
-If the API service and PostgreSQL database already exist, do not create a second API or database. Keep the existing `vyra-api` service and deploy only the frontend service from this repository, or use the Blueprint after checking the resources it proposes.
+If the API service and TiDB database already exist, do not create duplicates. Keep the existing services and deploy from this repository.
 
 ### API environment
 
 Set these variables on the existing `vyra-api` service:
-- `DATABASE_URL`: Render **Internal Database URL** from `vyra-db`; keep it private.
+- `DATABASE_URL1`: TiDB Cloud connection URL using `mysql+pymysql://`; keep it private.
 - `JWT_SECRET`: a randomly generated secret with at least 32 characters. Generate it in Render and never put it in GitHub.
-- `CORS_ORIGINS`: include the frontend's exact origin, for example `https://vyra-web.onrender.com`.
+- `CORS_ORIGINS`: include the frontend's exact origin, for example `https://vyra-web-rs1b.onrender.com`.
 
-The API converts Render's PostgreSQL URL to the psycopg SQLAlchemy driver. On startup it creates any missing tables in the configured database.
+VYRA uses TiDB Cloud as its only database. The API requires TLS for the TiDB public endpoint and creates missing tables from the SQLAlchemy models at startup.
 
 ### Frontend environment
 
@@ -31,7 +31,7 @@ This value is a public API address, not a secret. The database URL and JWT secre
 API:
 ```bash
 pip install -r backend/requirements.txt
-set DATABASE_URL=postgresql://...
+set DATABASE_URL1=mysql+pymysql://USER:PASSWORD@HOST:4000/vyra_social
 set JWT_SECRET=replace-with-a-long-random-secret
 uvicorn backend.main:app --reload
 ```
@@ -50,7 +50,7 @@ API docs: `/api/docs`.
 - Passwords are hashed with Argon2 via pwdlib.
 - API access tokens are signed JWTs and expire after 12 hours.
 - Authenticated profile and social API routes require `Authorization: Bearer <token>`.
-- The browser stores the short-lived token in sessionStorage. This is a basic deployment foundation; harden session storage and add rate limiting before a production public launch.
+- The browser stores the short-lived token in sessionStorage. This is a basic deployment foundation; harden session storage before a production public launch.
 
 The SQLAlchemy schema includes users, profiles, sessions, email-verification and password-reset token records, posts, media metadata, comments, reactions, follows, friendships, blocks, stories, conversations, conversation members, direct messages, notifications, groups, group members, pages, page followers and post bookmarks. A schema table is not proof that its product workflow is implemented.
 
@@ -74,8 +74,6 @@ Email verification, password reset, server-side session revocation/logout, stori
 
 See `SECURITY.md`, `PERFORMANCE.md`, and `PROCESSING.md` for current controls, limitations and the next implementation steps.
 
-Render Free PostgreSQL expires after its stated trial period. Back up and migrate the database before expiry; do not rely on the free database as permanent storage.
-
-
 ## Marketplace
+
 The authenticated `/market` page supports creating and browsing text-based listings, filtering by category, and marking the owner's listing as sold. Payments, checkout, product image galleries, orders, and dispute workflows are not included yet.
