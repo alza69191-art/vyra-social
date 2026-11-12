@@ -137,6 +137,8 @@ class Conversation(Base):
     is_group: Mapped[bool] = mapped_column(Boolean, default=False)
     title: Mapped[str | None] = mapped_column(String(120), nullable=True)
     created_by: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"))
+    context_type: Mapped[str | None] = mapped_column(String(16), nullable=True, index=True)
+    context_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
