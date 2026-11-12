@@ -14,7 +14,7 @@ from backend.schemas import ProfileUpdate, ProfileOut, PostCreate, PostOut, Post
 from backend.security import current_user
 from backend.auth import router as auth_router
 from backend.oauth import router as oauth_router
-from backend.ai_router import generate_reply, generate_agent_reply
+from backend.ai_router import generate_reply
 from backend.cloudinary_uploads import router as uploads_router
 from backend.security_controls import SecurityControlsMiddleware
 
@@ -754,12 +754,13 @@ def delete_conversation_message(conversation_id: str, message_id: str, claims: d
 class AIMessage(BaseModel):
     prompt: str = Field(min_length=1, max_length=12000)
     history: list[dict] = Field(default_factory=list, max_length=12)
+    image_data: str | None = Field(default=None, max_length=11000000)
 
 
 @app.post("/api/ai/chat")
 def ai_chat(payload: AIMessage, claims: dict = Depends(current_user)):
     try:
-        return generate_reply(payload.prompt.strip(), payload.history)
+        return generate_reply(payload.prompt.strip(), payload.history, payload.image_data)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
 
