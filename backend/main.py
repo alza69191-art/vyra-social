@@ -61,9 +61,7 @@ def get_db():
 @app.on_event("startup")
 def initialize_schema():
     if engine is not None:
-        # SQLAlchemy creates missing tables using the active database dialect.
-        # Column definitions are already represented in backend.models for both
-        # PostgreSQL and MySQL-compatible TiDB. Avoid PostgreSQL-only ALTER syntax.
+        # SQLAlchemy creates missing tables using the active TiDB/MySQL dialect.
         Base.metadata.create_all(bind=engine)
 
 
