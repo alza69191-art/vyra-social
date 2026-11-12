@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api", tags=["media"])
 
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 VIDEO_TYPES = {"video/mp4", "video/webm", "video/quicktime"}
+AUDIO_TYPES = {"audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav"}
 IMAGE_LIMIT = 15 * 1024 * 1024
 VIDEO_LIMIT = 100 * 1024 * 1024
 
@@ -52,10 +53,12 @@ async def upload_media(
         resource_type, max_size = "image", IMAGE_LIMIT
     elif content_type in VIDEO_TYPES:
         resource_type, max_size = "video", VIDEO_LIMIT
+    elif content_type in AUDIO_TYPES:
+        resource_type, max_size = "video", 25 * 1024 * 1024
     else:
         raise HTTPException(status_code=415, detail="Only JPG, PNG, WEBP, GIF, MP4, WEBM and MOV files are allowed")
 
-    if purpose not in {"post", "avatar", "cover", "space"}:
+    if purpose not in {"post", "avatar", "cover", "space", "message"}:
         raise HTTPException(status_code=400, detail="Invalid upload purpose")
     if purpose == "avatar" and resource_type != "image":
         raise HTTPException(status_code=415, detail="Profile photo must be an image")
@@ -78,7 +81,7 @@ async def upload_media(
         raise HTTPException(status_code=413, detail=f"File exceeds the {max_size // (1024 * 1024)} MB limit")
 
     cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
-    folder = "vyra/spaces" if purpose == "space" else ("vyra/profiles" if purpose in {"avatar", "cover"} else "vyra/posts")
+    folder = "vyra/messages" if purpose == "message" else ("vyra/spaces" if purpose == "space" else ("vyra/profiles" if purpose in {"avatar", "cover"} else "vyra/posts"))
     try:
         result = cloudinary.uploader.upload(
             BytesIO(data),
@@ -99,7 +102,7 @@ async def upload_media(
         profile.avatar_url = url
     elif purpose == "cover":
         profile.cover_url = url
-    elif purpose == "space":
+    elif purpose in {"space", "message"}:
         pass
     else:
         db.add(models.PostMedia(
@@ -112,7 +115,7 @@ async def upload_media(
 
     return {
         "url": url,
-        "media_type": resource_type,
+        "media_type": "audio" if content_type in AUDIO_TYPES else resource_type,
         "purpose": purpose,
         "post_id": post.id if post else None,
     }
