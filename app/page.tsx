@@ -14,7 +14,7 @@ const navigation = [
   { label: "مركز المساعدة", icon: CircleHelp },
 ];
 const stories = [{ name: "قصتك", initials: "+", own: true }];
-const initialPosts: Array<{ id: string | number; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean; media?: Array<{ url: string; media_type: string }> }> = [];
+const initialPosts: Array<{ id: string | number; authorId?: string; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean; media?: Array<{ url: string; media_type: string }> }> = [];
 
 export default function HomePage() { return <AuthGate><HomeFeed /></AuthGate>; }
 
