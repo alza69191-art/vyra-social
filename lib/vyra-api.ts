@@ -66,7 +66,7 @@ export function getComments(postId: string): Promise<VyraComment[]> {
   return request<VyraComment[]>(`/api/posts/${encodeURIComponent(postId)}/comments`);
 }
 
-export async function uploadMedia(accessToken: string, file: File, purpose: "avatar" | "cover" | "post" | "space" = "post", postId?: string) {
+export async function uploadMedia(accessToken: string, file: File, purpose: "avatar" | "cover" | "post" | "space" | "message" = "post", postId?: string) {
   const form = new FormData();
   form.append("file", file);
   form.append("purpose", purpose);
@@ -79,7 +79,7 @@ export async function uploadMedia(accessToken: string, file: File, purpose: "ava
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(typeof payload.detail === "string" ? payload.detail : "تعذر رفع الملف.");
-  return payload as { url: string; media_type: "image" | "video"; purpose: string; post_id: string | null };
+  return payload as { url: string; media_type: "image" | "video" | "audio"; purpose: string; post_id: string | null };
 }
 
 export function getPostMedia(postId: string): Promise<Array<{ url: string; media_type: "image" | "video" }>> {
