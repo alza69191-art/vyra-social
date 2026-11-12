@@ -117,7 +117,7 @@ function HomeFeed() {
     const token = sessionStorage.getItem("vyra_access_token");
     if (!token || viewedPosts.current.has(key)) return;
     viewedPosts.current.add(key);
-    try { await fetch((process.env.NEXT_PUBLIC_API_URL || "https://vyra-api-9pxl.onrender.com").replace(/\\/$/, "") + "/api/posts/" + encodeURIComponent(key) + "/view", { method: "POST", headers: { Authorization: "Bearer " + token } }); }
+    try { await fetch((process.env.NEXT_PUBLIC_API_URL || "https://vyra-api-9pxl.onrender.com").replace(/\/$/, "") + "/api/posts/" + encodeURIComponent(key) + "/view", { method: "POST", headers: { Authorization: "Bearer " + token } }); }
     catch { viewedPosts.current.delete(key); }
   }
 
