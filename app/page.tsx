@@ -170,4 +170,5 @@ function HomeFeed() {
   </main>;
 }
 function Brand() { return <div className="brand"><span className="brand-mark">V</span><span className="brand-word">VYRA</span></div>; }
-\nconst menuItem = {display:"flex",alignItems:"center",gap:9,padding:"10px 11px",borderRadius:8,textAlign:"right",fontSize:12,whiteSpace:"nowrap"} as const;\n
+
+const menuItem = {display:"flex",alignItems:"center",gap:9,padding:"10px 11px",borderRadius:8,textAlign:"right",fontSize:12,whiteSpace:"nowrap"} as const;
