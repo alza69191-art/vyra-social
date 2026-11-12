@@ -166,3 +166,93 @@ main[style*="background:#fff"] textarea,main[style*="background: #fff"] textarea
 }
 main[style*="background:#fff"] button:hover,main[style*="background: #fff"] button:hover,main[style*="background: white"] button:hover{filter:brightness(1.04);transform:translateY(-1px)}
 @media(max-width:600px){main[style*="background:#fff"],main[style*="background: #fff"],main[style*="background: white"]{padding:16px!important}}
+
+
+/* VYRA global theme coverage: settings, profile, notifications and all inner pages */
+:root{
+  color-scheme:light;
+  --vyra-primary:#7165f5;
+  --vyra-primary-dark:#5c53dc;
+  --vyra-blue:#40b9df;
+  --vyra-ink:#25294b;
+  --vyra-muted:#7c84a0;
+  --vyra-border:rgba(111,122,165,.18);
+  --vyra-surface:rgba(255,255,255,.94);
+  --vyra-page:#f4f6fc;
+}
+html,body{background-color:var(--vyra-page)!important;color:var(--vyra-ink)!important}
+body{accent-color:var(--vyra-primary)}
+/* Neutralize legacy inline white/black page shells without changing layout */
+main,main[style],section[style*="background"],div[style*="background:#fff"],div[style*="background: #fff"],div[style*="background:white"]{
+  color:var(--vyra-ink);
+}
+main[style*="background"],main[style*="background-color"]{
+  background-color:var(--vyra-page)!important;
+}
+main h1,main h2,main h3,main h4,
+[class*="settings"] h1,[class*="settings"] h2,[class*="settings"] h3,
+[class*="Settings"] h1,[class*="Settings"] h2,[class*="Settings"] h3{
+  color:var(--vyra-ink)!important;
+}
+main p,main label,main small,
+[class*="settings"] p,[class*="settings"] label,[class*="settings"] small,
+[class*="Settings"] p,[class*="Settings"] label,[class*="Settings"] small{
+  color:var(--vyra-muted);
+}
+main a,[class*="settings"] a,[class*="Settings"] a{color:var(--vyra-primary)!important}
+main article,main form,main aside,
+[class*="settings"] article,[class*="settings"] form,[class*="settings"] section,
+[class*="Settings"] article,[class*="Settings"] form,[class*="Settings"] section{
+  border-color:var(--vyra-border)!important;
+}
+main article,[class*="settings"] article,[class*="Settings"] article{
+  background:var(--vyra-surface)!important;
+  border:1px solid var(--vyra-border)!important;
+  border-radius:20px!important;
+  box-shadow:0 12px 34px rgba(35,43,91,.065)!important;
+}
+main button,[class*="settings"] button,[class*="Settings"] button{
+  border-radius:12px;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+main button:not(:disabled),[class*="settings"] button:not(:disabled),[class*="Settings"] button:not(:disabled){
+  border-color:var(--vyra-border);
+}
+main button[type="submit"],main button.primary,main .primary-button,
+[class*="settings"] button[type="submit"],[class*="settings"] .primary-button,
+[class*="Settings"] button[type="submit"],[class*="Settings"] .primary-button{
+  background:linear-gradient(115deg,#7468f5,#527fe9 58%,#42b6dc)!important;
+  color:#fff!important;border:0!important;
+  box-shadow:0 8px 20px rgba(100,105,230,.20)!important;
+}
+main input,main textarea,main select,
+[class*="settings"] input,[class*="settings"] textarea,[class*="settings"] select,
+[class*="Settings"] input,[class*="Settings"] textarea,[class*="Settings"] select{
+  background:#f7f8fd!important;color:var(--vyra-ink)!important;
+  border:1px solid var(--vyra-border)!important;border-radius:12px!important;
+}
+main input:focus,main textarea:focus,main select:focus,
+[class*="settings"] input:focus,[class*="settings"] textarea:focus,[class*="settings"] select:focus,
+[class*="Settings"] input:focus,[class*="Settings"] textarea:focus,[class*="Settings"] select:focus{
+  outline:3px solid rgba(113,101,245,.16)!important;border-color:var(--vyra-primary)!important;
+}
+main [role="tab"],main [role="tablist"] button,
+[class*="settings"] [role="tab"],[class*="Settings"] [role="tab"]{
+  border-radius:11px!important;
+}
+main [aria-selected="true"],[class*="settings"] [aria-selected="true"],[class*="Settings"] [aria-selected="true"]{
+  background:linear-gradient(115deg,rgba(113,101,245,.13),rgba(64,185,223,.12))!important;
+  color:var(--vyra-primary-dark)!important;border-color:rgba(113,101,245,.25)!important;
+}
+main hr,[class*="settings"] hr,[class*="Settings"] hr{border-color:var(--vyra-border)!important}
+main [class*="card"],main [class*="panel"],main [class*="section"],
+[class*="settings"] [class*="card"],[class*="settings"] [class*="panel"],
+[class*="Settings"] [class*="card"],[class*="Settings"] [class*="panel"]{
+  border-color:var(--vyra-border);
+}
+main button:hover:not(:disabled),[class*="settings"] button:hover:not(:disabled),[class*="Settings"] button:hover:not(:disabled){
+  transform:translateY(-1px);
+}
+@media(prefers-color-scheme:dark){
+  html,body{color-scheme:light!important;background:var(--vyra-page)!important;color:var(--vyra-ink)!important}
+}
