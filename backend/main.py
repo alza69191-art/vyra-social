@@ -25,17 +25,12 @@ app = FastAPI(
     redoc_url=None,
 )
 
-default_origins = {
+# Allow only the active VYRA frontend and the local development origin.
+# Obsolete deployment domains are intentionally excluded.
+origins = [
     "http://localhost:3000",
-    "https://alza69191-art.github.io",
-    "https://vyra-web.onrender.com",
     "https://vyra-web-rs1b.onrender.com",
-    "https://vyra-social-web.onrender.com",
-}
-configured_origins = {
-    item.strip() for item in os.getenv("CORS_ORIGINS", "").split(",") if item.strip()
-}
-origins = sorted(default_origins | configured_origins)
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
