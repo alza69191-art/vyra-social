@@ -2,6 +2,7 @@ import os
 from uuid import uuid4
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import select, desc, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -11,6 +12,7 @@ from backend import models
 from backend.schemas import ProfileUpdate, ProfileOut, PostCreate, PostOut, PostFeedOut, CommentCreate, CommentOut
 from backend.security import current_user
 from backend.auth import router as auth_router
+from backend.oauth import router as oauth_router
 from backend.ai_router import generate_reply, generate_agent_reply
 from backend.cloudinary_uploads import router as uploads_router
 from backend.security_controls import SecurityControlsMiddleware
@@ -43,8 +45,10 @@ app.add_middleware(
 )
 
 app.add_middleware(SecurityControlsMiddleware)
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET") or os.urandom(32).hex(), same_site="lax", https_only=True, session_cookie="vyra_oauth_session")
 
 app.include_router(auth_router)
+app.include_router(oauth_router)
 app.include_router(uploads_router)
 
 
