@@ -21,7 +21,7 @@ export default function HomePage() { return <AuthGate><HomeFeed /></AuthGate>; }
 
 function HomeFeed() {
   const [active, setActive] = useState("الرئيسية");
-  const [posts, setPosts] = useState<Array<{ id: string | number; authorId?: string; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean; media?: Array<{ url: string; media_type: string }> }>>(initialPosts);
+  const [posts, setPosts] = useState<Array<{ id: string | number; authorId?: string; visibility?: "public"|"followers"|"private"; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean; media?: Array<{ url: string; media_type: string }> }>>(initialPosts);
   const [draft, setDraft] = useState("");
   const [visibility, setVisibility] = useState<"public" | "followers" | "private">("public");
   useEffect(()=>{const saved=localStorage.getItem("vyra_default_audience");if(saved==="public"||saved==="followers"||saved==="private")setVisibility(saved);},[]);
