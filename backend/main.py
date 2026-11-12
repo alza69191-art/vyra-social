@@ -66,6 +66,7 @@ def initialize_schema():
         migrations = {
             "social_groups": {"category": "VARCHAR(60) NULL", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
             "social_pages": {"privacy": "VARCHAR(16) NOT NULL DEFAULT 'public'", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
+            "direct_messages": {"media_type": "VARCHAR(16) NULL"},
         }
         with engine.begin() as connection:
             for table_name, columns in migrations.items():
@@ -483,6 +484,89 @@ def update_market_listing_status(listing_id: str, payload: MarketListingStatus, 
     listing.status = payload.status
     db.commit()
     return {"id": listing.id, "status": listing.status}
+
+
+
+class DirectConversationCreate(BaseModel):
+    recipient_id: str = Field(min_length=1, max_length=36)
+
+
+class DirectMessageCreate(BaseModel):
+    body: str = Field(default="", max_length=5000)
+    media_url: str | None = Field(default=None, max_length=2000)
+    media_type: str | None = Field(default=None, pattern="^(image|video|audio)$")
+
+
+@app.get("/api/people")
+def search_people(q: str = Query(default="", max_length=80), claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    query = select(models.Profile).where(models.Profile.id != claims["sub"])
+    if q.strip():
+        term = "%" + q.strip() + "%"
+        query = query.where((models.Profile.username.ilike(term)) | (models.Profile.display_name.ilike(term)))
+    rows = db.scalars(query.order_by(models.Profile.display_name).limit(25)).all()
+    return [{"id": p.id, "username": p.username, "display_name": p.display_name, "avatar_url": p.avatar_url} for p in rows]
+
+
+@app.post("/api/conversations/direct", status_code=201)
+def create_direct_conversation(payload: DirectConversationCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    if payload.recipient_id == claims["sub"] or db.get(models.Profile, payload.recipient_id) is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    conversation = models.Conversation(id=str(uuid4()), is_group=False, created_by=claims["sub"])
+    db.add(conversation)
+    db.flush()
+    db.add_all([
+        models.ConversationMember(id=str(uuid4()), conversation_id=conversation.id, user_id=claims["sub"]),
+        models.ConversationMember(id=str(uuid4()), conversation_id=conversation.id, user_id=payload.recipient_id),
+    ])
+    db.commit()
+    return {"id": conversation.id, "is_group": False, "title": None}
+
+
+@app.get("/api/conversations")
+def list_conversations(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    rows = db.execute(
+        select(models.Conversation, models.ConversationMember)
+        .join(models.ConversationMember, models.ConversationMember.conversation_id == models.Conversation.id)
+        .where(models.ConversationMember.user_id == claims["sub"])
+        .order_by(desc(models.Conversation.created_at)).limit(100)
+    ).all()
+    output = []
+    for conversation, _member in rows:
+        members = db.scalars(select(models.ConversationMember).where(models.ConversationMember.conversation_id == conversation.id)).all()
+        other_ids = [m.user_id for m in members if m.user_id != claims["sub"]]
+        other = db.get(models.Profile, other_ids[0]) if other_ids else None
+        last = db.scalar(select(models.DirectMessage).where(models.DirectMessage.conversation_id == conversation.id).order_by(desc(models.DirectMessage.created_at)).limit(1))
+        output.append({"id": conversation.id, "is_group": conversation.is_group,
+            "title": conversation.title or (other.display_name if other else "محادثة"),
+            "other_user_id": other.id if other else None, "avatar_url": other.avatar_url if other else None,
+            "last_message": last.body if last else "", "last_media_type": last.media_type if last else None,
+            "created_at": conversation.created_at})
+    return output
+
+
+@app.get("/api/conversations/{conversation_id}/messages")
+def list_conversation_messages(conversation_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    member = db.scalar(select(models.ConversationMember).where(models.ConversationMember.conversation_id == conversation_id, models.ConversationMember.user_id == claims["sub"]))
+    if member is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    rows = db.scalars(select(models.DirectMessage).where(models.DirectMessage.conversation_id == conversation_id).order_by(models.DirectMessage.created_at).limit(200)).all()
+    return [{"id": m.id, "sender_id": m.sender_id, "body": m.body, "media_url": m.media_url, "media_type": m.media_type, "created_at": m.created_at, "read_at": m.read_at} for m in rows]
+
+
+@app.post("/api/conversations/{conversation_id}/messages", status_code=201)
+def send_conversation_message(conversation_id: str, payload: DirectMessageCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    member = db.scalar(select(models.ConversationMember).where(models.ConversationMember.conversation_id == conversation_id, models.ConversationMember.user_id == claims["sub"]))
+    if member is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if not payload.body.strip() and not payload.media_url:
+        raise HTTPException(status_code=422, detail="Message cannot be empty")
+    message = models.DirectMessage(id=str(uuid4()), sender_id=claims["sub"], recipient_id=claims["sub"],
+        conversation_id=conversation_id, body=payload.body.strip(), media_url=payload.media_url, media_type=payload.media_type)
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    return {"id": message.id, "sender_id": message.sender_id, "body": message.body, "media_url": message.media_url,
+        "media_type": message.media_type, "created_at": message.created_at, "read_at": message.read_at}
 
 
 class AIMessage(BaseModel):
