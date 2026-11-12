@@ -36,8 +36,9 @@ export function createPost(accessToken: string, body: string, visibility: "publi
 export function createComment(accessToken: string, postId: string, body: string): Promise<VyraComment> {
   return request<VyraComment>(`/api/posts/${encodeURIComponent(postId)}/comments`, { method: "POST", body: JSON.stringify({ body }) }, accessToken);
 }
-export function toggleReaction(accessToken: string, postId: string) {
-  return request<{ reacted: boolean }>(`/api/posts/${encodeURIComponent(postId)}/reaction`, { method: "PUT" }, accessToken);
+export type VyraReaction = "like" | "love" | "care" | "haha" | "wow" | "sad" | "angry";
+export function toggleReaction(accessToken: string, postId: string, reaction: VyraReaction = "like") {
+  return request<{ reacted: boolean; reaction_type: VyraReaction | null }>(`/api/posts/${encodeURIComponent(postId)}/reaction`, { method: "PUT", body: JSON.stringify({ reaction_type: reaction }) }, accessToken);
 }
 
 export type VyraComment = {
