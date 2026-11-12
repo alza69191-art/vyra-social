@@ -131,3 +131,38 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
   .composer-card,.post-card,.side-card{border-radius:17px!important}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* VYRA unified identity across every route */
+.brand-mark,.auth-brand .brand-mark,.ai-brand>span{
+  background:linear-gradient(145deg,#8175ff 0%,#625be9 48%,#40b9df 100%)!important;
+  color:#fff!important;
+  box-shadow:0 8px 22px rgba(101,104,231,.30),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.brand-word,.auth-brand b,.ai-brand{color:#25294b!important}
+.ai-brand>span{border-radius:12px!important}
+a{transition:color .2s ease}
+a:hover{color:#655be6}
+main[style*="background:#fff"],main[style*="background: #fff"],main[style*="background: white"]{
+  background:radial-gradient(ellipse at 12% 5%,rgba(113,101,245,.10),transparent 34%),radial-gradient(ellipse at 88% 35%,rgba(69,185,232,.09),transparent 32%),#f4f6fc!important;
+  color:#202541!important;
+}
+main[style*="background:#fff"] section,main[style*="background: #fff"] section,main[style*="background: white"] section{color:#202541}
+main[style*="background:#fff"] form,main[style*="background: #fff"] form,main[style*="background: white"] form,
+main[style*="background:#fff"] article,main[style*="background: #fff"] article,main[style*="background: white"] article{
+  background:rgba(255,255,255,.92)!important;border:1px solid rgba(111,122,165,.17)!important;
+  border-radius:20px!important;box-shadow:0 14px 38px rgba(35,43,91,.075)!important;
+}
+main[style*="background:#fff"] h1,main[style*="background: #fff"] h1,main[style*="background: white"] h1,
+main[style*="background:#fff"] h2,main[style*="background: #fff"] h2,main[style*="background: white"] h2{color:#25294b!important}
+main[style*="background:#fff"] p,main[style*="background: #fff"] p,main[style*="background: white"] p{color:#77809b}
+main[style*="background:#fff"] a,main[style*="background: #fff"] a,main[style*="background: white"] a{color:#655be6!important}
+main[style*="background:#fff"] button,main[style*="background: #fff"] button,main[style*="background: white"] button{
+  background:linear-gradient(115deg,#7468f5,#527fe9 58%,#42b6dc)!important;color:#fff!important;
+  border:0!important;border-radius:12px!important;box-shadow:0 8px 20px rgba(100,105,230,.20)!important;
+}
+main[style*="background:#fff"] input,main[style*="background: #fff"] input,main[style*="background: white"] input,
+main[style*="background:#fff"] textarea,main[style*="background: #fff"] textarea,main[style*="background: white"] textarea{
+  background:#f7f8fd!important;color:#25294b!important;border:1px solid rgba(111,122,165,.20)!important;border-radius:12px!important;
+}
+main[style*="background:#fff"] button:hover,main[style*="background: #fff"] button:hover,main[style*="background: white"] button:hover{filter:brightness(1.04);transform:translateY(-1px)}
+@media(max-width:600px){main[style*="background:#fff"],main[style*="background: #fff"],main[style*="background: white"]{padding:16px!important}}
