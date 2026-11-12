@@ -290,3 +290,34 @@ class SupportMessage(Base):
     sender_role: Mapped[str] = mapped_column(String(12), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
+class StoryView(Base):
+    __tablename__ = "story_views"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    story_id: Mapped[str] = mapped_column(ForeignKey("stories.id", ondelete="CASCADE"), index=True)
+    viewer_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (UniqueConstraint("story_id", "viewer_id", name="uq_story_viewer"),)
+
+
+class PostView(Base):
+    __tablename__ = "post_views"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    post_id: Mapped[str] = mapped_column(ForeignKey("posts.id", ondelete="CASCADE"), index=True)
+    viewer_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (UniqueConstraint("post_id", "viewer_id", name="uq_post_viewer"),)
+
+
+class SponsoredAd(Base):
+    __tablename__ = "sponsored_ads"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    brand_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    title: Mapped[str] = mapped_column(String(140), nullable=False)
+    body: Mapped[str | None] = mapped_column(Text, nullable=True)
+    destination_url: Mapped[str] = mapped_column(String(2000), nullable=False)
+    media_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), default="pending", nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
