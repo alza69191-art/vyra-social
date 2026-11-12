@@ -15,6 +15,18 @@ services:
         generateValue: true
       - key: CORS_ORIGINS
         value: http://localhost:3000,https://alza69191-art.github.io,https://vyra-web.onrender.com,https://vyra-web-rs1b.onrender.com,https://vyra-social-web.onrender.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: OAUTH_API_BASE_URL
+        value: https://vyra-api-9pxl.onrender.com
+      - key: OAUTH_FRONTEND_URL
+        value: https://vyra-web-rs1b.onrender.com
 
   - type: web
     name: vyra-web
