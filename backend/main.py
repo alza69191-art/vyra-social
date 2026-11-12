@@ -602,6 +602,14 @@ def create_space_conversation(payload: SpaceConversationCreate, claims: dict = D
 def create_direct_conversation(payload: DirectConversationCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     if payload.recipient_id == claims["sub"] or db.get(models.Profile, payload.recipient_id) is None:
         raise HTTPException(status_code=404, detail="User not found")
+    my_conversations = select(models.ConversationMember.conversation_id).where(models.ConversationMember.user_id == claims["sub"])
+    existing = db.scalar(
+        select(models.Conversation).join(models.ConversationMember, models.ConversationMember.conversation_id == models.Conversation.id)
+        .where(models.Conversation.is_group.is_(False), models.Conversation.id.in_(my_conversations),
+               models.ConversationMember.user_id == payload.recipient_id).limit(1)
+    )
+    if existing:
+        return {"id": existing.id, "is_group": False, "title": None}
     conversation = models.Conversation(id=str(uuid4()), is_group=False, created_by=claims["sub"])
     db.add(conversation)
     db.flush()
