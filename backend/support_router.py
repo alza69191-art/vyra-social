@@ -107,3 +107,43 @@ def read_notification(notification_id: str, claims: dict=Depends(current_user), 
     if not row or row.user_id!=claims["sub"]: raise HTTPException(404,"Notification not found")
     row.read_at=datetime.now(timezone.utc); db.commit()
     return {"read":True}
+
+
+@router.get("/friends")
+def list_friends(claims: dict=Depends(current_user), db: Session=Depends(get_db)):
+    uid=claims["sub"]
+    rows=db.scalars(select(models.Friendship).where((models.Friendship.requester_id==uid)|(models.Friendship.addressee_id==uid)).order_by(desc(models.Friendship.created_at))).all()
+    result=[]
+    for f in rows:
+        other=f.addressee_id if f.requester_id==uid else f.requester_id
+        profile=db.get(models.Profile,other)
+        result.append({"id":f.id,"user_id":other,"username":profile.username if profile else "","display_name":profile.display_name if profile else "عضو","avatar_url":profile.avatar_url if profile else None,"status":f.status,"direction":"sent" if f.requester_id==uid else "received"})
+    return result
+
+@router.post("/friends/request/{recipient_id}",status_code=201)
+def request_friend(recipient_id: str, claims: dict=Depends(current_user), db: Session=Depends(get_db)):
+    uid=claims["sub"]
+    if recipient_id==uid: raise HTTPException(400,"Cannot add yourself")
+    if db.get(models.Profile,recipient_id) is None: raise HTTPException(404,"User not found")
+    blocked=db.scalar(select(models.Block).where(((models.Block.blocker_id==uid)&(models.Block.blocked_id==recipient_id))|((models.Block.blocker_id==recipient_id)&(models.Block.blocked_id==uid))))
+    if blocked: raise HTTPException(403,"Friend request unavailable")
+    existing=db.scalar(select(models.Friendship).where(((models.Friendship.requester_id==uid)&(models.Friendship.addressee_id==recipient_id))|((models.Friendship.requester_id==recipient_id)&(models.Friendship.addressee_id==uid))))
+    if existing:
+        if existing.status=="accepted": return {"status":"accepted","id":existing.id}
+        if existing.requester_id==recipient_id: raise HTTPException(409,"This user already sent you a request")
+        raise HTTPException(409,"Friend request already sent")
+    row=models.Friendship(id=str(uuid4()),requester_id=uid,addressee_id=recipient_id,status="pending")
+    db.add(row); db.add(models.Notification(id=str(uuid4()),user_id=recipient_id,actor_id=uid,kind="friend_request",target_id=row.id)); db.commit()
+    return {"id":row.id,"status":row.status}
+
+@router.post("/friends/{friendship_id}/respond")
+def respond_friend(friendship_id: str, action: str=Query(pattern="^(accept|reject)$"), claims: dict=Depends(current_user), db: Session=Depends(get_db)):
+    row=db.get(models.Friendship,friendship_id)
+    if not row or row.addressee_id!=claims["sub"] or row.status!="pending": raise HTTPException(404,"Friend request not found")
+    if action=="accept":
+        row.status="accepted"
+        db.add(models.Notification(id=str(uuid4()),user_id=row.requester_id,actor_id=claims["sub"],kind="friend_accepted",target_id=row.id))
+    else:
+        db.delete(row)
+    db.commit()
+    return {"status":"accepted" if action=="accept" else "rejected"}
