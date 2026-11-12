@@ -107,7 +107,7 @@ function HomeFeed() {
     if (!token) return;
     try {
       const result = await toggleReaction(token, String(id), reaction);
-      setPosts(current => current.map(p => p.id === id ? { ...p, liked: result.reacted, likes: Math.max(0, p.likes + (result.reacted ? 1 : -1)) } : p));
+      setPosts(current => current.map(p => p.id === id ? { ...p, liked: result.reacted, likes: Math.max(0, p.likes + (result.reacted ? (p.liked ? 0 : 1) : -1)) } : p));
       setReactionMenu(null);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "تعذر حفظ التفاعل");
