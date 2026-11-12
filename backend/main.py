@@ -70,6 +70,7 @@ def initialize_schema():
             "direct_messages": {"media_type": "VARCHAR(16) NULL", "edited_at": "DATETIME NULL"},
             "market_listings": {"media_url": "VARCHAR(2000) NULL", "media_type": "VARCHAR(16) NULL"},
             "conversations": {"context_type": "VARCHAR(16) NULL", "context_id": "VARCHAR(36) NULL"},
+            "users": {"email_verified_at": "DATETIME NULL"},
         }
         with engine.begin() as connection:
             for table_name, columns in migrations.items():
