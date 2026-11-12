@@ -184,6 +184,23 @@ def delete_post(post_id: str, claims: dict = Depends(current_user), db: Session 
     return {"deleted": True}
 
 
+class PostUpdate(BaseModel):
+    body: str | None = Field(default=None, max_length=10000)
+    visibility: str = Field(default="public", pattern="^(public|followers|private)$")
+
+
+@app.patch("/api/posts/{post_id}")
+def update_post(post_id: str, payload: PostUpdate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    post = db.get(models.Post, post_id)
+    if post is None or post.author_id != claims["sub"]:
+        raise HTTPException(status_code=404, detail="Post not found")
+    post.body = payload.body.strip() if payload.body else None
+    post.visibility = payload.visibility
+    db.commit()
+    db.refresh(post)
+    return {"id": post.id, "body": post.body, "visibility": post.visibility, "updated": True}
+
+
 @app.get("/api/posts/{post_id}/media")
 def list_post_media(post_id: str, db: Session = Depends(get_db)):
     require_public_post(db, post_id)
