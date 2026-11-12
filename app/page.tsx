@@ -41,7 +41,7 @@ function HomeFeed() {
   const [notice, setNotice] = useState("");
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [sponsoredAds, setSponsoredAds] = useState<Array<{id:string;brand_name:string;title:string;body:string|null;destination_url:string;media_url:string|null}>>([]);
-  useEffect(()=>{fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/$/,"")+"/api/ads?limit=4",{cache:"no-store"}).then(r=>r.ok?r.json():[]).then(setSponsoredAds).catch(()=>setSponsoredAds([]));},[]);
+  useEffect(()=>{fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/+$/,"")+"/api/ads?limit=4",{cache:"no-store"}).then(r=>r.ok?r.json():[]).then(setSponsoredAds).catch(()=>setSponsoredAds([]));},[]);
   useEffect(() => { const token=sessionStorage.getItem("vyra_access_token"); if(!token)return; const load=()=>fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/$/,"")+"/api/notifications",{headers:{Authorization:"Bearer "+token},cache:"no-store"}).then(r=>r.ok?r.json():[]).then(rows=>setUnreadNotifications(rows.filter((n:any)=>!n.read).length)).catch(()=>undefined); load(); const timer=setInterval(load,20000); return()=>clearInterval(timer); },[]);
   const [query, setQuery] = useState("");
   const [focus, setFocus] = useState(false);
