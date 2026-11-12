@@ -22,6 +22,8 @@ function HomeFeed() {
   const [active, setActive] = useState("الرئيسية");
   const [posts, setPosts] = useState<Array<{ id: string | number; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean; media?: Array<{ url: string; media_type: string }> }>>(initialPosts);
   const [draft, setDraft] = useState("");
+  const [visibility, setVisibility] = useState<"public" | "followers" | "private">("public");
+  const [reactionMenu, setReactionMenu] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const mediaInput = useRef<HTMLInputElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -62,7 +64,7 @@ function HomeFeed() {
     if ((!body && selectedFiles.length === 0) || !token) return;
     let createdPostId: string | null = null;
     try {
-      const created = await createPost(token, body, "public");
+      const created = await createPost(token, body, visibility);
       createdPostId = created.id;
       setNotice("جارٍ رفع الصور والفيديوهات...");
       const uploaded: Array<{url:string;media_type:"image"|"video"}> = [];
@@ -72,7 +74,7 @@ function HomeFeed() {
         uploaded.push(...results.map(item => ({ url: item.url, media_type: item.media_type })));
       }
       setPosts(current => [{ id: created.id, name: "أنت", handle: "@your.profile", avatar: "أ", time: "الآن", text: created.body || "", likes: 0, comments: 0, shares: 0, tag: "منشور جديد", liked: false, media: uploaded }, ...current]);
-      setDraft(""); setSelectedFiles([]); setNotice("تم نشر المنشور ورفع الوسائط"); setTimeout(() => setNotice(""), 2500);
+      setDraft(""); setSelectedFiles([]); setVisibility("public"); setNotice("تم نشر المنشور ورفع الوسائط"); setTimeout(() => setNotice(""), 2500);
     } catch (error) {
       if (createdPostId) { try { await deletePost(token, createdPostId); } catch { /* Keep the original publish error visible. */ } }
       setNotice(error instanceof Error ? error.message : "تعذر نشر المنشور");
@@ -100,12 +102,13 @@ function HomeFeed() {
       setNotice(error instanceof Error ? error.message : "تعذر حفظ المنشور.");
     }
   }
-  async function toggleLike(id: string | number) {
+  async function toggleLike(id: string | number, reaction: "like" | "love" | "care" | "haha" | "wow" | "sad" | "angry" = "like") {
     const token = sessionStorage.getItem("vyra_access_token");
     if (!token) return;
     try {
-      const result = await toggleReaction(token, String(id));
+      const result = await toggleReaction(token, String(id), reaction);
       setPosts(current => current.map(p => p.id === id ? { ...p, liked: result.reacted, likes: Math.max(0, p.likes + (result.reacted ? 1 : -1)) } : p));
+      setReactionMenu(null);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "تعذر حفظ التفاعل");
       setTimeout(() => setNotice(""), 3000);
@@ -135,10 +138,10 @@ function HomeFeed() {
           
           <section className="composer-card" id="composer"><div className="composer-top"><span className="avatar avatar-dark">أ</span><button className="composer-input" onClick={()=>document.getElementById("post-input")?.focus()}>بماذا تفكر اليوم؟</button></div>
             <textarea id="post-input" value={draft} onChange={e=>setDraft(e.target.value)} placeholder="اكتب شيئاً يستحق المشاركة..." rows={draft ? 3 : 1}/>{selectedFiles.length>0 && <div style={{display:"flex",gap:8,flexWrap:"wrap",padding:"8px 0"}}>{selectedFiles.map((file,index)=><span key={index} style={{border:"1px solid #000",padding:"5px 9px",borderRadius:8,fontSize:12}}>{file.name}<button type="button" onClick={()=>setSelectedFiles(items=>items.filter((_,i)=>i!==index))} style={{marginInlineStart:8}}>×</button></span>)}</div>}<input ref={mediaInput} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple hidden onChange={e=>{const next=Array.from(e.target.files||[]);const valid=next.filter(file=>{const max=file.type.startsWith("video/")?100:15;if(file.size>max*1024*1024){setNotice(`الحد الأقصى للملف ${max} MB: ${file.name}`);return false;}return true;});setSelectedFiles(current=>[...current,...valid].slice(0,5));e.currentTarget.value="";}}/>
-            <div className="composer-footer"><div className="composer-tools"><button type="button" onClick={()=>mediaInput.current?.click()}><ImageIcon size={18}/> صورة / فيديو</button><button className="emoji-tool" onClick={()=>setDraft(draft+" ✨")}><Smile size={18}/></button></div><button className="publish-button" disabled={!draft.trim() && selectedFiles.length === 0} onClick={publish}>نشر <Send size={15}/></button></div>
+            <div className="composer-footer"><div className="composer-tools"><button type="button" onClick={()=>mediaInput.current?.click()}><ImageIcon size={18}/> صورة / فيديو</button><button className="emoji-tool" onClick={()=>setDraft(draft+" ✨")}><Smile size={18}/></button><label style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#777"}}>الجمهور <select value={visibility} onChange={e=>setVisibility(e.target.value as "public"|"followers"|"private")} style={{border:"1px solid #ddd",borderRadius:7,padding:"5px",background:"#fff",font:"inherit",color:"#222"}}><option value="public">عام</option><option value="followers">المتابعون</option><option value="private">أنا فقط</option></select></label></div><button className="publish-button" disabled={!draft.trim() && selectedFiles.length === 0} onClick={publish}>نشر <Send size={15}/></button></div>
           </section>
           <div className="feed-heading"><div><h2>آخر المنشورات</h2><span>من مجتمعك</span></div><span className="sort-button" aria-label="ترتيب المنشورات">الأحدث أولاً</span></div>
-          {filteredPosts.map(post=><article className="post-card" key={post.id}><div className="post-header">{post.avatar.startsWith("http") ? <img className="avatar avatar-soft" src={post.avatar} alt="" style={{objectFit:"cover"}}/> : <span className="avatar avatar-soft">{post.avatar}</span>}<div className="post-author"><b>{post.name}</b><small>{post.handle} · {post.time}</small></div><button className="icon-button more-button" aria-label="حفظ المنشور" title="حفظ المنشور" onClick={()=>savePost(post.id)}><Bookmark/></button></div><p className="post-text">{post.text}</p>{post.media?.length ? <div style={{display:"grid",gap:8,margin:"12px 0"}}>{post.media.map((item,index)=>item.media_type==="video" ? <video key={index} src={item.url} controls playsInline preload="none" style={{width:"100%",maxHeight:420,borderRadius:12}}/> : <img key={index} src={item.url} alt="وسائط المنشور" loading="lazy" style={{width:"100%",maxHeight:480,objectFit:"contain",borderRadius:12}}/>)}</div> : null}<div className="post-tag"><Hash size={13}/>{post.tag}</div><div className="post-stats"><span>{post.likes} إعجاب</span><span>{post.comments} تعليق</span></div><div className="post-actions"><button className={post.liked?"liked":""} onClick={()=>toggleLike(post.id)}><Heart size={18} fill={post.liked?"currentColor":"none"}/> إعجاب</button><button onClick={()=>openComments(post.id)}><MessageSquare size={18}/> تعليق</button></div></article>)}
+          {filteredPosts.map(post=><article className="post-card" key={post.id}><div className="post-header">{post.avatar.startsWith("http") ? <img className="avatar avatar-soft" src={post.avatar} alt="" style={{objectFit:"cover"}}/> : <span className="avatar avatar-soft">{post.avatar}</span>}<div className="post-author"><b>{post.name}</b><small>{post.handle} · {post.time}</small></div><button className="icon-button more-button" aria-label="حفظ المنشور" title="حفظ المنشور" onClick={()=>savePost(post.id)}><Bookmark/></button></div><p className="post-text">{post.text}</p>{post.media?.length ? <div style={{display:"grid",gap:8,margin:"12px 0"}}>{post.media.map((item,index)=>item.media_type==="video" ? <video key={index} src={item.url} controls playsInline preload="none" style={{width:"100%",maxHeight:420,borderRadius:12}}/> : <img key={index} src={item.url} alt="وسائط المنشور" loading="lazy" style={{width:"100%",maxHeight:480,objectFit:"contain",borderRadius:12}}/>)}</div> : null}<div className="post-tag"><Hash size={13}/>{post.tag}</div><div className="post-stats"><span>{post.likes} إعجاب</span><span>{post.comments} تعليق</span></div><div className="post-actions"><div style={{position:"relative"}}><button className={post.liked?"liked":""} onClick={()=>toggleLike(post.id)} onContextMenu={e=>{e.preventDefault();setReactionMenu(reactionMenu===String(post.id)?null:String(post.id));}}><Heart size={18} fill={post.liked?"currentColor":"none"}/> إعجاب</button><button aria-label="اختيار تفاعل" title="اختيار تفاعل" onClick={()=>setReactionMenu(reactionMenu===String(post.id)?null:String(post.id))} style={{fontSize:10,marginInlineStart:4}}>⌄</button>{reactionMenu===String(post.id)&&<div style={{position:"absolute",bottom:"calc(100% + 8px)",right:0,zIndex:5,display:"flex",gap:5,padding:8,background:"#fff",border:"1px solid #eee",borderRadius:14,boxShadow:"0 8px 30px #0002"}}>{[["👍","like"],["❤️","love"],["🤗","care"],["😂","haha"],["😮","wow"],["😢","sad"],["😡","angry"]].map(([emoji,type])=><button key={type} title={type} onClick={()=>toggleLike(post.id,type as "like"|"love"|"care"|"haha"|"wow"|"sad"|"angry")} style={{fontSize:21,padding:3}}>{emoji}</button>)}</div>}</div><button onClick={()=>openComments(post.id)}><MessageSquare size={18}/> تعليق</button></div></article>)}
           {filteredPosts.length===0 && <div className="empty-state">لا توجد منشورات تطابق بحثك.</div>}
         </div>
         <aside className="right-column">
