@@ -12,12 +12,12 @@ HF_URL = "https://router.huggingface.co/v1/chat/completions"
 CODIV_URL = "https://api.codiv.ai/v1/chat/completions"
 
 
-def _messages(system_prompt: str, prompt: str, history: list[dict] | None) -> list[dict]:
+def _messages(system_prompt: str, prompt: str, history: list[dict] | None, image_data: str | None = None) -> list[dict]:
     result = [{"role": "system", "content": system_prompt}]
     for item in (history or [])[-12:]:
         if isinstance(item, dict) and item.get("role") in ("user", "assistant") and isinstance(item.get("content"), str):
             result.append({"role": item["role"], "content": item["content"][:6000]})
-    result.append({"role": "user", "content": prompt[:12000]})
+    content = [{"type": "text", "text": prompt[:12000]}]\n    if image_data:\n        if not image_data.startswith("data:image/") or len(image_data) > 10_500_000:\n            raise RuntimeError("صيغة الصورة غير مدعومة أو حجمها أكبر من الحد المسموح.")\n        content.append({"type": "image_url", "image_url": {"url": image_data}})\n    result.append({"role": "user", "content": content if image_data else prompt[:12000]})
     return result
 
 
@@ -65,7 +65,7 @@ def _providers(role: str):
 def _run(role: str, system_prompt: str, prompt: str, history: list[dict] | None) -> dict:
     messages = _messages(system_prompt, prompt, history)
     errors = []
-    providers = list(_providers(role))
+    providers = list(_providers(role))\n    if image_data:\n        vision_model = os.getenv("VYRA_VISION_MODEL", "").strip()\n        if not vision_model:\n            raise RuntimeError("تحليل الصور يحتاج ضبط VYRA_VISION_MODEL لموديل يدعم الرؤية في Render.")\n        providers = [(name, url, key, vision_model) for name, url, key, _model in providers]
     if not providers:
         raise RuntimeError("أضف CODIV_API_KEY أو مفتاح مزود ذكاء اصطناعي آخر في Render لتشغيل مساعد VYRA.")
     for name, url, key, model in providers:
@@ -79,7 +79,7 @@ def _run(role: str, system_prompt: str, prompt: str, history: list[dict] | None)
     raise RuntimeError("تعذر الحصول على رد من مزودي الذكاء الاصطناعي المتاحين. " + " | ".join(errors[:3]))
 
 
-def generate_reply(prompt: str, history: list[dict] | None = None) -> dict:
+def generate_reply(prompt: str, history: list[dict] | None = None, image_data: str | None = None) -> dict:
     return _run(
         "assistant",
         "أنت مساعد VYRA الذكي. أجب بلغة المستخدم وباختصار ودقة، واشرح المعلومات وقدّم اقتراحات عملية. "
