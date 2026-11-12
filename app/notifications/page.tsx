@@ -1,0 +1,12 @@
+"use client";
+import {useEffect,useState} from "react";import Link from "next/link";import AuthGate from "@/components/auth-gate";import {ArrowRight,Bell,CheckCheck} from "lucide-react";
+const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/$/,"");
+type N={id:string;kind:string;target_id:string|null;read:boolean;created_at:string};
+function Notifications(){const [rows,setRows]=useState<N[]>([]),[notice,setNotice]=useState("");const token=()=>sessionStorage.getItem("vyra_access_token")||"";
+async function load(){const r=await fetch(API+"/api/notifications",{headers:{Authorization:"Bearer "+token()}});if(r.ok)setRows(await r.json());else setNotice("تعذر تحميل الإشعارات")}
+useEffect(()=>{load();const t=setInterval(load,15000);return()=>clearInterval(t)},[]);
+async function markAll(){await fetch(API+"/api/notifications/read-all",{method:"PUT",headers:{Authorization:"Bearer "+token()}});load()}
+const label=(k:string)=>k==="support_reply"?"رد جديد من الدعم الفني":k==="friend_request"?"طلب صداقة جديد":k==="friend_accepted"?"تم قبول طلب الصداقة":k==="message"?"رسالة جديدة":k==="like"?"تفاعل جديد":k==="comment"?"تعليق جديد": "تحديث جديد في VYRA";
+return <main dir="rtl" style={{maxWidth:800,margin:"35px auto",padding:18,color:"#211f1b"}}><Link href="/" style={{color:"#8a673b",textDecoration:"none"}}><ArrowRight size={16}/> العودة للرئيسية</Link><header style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"24px 0"}}><h1><Bell style={{verticalAlign:"middle"}}/> الإشعارات</h1><button onClick={markAll} style={btn}><CheckCheck size={16}/> تحديد الكل كمقروء</button></header>{notice&&<p>{notice}</p>}{rows.map(n=><Link key={n.id} href={n.kind==="support_reply"&&n.target_id?"/support":"/"} style={{display:"block",padding:15,marginBottom:9,borderRadius:12,background:n.read?"#fff":"#f2eadc",border:"1px solid #eee",color:"inherit",textDecoration:"none"}}><b>{label(n.kind)}</b><small style={{display:"block",color:"#888",marginTop:5}}>{new Date(n.created_at).toLocaleString("ar")}</small></Link>)}{!rows.length&&!notice&&<p style={{color:"#888"}}>لا توجد إشعارات حالياً.</p>}</main>}
+const btn:React.CSSProperties={display:"inline-flex",alignItems:"center",gap:7,padding:"9px 12px",border:0,borderRadius:8,background:"#211f1b",color:"#fff",cursor:"pointer",font:"inherit"};
+export default function Page(){return <AuthGate><Notifications/></AuthGate>}
