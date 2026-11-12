@@ -244,7 +244,7 @@ def create_comment(post_id: str, payload: CommentCreate, claims: dict = Depends(
 
 
 class ReactionPayload(BaseModel):
-    reaction_type: str = Field(default="like", pattern="^(like|love|care|haha|wow|sad|angry)$")
+    reaction_type: str = Field(default="like", pattern="^(like|love|care|haha|wow|sad|angry|dislike)$")
 
 @app.put("/api/posts/{post_id}/reaction")
 def set_reaction(post_id: str, payload: ReactionPayload = ReactionPayload(), claims: dict = Depends(current_user), db: Session = Depends(get_db)):
