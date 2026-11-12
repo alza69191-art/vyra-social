@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { ArrowRight, Bot, LoaderCircle, Send, Sparkles, Copy, Plus, WandSparkles, BrainCircuit, Check, ImagePlus, X, Link2, Unplug, Image as ImageIcon } from "lucide-react";
+import { ArrowRight, Bot, LoaderCircle, Send, Sparkles, Copy, Plus, WandSparkles, BrainCircuit, Check, ImagePlus, X, Link2, Unplug, Image as ImageIcon, Download } from "lucide-react";
 import Link from "next/link";
 import AuthGate from "@/components/auth-gate";
 
@@ -120,6 +120,25 @@ function AIChat() {
     } finally { setBusy(false); }
   }
 
+  async function downloadGeneratedImage(url: string, index: number) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("تعذر تنزيل الصورة.");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `vyra-ai-image-${index + 1}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+      setError("لم يسمح مصدر الصورة بالتنزيل المباشر. فُتحت الصورة في نافذة جديدة؛ يمكنك حفظها منها.");
+    }
+  }
+
   function chooseImage(file?: File) {
     if (!file) return;
     if (!file.type.startsWith("image/")) { setError("يمكن إرفاق الصور فقط حالياً."); return; }
@@ -145,7 +164,7 @@ function AIChat() {
           {!connectedUser && <div style={{ marginTop: 14, padding: 13, borderRadius: 12, background: "#f8f4ec", color: "#70552f", fontSize: 13, lineHeight: 1.8 }}>اربط حساب Puter مرة واحدة لتفعيل الصديق الذكي. الربط اختياري ولا يؤثر على بقية VYRA. تتم معالجة طلبات الذكاء الاصطناعي وفق نظام Puter وحصة حسابك.</div>}
 
           <div style={{ minHeight: 390, maxHeight: "58vh", overflowY: "auto", padding: "18px 2px" }}>
-            {messages.length === 0 ? <div style={{ textAlign: "center", padding: "48px 12px" }}><div style={{ width: 64, height: 64, borderRadius: 22, margin: "0 auto 16px", display: "grid", placeItems: "center", background: "#f3ede3", color: "#9a6a2d" }}><BrainCircuit size={30} /></div><h2 style={{ margin: "0 0 8px" }}>أهلاً، أنا صديقك في VYRA</h2><p style={{ color: "#888", margin: 0 }}>ابدأ محادثة أو اطلب إنشاء صورة.</p></div> : messages.map((m, i) => <article key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-start" : "flex-end", marginBottom: 14 }}><div style={{ maxWidth: "88%", background: m.role === "user" ? "#f4f1eb" : "#211f1b", color: m.role === "user" ? "#211f1b" : "#fff", borderRadius: 16, padding: "13px 15px", lineHeight: 1.9, whiteSpace: "pre-wrap" }}><small style={{ display: "block", opacity: .65, marginBottom: 5 }}>{m.role === "user" ? "أنت" : "صديق VYRA"}</small>{m.imageUrl && <img src={m.imageUrl} alt="مرفق أو صورة مولدة" style={{ display: "block", maxWidth: 300, maxHeight: 260, objectFit: "contain", borderRadius: 10, marginBottom: 8 }} />}{m.content}{m.role === "assistant" && <button onClick={async () => { await navigator.clipboard?.writeText(m.content); setCopied(i); }} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 9, color: "inherit", opacity: .75, fontSize: 11 }}>{copied === i ? <Check size={13} /> : <Copy size={13} />} {copied === i ? "تم النسخ" : "نسخ الإجابة"}</button>}</div></article>)}{busy && <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#8a6334" }}><LoaderCircle size={17} className="animate-spin" /> جارٍ تنفيذ طلبك عبر Puter...</div>}<div ref={bottom} />
+            {messages.length === 0 ? <div style={{ textAlign: "center", padding: "48px 12px" }}><div style={{ width: 64, height: 64, borderRadius: 22, margin: "0 auto 16px", display: "grid", placeItems: "center", background: "#f3ede3", color: "#9a6a2d" }}><BrainCircuit size={30} /></div><h2 style={{ margin: "0 0 8px" }}>أهلاً، أنا صديقك في VYRA</h2><p style={{ color: "#888", margin: 0 }}>ابدأ محادثة أو اطلب إنشاء صورة.</p></div> : messages.map((m, i) => <article key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-start" : "flex-end", marginBottom: 14 }}><div style={{ maxWidth: "88%", background: m.role === "user" ? "#f4f1eb" : "#211f1b", color: m.role === "user" ? "#211f1b" : "#fff", borderRadius: 16, padding: "13px 15px", lineHeight: 1.9, whiteSpace: "pre-wrap" }}><small style={{ display: "block", opacity: .65, marginBottom: 5 }}>{m.role === "user" ? "أنت" : "صديق VYRA"}</small>{m.imageUrl && <img src={m.imageUrl} alt="مرفق أو صورة مولدة" style={{ display: "block", maxWidth: 300, maxHeight: 260, objectFit: "contain", borderRadius: 10, marginBottom: 8 }} />}{m.content}{m.role === "assistant" && <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 9 }}><button onClick={async () => { await navigator.clipboard?.writeText(m.content); setCopied(i); }} style={{ display: "flex", alignItems: "center", gap: 6, color: "inherit", opacity: .75, fontSize: 11 }}>{copied === i ? <Check size={13} /> : <Copy size={13} />} {copied === i ? "تم النسخ" : "نسخ الإجابة"}</button>{m.imageUrl && <button onClick={() => downloadGeneratedImage(m.imageUrl!, i)} style={{ display: "flex", alignItems: "center", gap: 6, color: "inherit", fontSize: 11, fontWeight: 700 }}><Download size={14} /> تنزيل الصورة</button>}</div>}</div></article>)}{busy && <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#8a6334" }}><LoaderCircle size={17} className="animate-spin" /> جارٍ تنفيذ طلبك عبر Puter...</div>}<div ref={bottom} />
           </div>
 
           {error && <p role="alert" style={{ background: "#fff2f0", color: "#b42318", padding: 11, borderRadius: 10 }}>{error}</p>}
