@@ -4,6 +4,8 @@ import os
 import re
 import secrets
 import smtplib
+import json
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from uuid import uuid4
@@ -66,23 +68,43 @@ def auth_result(user: models.User, profile: models.Profile):
 
 
 def _send_verification_email(email: str, code: str):
+    subject = "رمز التحقق من بريدك - VYRA"
+    body = f"مرحباً بك في VYRA. رمز التحقق الخاص بك هو: {code}\nصلاحية الرمز 10 دقائق. إذا لم تطلب إنشاء الحساب فتجاهل هذه الرسالة."
+    resend_key = os.getenv("RESEND_API_KEY", "").strip()
+    sender = (os.getenv("RESEND_FROM") or os.getenv("SMTP_FROM") or "").strip()
+    if resend_key:
+        if not sender:
+            raise RuntimeError("أضف RESEND_FROM بعنوان بريد موثّق لدى Resend.")
+        payload = json.dumps({"from": sender, "to": [email], "subject": subject, "text": body}).encode("utf-8")
+        request = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=payload,
+            headers={"Authorization": f"Bearer {resend_key}", "Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                if response.status not in (200, 201, 202):
+                    raise RuntimeError("تعذر إرسال البريد عبر Resend.")
+        except Exception as exc:
+            raise RuntimeError("تعذر إرسال البريد عبر Resend.") from exc
+        return
     host = os.getenv("SMTP_HOST", "").strip()
     username = os.getenv("SMTP_USER", "").strip()
     password = os.getenv("SMTP_PASSWORD", "")
     sender = os.getenv("SMTP_FROM", username).strip()
     if not all((host, username, password, sender)):
-        raise RuntimeError("خدمة البريد غير مهيأة. أضف SMTP_HOST وSMTP_USER وSMTP_PASSWORD وSMTP_FROM في Render.")
+        raise RuntimeError("أضف RESEND_API_KEY وRESEND_FROM، أو بيانات SMTP في Render.")
     port = int(os.getenv("SMTP_PORT", "587"))
     message = EmailMessage()
-    message["Subject"] = "رمز التحقق من بريدك - VYRA"
+    message["Subject"] = subject
     message["From"] = sender
     message["To"] = email
-    message.set_content(f"مرحباً بك في VYRA. رمز التحقق الخاص بك هو: {code}\nصلاحية الرمز 10 دقائق. إذا لم تطلب إنشاء الحساب فتجاهل هذه الرسالة.")
+    message.set_content(body)
     with smtplib.SMTP(host, port, timeout=20) as server:
         server.starttls()
         server.login(username, password)
         server.send_message(message)
-
 
 def _issue_verification(db: Session, user: models.User):
     code = f"{secrets.randbelow(1_000_000):06d}"
