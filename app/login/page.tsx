@@ -20,7 +20,7 @@ export default function LoginPage(){
   try{
    const response=await fetch(API_BASE+"/api/auth/"+(mode==="signup"?"register":"login"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email.trim().toLowerCase(),password})});
    const data=await response.json().catch(()=>({}));
-   if(!response.ok)throw new Error(data.detail||"تعذر إكمال العملية.");
+   if(!response.ok){if(mode==="signup"&&response.status===503){setVerificationPending(true);setMessage(data.detail||"تم إنشاء الحساب لكن تعذر إرسال رمز التحقق. أعد المحاولة.");return;}throw new Error(data.detail||"تعذر إكمال العملية.");}
    if(data.verification_required){setVerificationPending(true);setMessage("أرسلنا رمز تحقق إلى بريدك. أدخله لإكمال إنشاء الحساب.");return;}
    sessionStorage.setItem("vyra_access_token",data.access_token);sessionStorage.setItem("vyra_user",JSON.stringify(data.user));router.replace("/");router.refresh();
   }catch(e){setError(e instanceof Error?e.message:"تعذر الاتصال بالخادم.");}finally{setBusy(false);}
