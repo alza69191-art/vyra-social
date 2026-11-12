@@ -247,6 +247,9 @@ def create_comment(post_id: str, payload: CommentCreate, claims: dict = Depends(
         raise HTTPException(status_code=409, detail="Profile not found")
     comment = models.Comment(id=str(uuid4()), post_id=post_id, author_id=claims["sub"], body=payload.body)
     db.add(comment)
+    post = db.get(models.Post, post_id)
+    if post and post.author_id != claims["sub"]:
+        db.add(models.Notification(id=str(uuid4()), user_id=post.author_id, actor_id=claims["sub"], kind="comment", target_id=post_id))
     db.commit()
     db.refresh(comment)
     return comment
@@ -271,6 +274,9 @@ def set_reaction(post_id: str, payload: ReactionPayload = ReactionPayload(), cla
         existing.reaction_type = payload.reaction_type
     else:
         db.add(models.Reaction(id=str(uuid4()), post_id=post_id, user_id=claims["sub"], reaction_type=payload.reaction_type))
+        post = db.get(models.Post, post_id)
+        if post and post.author_id != claims["sub"]:
+            db.add(models.Notification(id=str(uuid4()), user_id=post.author_id, actor_id=claims["sub"], kind="reaction", target_id=post_id))
     db.commit()
     return {"reacted": True, "reaction_type": payload.reaction_type}
 
@@ -378,6 +384,8 @@ def follow_page(page_id: str, claims: dict = Depends(current_user), db: Session 
         db.commit()
         return {"following": False}
     db.add(models.PageFollower(id=str(uuid4()), page_id=page_id, user_id=claims["sub"]))
+    if page.owner_id != claims["sub"]:
+        db.add(models.Notification(id=str(uuid4()), user_id=page.owner_id, actor_id=claims["sub"], kind="page_follow", target_id=page_id))
     if room and db.scalar(select(models.ConversationMember).where(models.ConversationMember.conversation_id == room.id, models.ConversationMember.user_id == claims["sub"])) is None:
         db.add(models.ConversationMember(id=str(uuid4()), conversation_id=room.id, user_id=claims["sub"]))
     db.commit()
