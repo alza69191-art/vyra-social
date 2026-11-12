@@ -1,99 +1,16 @@
 "use client";
-
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AuthGate from "@/components/auth-gate";
 import { getMyProfile, saveProfile, uploadMedia, type VyraProfile } from "@/lib/vyra-api";
-
-export default function AccountPage() {
-  return <AuthGate><AccountEditor /></AuthGate>;
+import { ArrowRight, ShieldCheck, UserRound, ImagePlus, LockKeyhole, LogOut, Sparkles } from "lucide-react";
+export default function AccountPage(){return <AuthGate><AccountEditor/></AuthGate>}
+function AccountEditor(){
+ const router=useRouter();const [profile,setProfile]=useState<VyraProfile|null>(null),[username,setUsername]=useState(""),[displayName,setDisplayName]=useState(""),[bio,setBio]=useState(""),[isPrivate,setIsPrivate]=useState(false),[busy,setBusy]=useState(true),[message,setMessage]=useState(""),[uploading,setUploading]=useState(false);
+ useEffect(()=>{const token=sessionStorage.getItem("vyra_access_token");if(!token)return;getMyProfile(token).then(v=>{setProfile(v);setUsername(v.username);setDisplayName(v.display_name);setBio(v.bio||"");setIsPrivate(v.is_private)}).catch(e=>setMessage(e instanceof Error?e.message:"تعذر تحميل الحساب")).finally(()=>setBusy(false))},[]);
+ async function media(file:File|undefined,purpose:"avatar"|"cover"){if(!file)return;const token=sessionStorage.getItem("vyra_access_token");if(!token){router.replace("/login");return}setUploading(true);try{const result=await uploadMedia(token,file,purpose);setProfile(v=>v?{...v,...(purpose==="avatar"?{avatar_url:result.url}:{cover_url:result.url})}:v);setMessage("تم تحديث الصورة بنجاح")}catch(e){setMessage(e instanceof Error?e.message:"تعذر رفع الصورة")}finally{setUploading(false)}}
+ async function submit(e:FormEvent){e.preventDefault();const token=sessionStorage.getItem("vyra_access_token");if(!token){router.replace("/login");return}setBusy(true);try{const saved=await saveProfile(token,{username,display_name:displayName,bio:bio||null,is_private:isPrivate});setProfile(v=>({...v!,...saved}));setMessage("تم حفظ إعدادات الحساب")}catch(e){setMessage(e instanceof Error?e.message:"تعذر حفظ التغييرات")}finally{setBusy(false)}}
+ return <main dir="rtl" style={{minHeight:"100vh",background:"#f5f3ef",padding:"30px 18px",color:"#211f1b"}}><section style={{maxWidth:850,margin:"auto"}}><Link href="/" style={{display:"inline-flex",alignItems:"center",gap:8,color:"#777",textDecoration:"none"}}><ArrowRight size={17}/> العودة إلى VYRA</Link><header style={{margin:"28px 0"}}><small style={{color:"#a47742",letterSpacing:2,fontWeight:800}}>ACCOUNT CENTER</small><h1 style={{fontSize:36,margin:"6px 0"}}>مركز الحساب</h1><p style={{color:"#777"}}>إدارة الهوية والخصوصية والأمان من مكان واحد.</p></header><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:16}}><section style={panel}><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>{profile?.avatar_url?<img src={profile.avatar_url} alt="" style={{width:68,height:68,borderRadius:20,objectFit:"cover"}}/>:<div style={avatar}>V</div>}<div><h2 style={{margin:0}}>{profile?.display_name||"حسابك"}</h2><small style={{color:"#888"}}>@{profile?.username||"member"}</small></div></div>{profile?.cover_url&&<img src={profile.cover_url} alt="" style={{width:"100%",height:110,objectFit:"cover",borderRadius:12,marginBottom:12}}/>}<label style={upload}><ImagePlus size={17}/> تغيير الصورة الشخصية<input hidden type="file" accept="image/*" disabled={uploading} onChange={e=>{media(e.target.files?.[0],"avatar");e.currentTarget.value=""}}/></label><label style={upload}><ImagePlus size={17}/> تغيير صورة الغلاف<input hidden type="file" accept="image/*" disabled={uploading} onChange={e=>{media(e.target.files?.[0],"cover");e.currentTarget.value=""}}/></label>{uploading&&<small>جارٍ رفع الصورة...</small>}</section><section style={panel}><h2 style={{display:"flex",alignItems:"center",gap:9,fontSize:18}}><UserRound/> معلومات الملف</h2>{busy&&!profile?<p>جارٍ التحميل...</p>:<form onSubmit={submit} style={{display:"grid",gap:13}}><label style={label}>اسم العرض<input required maxLength={80} value={displayName} onChange={e=>setDisplayName(e.target.value)} style={field}/></label><label style={label}>اسم المستخدم<input required minLength={3} maxLength={30} pattern="[A-Za-z0-9_.]+" value={username} onChange={e=>setUsername(e.target.value)} style={field}/></label><label style={label}>نبذة عنك<textarea rows={3} maxLength={300} value={bio} onChange={e=>setBio(e.target.value)} style={field}/></label><label style={{display:"flex",alignItems:"center",gap:10,padding:12,background:"#f8f6f2",borderRadius:11}}><input type="checkbox" checked={isPrivate} onChange={e=>setIsPrivate(e.target.checked)}/><LockKeyhole size={16}/> حساب خاص</label><button disabled={busy} style={primary}>{busy?"جارٍ الحفظ...":"حفظ التغييرات"}</button></form>}</section><section style={{...panel,gridColumn:"1/-1"}}><h2 style={{display:"flex",alignItems:"center",gap:9,fontSize:18}}><ShieldCheck/> الخصوصية والأمان</h2><div style={row}><span><b>حالة الحساب</b><small>تحكم بمن يستطيع مشاهدة محتواك</small></span><strong>{isPrivate?"خاص":"عام"}</strong></div><div style={row}><span><b>جلسة الدخول</b><small>إنهاء الجلسة الحالية على هذا الجهاز</small></span><button style={danger} onClick={()=>{sessionStorage.removeItem("vyra_access_token");sessionStorage.removeItem("vyra_user");router.replace("/login")}}><LogOut size={15}/> تسجيل الخروج</button></div><div style={row}><span><b>تجربة VYRA</b><small>أدواتك الاجتماعية والذكاء الاصطناعي في مكان واحد</small></span><Sparkles color="#a47742"/></div></section></div>{message&&<p role="status" style={{background:"#211f1b",color:"#fff",padding:13,borderRadius:11,marginTop:16}}>{message}</p>}</section></main>
 }
-
-function AccountEditor() {
-  const router = useRouter();
-  const [profile, setProfile] = useState<VyraProfile | null>(null);
-  const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [bio, setBio] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [busy, setBusy] = useState(true);
-  const [message, setMessage] = useState("");
-  const [uploading, setUploading] = useState(false);
-
-  useEffect(() => {
-    const token = sessionStorage.getItem("vyra_access_token");
-    if (!token) return;
-    getMyProfile(token).then(value => {
-      setProfile(value);
-      setUsername(value.username);
-      setDisplayName(value.display_name);
-      setBio(value.bio || "");
-      setIsPrivate(value.is_private);
-    }).catch(error => setMessage(error instanceof Error ? error.message : "تعذر تحميل الحساب"))
-      .finally(() => setBusy(false));
-  }, []);
-
-  async function handleMediaUpload(file: File | undefined, purpose: "avatar" | "cover") {
-    if (!file) return;
-    const token = sessionStorage.getItem("vyra_access_token");
-    if (!token) { router.replace("/login"); return; }
-    setUploading(true); setMessage("");
-    try {
-      const result = await uploadMedia(token, file, purpose);
-      setProfile(current => current ? { ...current, ...(purpose === "avatar" ? { avatar_url: result.url } : { cover_url: result.url }) } : current);
-      setMessage(purpose === "avatar" ? "تم تحديث الصورة الشخصية." : "تم تحديث صورة الغلاف.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "تعذر رفع الصورة.");
-    } finally { setUploading(false); }
-  }
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    const token = sessionStorage.getItem("vyra_access_token");
-    if (!token) { router.replace("/login"); return; }
-    setBusy(true);
-    setMessage("");
-    try {
-      const saved = await saveProfile(token, { username, display_name: displayName, bio: bio || null, is_private: isPrivate });
-      setProfile({ ...profile!, ...saved });
-      setMessage("تم حفظ تغييرات الملف الشخصي.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "تعذر حفظ التغييرات.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return <main dir="rtl" style={{minHeight:"100vh",padding:"32px 18px",background:"#ffffff"}}>
-    <section style={{maxWidth:620,margin:"0 auto",background:"#ffffff",border:"1px solid #000000",borderRadius:18,padding:24}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-        <Link href="/" style={{color:"#000000",textDecoration:"none"}}>← العودة إلى VYRA</Link>
-        <button type="button" onClick={() => { sessionStorage.removeItem("vyra_access_token"); sessionStorage.removeItem("vyra_user"); router.replace("/login"); }} style={{border:"1px solid #000",borderRadius:9,padding:"9px 13px",background:"#fff",color:"#000"}}>تسجيل الخروج</button>
-      </div>
-      <h1 style={{fontSize:25,margin:"24px 0 6px"}}>الملف الشخصي</h1>
-      <p style={{color:"#000000",marginTop:0}}>عدّل معلومات حسابك واحفظها في قاعدة البيانات.</p>
-      {profile && <div style={{display:"grid",gap:12,margin:"18px 0"}}>
-        <div style={{display:"flex",alignItems:"center",gap:14}}>
-          {profile.avatar_url ? <img src={profile.avatar_url} alt="الصورة الشخصية" style={{width:76,height:76,objectFit:"cover",borderRadius:"50%",border:"1px solid #000"}}/> : <div style={{width:76,height:76,borderRadius:"50%",border:"1px solid #000",display:"grid",placeItems:"center"}}>VYRA</div>}
-          <label style={{display:"grid",gap:6}}>الصورة الشخصية<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploading} onChange={e=>{handleMediaUpload(e.target.files?.[0],"avatar");e.currentTarget.value="";}}/></label>
-        </div>
-        <div style={{display:"grid",gap:8}}>
-          {profile.cover_url && <img src={profile.cover_url} alt="صورة الغلاف" style={{width:"100%",maxHeight:150,objectFit:"cover",border:"1px solid #000",borderRadius:10}}/>}
-          <label style={{display:"grid",gap:6}}>صورة الغلاف<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploading} onChange={e=>{handleMediaUpload(e.target.files?.[0],"cover");e.currentTarget.value="";}}/></label>
-        </div>
-        {uploading && <p>جارٍ رفع الصورة...</p>}
-      </div> }
-      {busy && !profile ? <p>جارٍ تحميل بيانات الحساب...</p> : <form onSubmit={submit} style={{display:"grid",gap:16,marginTop:24}}>
-        <label style={{display:"grid",gap:7}}>اسم العرض<input required maxLength={80} value={displayName} onChange={e=>setDisplayName(e.target.value)} style={field}/></label>
-        <label style={{display:"grid",gap:7}}>اسم المستخدم<input required minLength={3} maxLength={30} pattern="[A-Za-z0-9_.]+" value={username} onChange={e=>setUsername(e.target.value)} style={field}/></label>
-        <label style={{display:"grid",gap:7}}>نبذة عنك<textarea maxLength={300} rows={4} value={bio} onChange={e=>setBio(e.target.value)} style={field}/></label>
-        <label style={{display:"flex",alignItems:"center",gap:9}}><input type="checkbox" checked={isPrivate} onChange={e=>setIsPrivate(e.target.checked)}/> حساب خاص</label>
-        <button disabled={busy} style={{background:"#000000",color:"#fff",border:0,borderRadius:10,padding:13,cursor:"pointer"}}>{busy ? "جارٍ الحفظ..." : "حفظ التغييرات"}</button>
-      </form>}
-      {message && <p role="status" style={{marginTop:16,color:"#000000"}}>{message}</p>}
-    </section>
-  </main>;
-}
-
-const field = {width:"100%",padding:12,border:"1px solid #000000",borderRadius:9,font:"inherit",background:"#fff"} as const;
+const panel={background:"#fff",border:"1px solid #e9e4dc",borderRadius:18,padding:22,boxShadow:"0 8px 28px #29201408"} as const,avatar={width:68,height:68,borderRadius:20,background:"#211f1b",color:"#fff",display:"grid",placeItems:"center",fontSize:24} as const,upload={display:"flex",alignItems:"center",gap:9,padding:12,border:"1px solid #e9e4dc",borderRadius:11,marginTop:10,cursor:"pointer",color:"#66543d"} as const,label={display:"grid",gap:7,fontSize:13,fontWeight:700} as const,field={width:"100%",padding:12,border:"1px solid #e2ddd4",borderRadius:10,font:"inherit",background:"#fff"} as const,primary={padding:13,background:"linear-gradient(120deg,#211f1b,#6d4d2c)",color:"#fff",border:0,borderRadius:11,fontWeight:700,cursor:"pointer"} as const,row={display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,padding:"14px 0",borderTop:"1px solid #eee"} as const,danger={display:"flex",alignItems:"center",gap:7,padding:"9px 12px",border:"1px solid #f0d0ce",background:"#fff7f6",color:"#b42318",borderRadius:9,cursor:"pointer"} as const;
