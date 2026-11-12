@@ -11,7 +11,7 @@ type PuterSDK = {
   auth: { isSignedIn: () => boolean; signIn: () => Promise<unknown>; signOut: () => Promise<unknown>; getUser: () => Promise<PuterUser> };
   ai: {
     chat: (prompt: string | Array<{role:string;content:unknown}>, mediaOrOptions?: File | {model?:string}, options?: {model?:string}) => Promise<PuterResponse | string>;
-    txt2img: (prompt: string, options?: { test_mode?: boolean }) => Promise<HTMLImageElement>;
+    txt2img: (prompt: string, options?: { test_mode?: boolean; model?: string }) => Promise<HTMLImageElement>;
   };
 };
 declare global { interface Window { puter?: PuterSDK } }
@@ -101,10 +101,10 @@ function AIChat() {
     setMessages(next); setBusy(true);
     try {
       if (toolMode === "image") {
-        const result = await window.puter.ai.chat(prompt || "أنشئ صورة إبداعية.", { model: "gemini-3.1-flash-image-preview" });
-        const text = responseText(result);
-        const generated = typeof result === "object" ? result.message?.images?.[0]?.image_url?.url : undefined;
-        setMessages([...next, { role: "assistant", content: text, ...(generated ? { imageUrl: generated } : {}) }]);
+        const generatedImage = await window.puter.ai.txt2img(prompt || "أنشئ صورة إبداعية.");
+        const generated = generatedImage?.src;
+        if (!generated) throw new Error("اكتمل الطلب لكن لم يرجع Puter رابط الصورة.");
+        setMessages([...next, { role: "assistant", content: "تم إنشاء الصورة بنجاح. يمكنك عرضها أو تنزيلها من الزر أدناه.", imageUrl: generated }]);
       } else {
         const result = await window.puter.ai.chat(
           prompt || "حلّل الصورة المرفقة ووصف ما تراه بدقة.",
@@ -132,7 +132,7 @@ function AIChat() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(objectUrl);
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch {
       window.open(url, "_blank", "noopener,noreferrer");
       setError("لم يسمح مصدر الصورة بالتنزيل المباشر. فُتحت الصورة في نافذة جديدة؛ يمكنك حفظها منها.");
