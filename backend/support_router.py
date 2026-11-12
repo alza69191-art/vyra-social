@@ -26,6 +26,16 @@ def is_support_admin(claims: dict, db: Session) -> bool:
     user = db.get(models.User, claims["sub"])
     return bool(user and ((configured_id and user.id == configured_id) or (configured_email and user.email.lower() == configured_email)))
 
+def support_admin_profile_id(db: Session):
+    configured_id = os.getenv("SUPPORT_ADMIN_USER_ID", "").strip()
+    if configured_id and db.get(models.Profile, configured_id):
+        return configured_id
+    configured_email = os.getenv("SUPPORT_ADMIN_EMAIL", "").strip().lower()
+    if configured_email:
+        return db.scalar(select(models.User.id).where(func.lower(models.User.email) == configured_email))
+    return None
+
+
 def ticket_view(ticket, db):
     profile = db.get(models.Profile, ticket.user_id)
     last = db.scalar(select(models.SupportMessage).where(models.SupportMessage.ticket_id == ticket.id).order_by(desc(models.SupportMessage.created_at)).limit(1))
@@ -45,6 +55,9 @@ def create_ticket(payload: TicketCreate, claims: dict=Depends(current_user), db:
     ticket=models.SupportTicket(id=str(uuid4()),user_id=uid,subject=payload.subject.strip(),status="open")
     db.add(ticket)
     db.add(models.SupportMessage(id=str(uuid4()),ticket_id=ticket.id,sender_id=uid,sender_role="user",body=payload.message.strip()))
+    admin_id = support_admin_profile_id(db)
+    if admin_id and admin_id != uid:
+        db.add(models.Notification(id=str(uuid4()), user_id=admin_id, actor_id=uid, kind="support_new_ticket", target_id=ticket.id))
     db.commit(); db.refresh(ticket)
     return ticket_view(ticket,db)
 
@@ -77,6 +90,10 @@ def send_ticket_message(ticket_id: str, payload: MessageCreate, claims: dict=Dep
     ticket.updated_at=datetime.now(timezone.utc)
     if admin:
         db.add(models.Notification(id=str(uuid4()),user_id=ticket.user_id,actor_id=claims["sub"],kind="support_reply",target_id=ticket.id))
+    else:
+        admin_id = support_admin_profile_id(db)
+        if admin_id and admin_id != claims["sub"]:
+            db.add(models.Notification(id=str(uuid4()),user_id=admin_id,actor_id=claims["sub"],kind="support_message",target_id=ticket.id))
     db.commit()
     return {"sent":True}
 
