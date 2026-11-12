@@ -3,7 +3,7 @@ from uuid import uuid4
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from sqlalchemy import select, desc, func
+from sqlalchemy import select, desc, func, inspect, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
@@ -60,8 +60,19 @@ def get_db():
 @app.on_event("startup")
 def initialize_schema():
     if engine is not None:
-        # SQLAlchemy creates missing tables using the active TiDB/MySQL dialect.
+        # Create new tables and safely add optional fields to existing spaces.
         Base.metadata.create_all(bind=engine)
+        inspector = inspect(engine)
+        migrations = {
+            "social_groups": {"avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
+            "social_pages": {"privacy": "VARCHAR(16) NOT NULL DEFAULT 'public'", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
+        }
+        with engine.begin() as connection:
+            for table_name, columns in migrations.items():
+                existing = {column["name"] for column in inspector.get_columns(table_name)}
+                for column_name, column_type in columns.items():
+                    if column_name not in existing:
+                        connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"))
 
 
 @app.get("/")
@@ -260,6 +271,8 @@ class SocialSpaceCreate(BaseModel):
     description: str | None = Field(default=None, max_length=2000)
     privacy: str = Field(default="public", pattern="^(public|private)$")
     category: str | None = Field(default=None, max_length=60)
+    avatar_url: str | None = Field(default=None, max_length=2000)
+    cover_url: str | None = Field(default=None, max_length=2000)
 
 
 @app.get("/api/groups")
@@ -272,7 +285,8 @@ def list_groups(db: Session = Depends(get_db)):
         .group_by(models.GroupMember.group_id)
     ).all()) if ids else {}
     return [{"id": g.id, "name": g.name, "description": g.description, "privacy": g.privacy,
-             "owner_id": g.owner_id, "members": counts.get(g.id, 0)}
+             "owner_id": g.owner_id, "members": counts.get(g.id, 0),
+             "avatar_url": g.avatar_url, "cover_url": g.cover_url}
             for g in groups]
 
 
@@ -281,13 +295,13 @@ def create_group(payload: SocialSpaceCreate, claims: dict = Depends(current_user
     if db.get(models.Profile, claims["sub"]) is None:
         raise HTTPException(status_code=409, detail="Profile not found")
     group = models.SocialGroup(id=str(uuid4()), owner_id=claims["sub"], name=payload.name.strip(),
-                               description=payload.description, privacy=payload.privacy)
+                               description=payload.description, privacy=payload.privacy, avatar_url=payload.avatar_url, cover_url=payload.cover_url)
     db.add(group)
     db.flush()
     db.add(models.GroupMember(id=str(uuid4()), group_id=group.id, user_id=claims["sub"], role="owner", status="active"))
     db.commit()
     db.refresh(group)
-    return {"id": group.id, "name": group.name, "description": group.description, "privacy": group.privacy, "owner_id": group.owner_id, "members": 1}
+    return {"id": group.id, "name": group.name, "description": group.description, "privacy": group.privacy, "owner_id": group.owner_id, "members": 1, "avatar_url": group.avatar_url, "cover_url": group.cover_url}
 
 
 @app.post("/api/groups/{group_id}/join")
@@ -313,7 +327,8 @@ def list_pages(db: Session = Depends(get_db)):
         .group_by(models.PageFollower.page_id)
     ).all()) if ids else {}
     return [{"id": p.id, "name": p.name, "description": p.description, "category": p.category,
-             "owner_id": p.owner_id, "followers": counts.get(p.id, 0)}
+             "owner_id": p.owner_id, "followers": counts.get(p.id, 0),
+             "privacy": p.privacy, "avatar_url": p.avatar_url, "cover_url": p.cover_url}
             for p in pages]
 
 
@@ -322,11 +337,12 @@ def create_page(payload: SocialSpaceCreate, claims: dict = Depends(current_user)
     if db.get(models.Profile, claims["sub"]) is None:
         raise HTTPException(status_code=409, detail="Profile not found")
     page = models.SocialPage(id=str(uuid4()), owner_id=claims["sub"], name=payload.name.strip(),
-                             description=payload.description, category=payload.category)
+                             description=payload.description, category=payload.category, privacy=payload.privacy, avatar_url=payload.avatar_url, cover_url=payload.cover_url)
     db.add(page)
     db.commit()
     db.refresh(page)
-    return {"id": page.id, "name": page.name, "description": page.description, "category": page.category, "owner_id": page.owner_id, "followers": 0}
+    return {"id": page.id, "name": page.name, "description": page.description, "category": page.category, "owner_id": page.owner_id, "followers": 0, "privacy": page.privacy,
+            "avatar_url": page.avatar_url, "cover_url": page.cover_url}
 
 
 @app.post("/api/pages/{page_id}/follow")
@@ -372,6 +388,38 @@ def toggle_bookmark(post_id: str, claims: dict = Depends(current_user), db: Sess
         db.rollback()
         return {"saved": True}
     return {"saved": True}
+
+
+class MarketStoreCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    description: str | None = Field(default=None, max_length=2000)
+    category: str = Field(min_length=2, max_length=60)
+    audience: str = Field(default="public", pattern="^(public|private)$")
+    avatar_url: str | None = Field(default=None, max_length=2000)
+    cover_url: str | None = Field(default=None, max_length=2000)
+
+
+@app.get("/api/market/stores")
+def list_market_stores(db: Session = Depends(get_db)):
+    rows = db.scalars(select(models.MarketStore).where(models.MarketStore.audience == "public").order_by(desc(models.MarketStore.created_at)).limit(100)).all()
+    return [{"id": row.id, "name": row.name, "description": row.description, "category": row.category,
+             "audience": row.audience, "owner_id": row.owner_id, "avatar_url": row.avatar_url,
+             "cover_url": row.cover_url, "created_at": row.created_at} for row in rows]
+
+
+@app.post("/api/market/stores", status_code=201)
+def create_market_store(payload: MarketStoreCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    if db.get(models.Profile, claims["sub"]) is None:
+        raise HTTPException(status_code=409, detail="Profile not found")
+    store = models.MarketStore(id=str(uuid4()), owner_id=claims["sub"], name=payload.name.strip(),
+        description=payload.description, category=payload.category.strip(), audience=payload.audience,
+        avatar_url=payload.avatar_url, cover_url=payload.cover_url)
+    db.add(store)
+    db.commit()
+    db.refresh(store)
+    return {"id": store.id, "name": store.name, "description": store.description, "category": store.category,
+            "audience": store.audience, "owner_id": store.owner_id, "avatar_url": store.avatar_url,
+            "cover_url": store.cover_url, "created_at": store.created_at}
 
 
 class MarketListingCreate(BaseModel):
