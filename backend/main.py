@@ -313,8 +313,16 @@ def join_group(group_id: str, claims: dict = Depends(current_user), db: Session 
         raise HTTPException(status_code=404, detail="Public group not found")
     existing = db.scalar(select(models.GroupMember).where(models.GroupMember.group_id == group_id, models.GroupMember.user_id == claims["sub"]))
     if existing:
-        return {"joined": existing.status == "active"}
-    db.add(models.GroupMember(id=str(uuid4()), group_id=group_id, user_id=claims["sub"], role="member", status="active"))
+        if existing.status != "active":
+            existing.status = "active"
+            db.flush()
+        else:
+            return {"joined": True}
+    else:
+        db.add(models.GroupMember(id=str(uuid4()), group_id=group_id, user_id=claims["sub"], role="member", status="active"))
+    room = db.scalar(select(models.Conversation).where(models.Conversation.context_type == "group", models.Conversation.context_id == group_id))
+    if room and db.scalar(select(models.ConversationMember).where(models.ConversationMember.conversation_id == room.id, models.ConversationMember.user_id == claims["sub"])) is None:
+        db.add(models.ConversationMember(id=str(uuid4()), conversation_id=room.id, user_id=claims["sub"]))
     db.commit()
     return {"joined": True}
 
@@ -353,11 +361,18 @@ def follow_page(page_id: str, claims: dict = Depends(current_user), db: Session 
     if page is None or page.privacy != "public":
         raise HTTPException(status_code=404, detail="Page not found")
     existing = db.scalar(select(models.PageFollower).where(models.PageFollower.page_id == page_id, models.PageFollower.user_id == claims["sub"]))
+    room = db.scalar(select(models.Conversation).where(models.Conversation.context_type == "page", models.Conversation.context_id == page_id))
     if existing:
         db.delete(existing)
+        if room:
+            room_member = db.scalar(select(models.ConversationMember).where(models.ConversationMember.conversation_id == room.id, models.ConversationMember.user_id == claims["sub"]))
+            if room_member:
+                db.delete(room_member)
         db.commit()
         return {"following": False}
     db.add(models.PageFollower(id=str(uuid4()), page_id=page_id, user_id=claims["sub"]))
+    if room and db.scalar(select(models.ConversationMember).where(models.ConversationMember.conversation_id == room.id, models.ConversationMember.user_id == claims["sub"])) is None:
+        db.add(models.ConversationMember(id=str(uuid4()), conversation_id=room.id, user_id=claims["sub"]))
     db.commit()
     return {"following": True}
 
