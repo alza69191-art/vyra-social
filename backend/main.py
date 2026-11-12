@@ -67,7 +67,7 @@ def initialize_schema():
         migrations = {
             "social_groups": {"category": "VARCHAR(60) NULL", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
             "social_pages": {"privacy": "VARCHAR(16) NOT NULL DEFAULT 'public'", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
-            "direct_messages": {"media_type": "VARCHAR(16) NULL"},
+            "direct_messages": {"media_type": "VARCHAR(16) NULL", "edited_at": "DATETIME NULL"},
             "conversations": {"context_type": "VARCHAR(16) NULL", "context_id": "VARCHAR(36) NULL"},
         }
         with engine.begin() as connection:
@@ -515,6 +515,12 @@ class DirectMessageCreate(BaseModel):
     media_type: str | None = Field(default=None, pattern="^(image|video|audio)$")
 
 
+class DirectMessageUpdate(BaseModel):
+    body: str | None = Field(default=None, max_length=5000)
+    media_url: str | None = Field(default=None, max_length=2000)
+    media_type: str | None = Field(default=None, pattern="^(image|video|audio)$")
+
+
 @app.get("/api/people")
 def search_people(q: str = Query(default="", max_length=80), claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     query = select(models.Profile).where(models.Profile.id != claims["sub"])
@@ -686,7 +692,58 @@ def send_conversation_message(conversation_id: str, payload: DirectMessageCreate
     db.commit()
     db.refresh(message)
     return {"id": message.id, "sender_id": message.sender_id, "body": message.body, "media_url": message.media_url,
-        "media_type": message.media_type, "created_at": message.created_at, "read_at": message.read_at}
+        "media_type": message.media_type, "created_at": message.created_at, "read_at": message.read_at, "edited_at": message.edited_at}
+
+
+@app.patch("/api/conversations/{conversation_id}/messages/{message_id}")
+def edit_conversation_message(conversation_id: str, message_id: str, payload: DirectMessageUpdate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    member = db.scalar(select(models.ConversationMember).where(
+        models.ConversationMember.conversation_id == conversation_id,
+        models.ConversationMember.user_id == claims["sub"],
+    ))
+    if member is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    message = db.scalar(select(models.DirectMessage).where(
+        models.DirectMessage.id == message_id,
+        models.DirectMessage.conversation_id == conversation_id,
+    ))
+    if message is None or message.sender_id != claims["sub"]:
+        raise HTTPException(status_code=404, detail="Message not found")
+    fields = payload.model_fields_set
+    if "body" in fields:
+        message.body = (payload.body or "").strip()
+    if "media_url" in fields:
+        message.media_url = payload.media_url
+        message.media_type = payload.media_type if payload.media_url else None
+    elif "media_type" in fields:
+        message.media_type = payload.media_type
+    if not message.body and not message.media_url:
+        raise HTTPException(status_code=422, detail="Message cannot be empty")
+    message.edited_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(message)
+    return {"id": message.id, "sender_id": message.sender_id, "body": message.body,
+        "media_url": message.media_url, "media_type": message.media_type,
+        "created_at": message.created_at, "read_at": message.read_at, "edited_at": message.edited_at}
+
+
+@app.delete("/api/conversations/{conversation_id}/messages/{message_id}")
+def delete_conversation_message(conversation_id: str, message_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    member = db.scalar(select(models.ConversationMember).where(
+        models.ConversationMember.conversation_id == conversation_id,
+        models.ConversationMember.user_id == claims["sub"],
+    ))
+    if member is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    message = db.scalar(select(models.DirectMessage).where(
+        models.DirectMessage.id == message_id,
+        models.DirectMessage.conversation_id == conversation_id,
+    ))
+    if message is None or message.sender_id != claims["sub"]:
+        raise HTTPException(status_code=404, detail="Message not found")
+    db.delete(message)
+    db.commit()
+    return {"deleted": True}
 
 
 class AIMessage(BaseModel):
