@@ -32,7 +32,6 @@ function CallRoom(){
      interfaceConfigOverwrite:{APP_NAME:"VYRA Calls",MOBILE_APP_PROMO:false,SHOW_JITSI_WATERMARK:false,SHOW_BRAND_WATERMARK:false},
     });
     api.current=instance;setStatus("المكالمة جاهزة. اسمح للمتصفح باستخدام الميكروفون والكاميرا.");
-    instance.dispose=instance.dispose.bind(instance);
    }catch{setStatus("تعذر فتح غرفة المكالمة.");setFailed(true);}
   };
   if(window.JitsiMeetExternalAPI){start();}
