@@ -763,11 +763,3 @@ def ai_chat(payload: AIMessage, claims: dict = Depends(current_user)):
         return generate_reply(payload.prompt.strip(), payload.history, payload.image_data)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
-
-
-@app.post("/api/ai/agent")
-def ai_agent(payload: AIMessage, claims: dict = Depends(current_user)):
-    try:
-        return generate_agent_reply(payload.prompt.strip(), payload.history)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
