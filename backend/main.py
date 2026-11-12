@@ -707,6 +707,13 @@ def send_conversation_message(conversation_id: str, payload: DirectMessageCreate
     message = models.DirectMessage(id=str(uuid4()), sender_id=claims["sub"], recipient_id=claims["sub"],
         conversation_id=conversation_id, body=payload.body.strip(), media_url=payload.media_url, media_type=payload.media_type)
     db.add(message)
+    recipients = db.scalars(select(models.ConversationMember.user_id).where(
+        models.ConversationMember.conversation_id == conversation_id,
+        models.ConversationMember.user_id != claims["sub"],
+    )).all()
+    for recipient_id in recipients:
+        db.add(models.Notification(id=str(uuid4()), user_id=recipient_id, actor_id=claims["sub"],
+                                   kind="message", target_id=conversation_id))
     db.commit()
     db.refresh(message)
     return {"id": message.id, "sender_id": message.sender_id, "body": message.body, "media_url": message.media_url,
