@@ -58,7 +58,7 @@ async def upload_media(
     else:
         raise HTTPException(status_code=415, detail="Only JPG, PNG, WEBP, GIF, MP4, WEBM, MOV and supported audio files are allowed")
 
-    if purpose not in {"post", "avatar", "cover", "space", "message"}:
+    if purpose not in {"post", "avatar", "cover", "space", "message", "market"}:
         raise HTTPException(status_code=400, detail="Invalid upload purpose")
     if purpose == "avatar" and resource_type != "image":
         raise HTTPException(status_code=415, detail="Profile photo must be an image")
@@ -81,7 +81,7 @@ async def upload_media(
         raise HTTPException(status_code=413, detail=f"File exceeds the {max_size // (1024 * 1024)} MB limit")
 
     cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
-    folder = "vyra/messages" if purpose == "message" else ("vyra/spaces" if purpose == "space" else ("vyra/profiles" if purpose in {"avatar", "cover"} else "vyra/posts"))
+    folder = "vyra/messages" if purpose == "message" else ("vyra/market" if purpose == "market" else ("vyra/spaces" if purpose == "space" else ("vyra/profiles" if purpose in {"avatar", "cover"} else "vyra/posts")) )
     try:
         result = cloudinary.uploader.upload(
             BytesIO(data),
@@ -102,7 +102,7 @@ async def upload_media(
         profile.avatar_url = url
     elif purpose == "cover":
         profile.cover_url = url
-    elif purpose in {"space", "message"}:
+    elif purpose in {"space", "message", "market"}:
         pass
     else:
         db.add(models.PostMedia(
