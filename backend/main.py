@@ -320,7 +320,7 @@ def join_group(group_id: str, claims: dict = Depends(current_user), db: Session 
 
 @app.get("/api/pages")
 def list_pages(db: Session = Depends(get_db)):
-    pages = db.scalars(select(models.SocialPage).order_by(desc(models.SocialPage.created_at)).limit(100)).all()
+    pages = db.scalars(select(models.SocialPage).where(models.SocialPage.privacy == "public").order_by(desc(models.SocialPage.created_at)).limit(100)).all()
     ids = [page.id for page in pages]
     counts = dict(db.execute(
         select(models.PageFollower.page_id, func.count(models.PageFollower.id))
@@ -348,7 +348,8 @@ def create_page(payload: SocialSpaceCreate, claims: dict = Depends(current_user)
 
 @app.post("/api/pages/{page_id}/follow")
 def follow_page(page_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
-    if db.get(models.SocialPage, page_id) is None:
+    page = db.get(models.SocialPage, page_id)
+    if page is None or page.privacy != "public":
         raise HTTPException(status_code=404, detail="Page not found")
     existing = db.scalar(select(models.PageFollower).where(models.PageFollower.page_id == page_id, models.PageFollower.user_id == claims["sub"]))
     if existing:
