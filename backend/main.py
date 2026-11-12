@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 from uuid import uuid4
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -642,6 +643,26 @@ def list_conversation_messages(conversation_id: str, claims: dict = Depends(curr
         raise HTTPException(status_code=404, detail="Conversation not found")
     rows = db.scalars(select(models.DirectMessage).where(models.DirectMessage.conversation_id == conversation_id).order_by(models.DirectMessage.created_at).limit(200)).all()
     return [{"id": m.id, "sender_id": m.sender_id, "body": m.body, "media_url": m.media_url, "media_type": m.media_type, "created_at": m.created_at, "read_at": m.read_at} for m in rows]
+
+
+@app.put("/api/conversations/{conversation_id}/read")
+def mark_conversation_read(conversation_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    member = db.scalar(select(models.ConversationMember).where(
+        models.ConversationMember.conversation_id == conversation_id,
+        models.ConversationMember.user_id == claims["sub"],
+    ))
+    if member is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    rows = db.scalars(select(models.DirectMessage).where(
+        models.DirectMessage.conversation_id == conversation_id,
+        models.DirectMessage.sender_id != claims["sub"],
+        models.DirectMessage.read_at.is_(None),
+    )).all()
+    now = datetime.now(timezone.utc)
+    for message in rows:
+        message.read_at = now
+    db.commit()
+    return {"marked_read": len(rows)}
 
 
 @app.post("/api/conversations/{conversation_id}/messages", status_code=201)
