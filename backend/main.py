@@ -215,23 +215,27 @@ def create_comment(post_id: str, payload: CommentCreate, claims: dict = Depends(
     return comment
 
 
+class ReactionPayload(BaseModel):
+    reaction_type: str = Field(default="like", pattern="^(like|love|care|haha|wow|sad|angry)$")
+
 @app.put("/api/posts/{post_id}/reaction")
-def set_reaction(post_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+def set_reaction(post_id: str, payload: ReactionPayload = ReactionPayload(), claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     require_public_post(db, post_id)
     if db.get(models.Profile, claims["sub"]) is None:
         raise HTTPException(status_code=409, detail="Profile not found")
     existing = db.scalar(select(models.Reaction).where(
         models.Reaction.post_id == post_id, models.Reaction.user_id == claims["sub"]
     ))
-    if existing:
+    if existing and existing.reaction_type == payload.reaction_type:
         db.delete(existing)
         db.commit()
-        return {"reacted": False}
-    db.add(models.Reaction(
-        id=str(uuid4()), post_id=post_id, user_id=claims["sub"], reaction_type="like"
-    ))
+        return {"reacted": False, "reaction_type": None}
+    if existing:
+        existing.reaction_type = payload.reaction_type
+    else:
+        db.add(models.Reaction(id=str(uuid4()), post_id=post_id, user_id=claims["sub"], reaction_type=payload.reaction_type))
     db.commit()
-    return {"reacted": True}
+    return {"reacted": True, "reaction_type": payload.reaction_type}
 
 
 class SocialSpaceCreate(BaseModel):
