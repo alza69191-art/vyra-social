@@ -111,7 +111,7 @@ function HomeFeed() {
       setNotice(error instanceof Error ? error.message : "تعذر حفظ المنشور.");
     }
   }
-  async function toggleLike(id: string | number, reaction: "like" | "love" | "care" | "haha" | "wow" | "sad" | "angry" = "like") {
+  async function toggleLike(id: string | number, reaction: "like" | "love" | "care" | "haha" | "wow" | "sad" | "angry" | "dislike" = "like") {
     const token = sessionStorage.getItem("vyra_access_token");
     if (!token) return;
     try {
