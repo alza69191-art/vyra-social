@@ -64,7 +64,7 @@ def initialize_schema():
         Base.metadata.create_all(bind=engine)
         inspector = inspect(engine)
         migrations = {
-            "social_groups": {"avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
+            "social_groups": {"category": "VARCHAR(60) NULL", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
             "social_pages": {"privacy": "VARCHAR(16) NOT NULL DEFAULT 'public'", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
         }
         with engine.begin() as connection:
@@ -285,7 +285,7 @@ def list_groups(db: Session = Depends(get_db)):
         .group_by(models.GroupMember.group_id)
     ).all()) if ids else {}
     return [{"id": g.id, "name": g.name, "description": g.description, "privacy": g.privacy,
-             "owner_id": g.owner_id, "members": counts.get(g.id, 0),
+             "owner_id": g.owner_id, "members": counts.get(g.id, 0), "category": g.category,
              "avatar_url": g.avatar_url, "cover_url": g.cover_url}
             for g in groups]
 
@@ -295,13 +295,13 @@ def create_group(payload: SocialSpaceCreate, claims: dict = Depends(current_user
     if db.get(models.Profile, claims["sub"]) is None:
         raise HTTPException(status_code=409, detail="Profile not found")
     group = models.SocialGroup(id=str(uuid4()), owner_id=claims["sub"], name=payload.name.strip(),
-                               description=payload.description, privacy=payload.privacy, avatar_url=payload.avatar_url, cover_url=payload.cover_url)
+                               description=payload.description, category=payload.category, privacy=payload.privacy, avatar_url=payload.avatar_url, cover_url=payload.cover_url)
     db.add(group)
     db.flush()
     db.add(models.GroupMember(id=str(uuid4()), group_id=group.id, user_id=claims["sub"], role="owner", status="active"))
     db.commit()
     db.refresh(group)
-    return {"id": group.id, "name": group.name, "description": group.description, "privacy": group.privacy, "owner_id": group.owner_id, "members": 1, "avatar_url": group.avatar_url, "cover_url": group.cover_url}
+    return {"id": group.id, "name": group.name, "description": group.description, "privacy": group.privacy, "owner_id": group.owner_id, "members": 1, "category": group.category, "avatar_url": group.avatar_url, "cover_url": group.cover_url}
 
 
 @app.post("/api/groups/{group_id}/join")
