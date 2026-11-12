@@ -256,3 +256,7 @@ main button:hover:not(:disabled),[class*="settings"] button:hover:not(:disabled)
 @media(prefers-color-scheme:dark){
   html,body{color-scheme:light!important;background:var(--vyra-page)!important;color:var(--vyra-ink)!important}
 }
+
+
+html[data-vyra-reduce-motion="true"] *,html[data-vyra-reduce-motion="true"] *::before,html[data-vyra-reduce-motion="true"] *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+html[data-vyra-compact-feed="true"] .post-card,html[data-vyra-compact-feed="true"] .composer-card{padding:11px!important}
