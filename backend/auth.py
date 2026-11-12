@@ -70,9 +70,11 @@ def register(payload: Credentials, db: Session = Depends(get_db)):
         display_name=payload.email.split("@", 1)[0][:80],
         is_private=False,
     )
-    db.add(user)
-    db.add(profile)
     try:
+        # Insert the parent row first so TiDB can satisfy profiles.id -> users.id.
+        db.add(user)
+        db.flush()
+        db.add(profile)
         db.commit()
         db.refresh(user)
         db.refresh(profile)
