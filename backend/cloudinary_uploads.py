@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api", tags=["media"])
 
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 VIDEO_TYPES = {"video/mp4", "video/webm", "video/quicktime"}
-AUDIO_TYPES = {"audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav"}
+AUDIO_TYPES = {"audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav", "audio/aac", "audio/x-m4a", "audio/3gpp"}
 IMAGE_LIMIT = 15 * 1024 * 1024
 VIDEO_LIMIT = 100 * 1024 * 1024
 
@@ -48,7 +48,7 @@ async def upload_media(
     if profile is None:
         raise HTTPException(status_code=409, detail="Profile not found")
 
-    content_type = (file.content_type or "").lower()
+    content_type = (file.content_type or "").lower().split(";", 1)[0].strip()
     if content_type in IMAGE_TYPES:
         resource_type, max_size = "image", IMAGE_LIMIT
     elif content_type in VIDEO_TYPES:
