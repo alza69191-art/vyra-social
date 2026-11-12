@@ -78,7 +78,7 @@ function HomeFeed() {
       const created = await createPost(token, body, visibility);
       createdPostId = created.id;
       setNotice("جارٍ رفع الصور والفيديوهات...");
-      const uploaded: Array<{url:string;media_type:"image"|"video"}> = [];
+      const uploaded: Array<{url:string;media_type:string}> = [];
       for (let index = 0; index < selectedFiles.length; index += 2) {
         const batch = selectedFiles.slice(index, index + 2);
         const results = await Promise.all(batch.map(file => uploadMedia(token, file, "post", created.id)));
