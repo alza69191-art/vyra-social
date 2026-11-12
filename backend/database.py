@@ -1,21 +1,12 @@
 import os
-from urllib.parse import quote, quote_plus
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 
 def _database_url():
-    # DATABASE_URL1 is reserved for the new TiDB/MySQL connection during migration.
-    # Keep DATABASE_URL as the existing PostgreSQL fallback until migration is verified.
-    url = os.getenv("DATABASE_URL1", "").strip() or os.getenv("DATABASE_URL", "").strip()
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql+psycopg://", 1)
-    elif url.startswith("postgresql://"):
-        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
-    elif url.startswith("mysql://"):
-        url = url.replace("mysql://", "mysql+pymysql://", 1)
-    return url
+    # VYRA uses TiDB Cloud (MySQL protocol) as its only database.
+    return os.getenv("DATABASE_URL1", "").strip()
 
 
 DATABASE_URL = _database_url()
@@ -32,20 +23,18 @@ def _build_engine(url: str):
         "max_overflow": 0,
     }
 
-    if url.startswith("mysql+") or url.startswith("mysql://"):
-        # TiDB Cloud requires TLS for public endpoints. PyMySQL validates
-        # certificates against the CA bundle installed with certifi.
-        import certifi
+    if not url.startswith("mysql+pymysql://"):
+        raise RuntimeError("DATABASE_URL1 must use the mysql+pymysql:// driver")
 
-        common["connect_args"] = {
-            "ssl": {
-                "ca": certifi.where(),
-                "check_hostname": True,
-            }
+    # TiDB Cloud public endpoints require TLS.
+    import certifi
+
+    common["connect_args"] = {
+        "ssl": {
+            "ca": certifi.where(),
+            "check_hostname": True,
         }
-    elif url.startswith("postgresql+"):
-        common["connect_args"] = {"sslmode": "require"}
-
+    }
     return create_engine(url, **common)
 
 
