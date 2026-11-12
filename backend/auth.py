@@ -140,8 +140,9 @@ def register(payload: Credentials, db: Session = Depends(get_db)):
         db.rollback()
         logger.exception("Registration failed: database integrity constraint rejected user/profile insert")
         raise HTTPException(status_code=409, detail="تعذر إنشاء الحساب بهذه البيانات.")
-    _issue_verification(db, user)
-    return {"verification_required": True, "email": user.email, "message": "أرسلنا رمز التحقق إلى بريدك الإلكتروني."}
+    # Email verification is temporarily disabled by product decision.
+    # Return a session immediately after successful account creation.
+    return auth_result(user, profile)
 
 
 @router.post("/verify-email")
@@ -187,8 +188,6 @@ def login(payload: Credentials, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="البريد الإلكتروني أو كلمة المرور غير صحيحة.")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="هذا الحساب موقوف.")
-    if user.email_verified_at is None:
-        raise HTTPException(status_code=403, detail="تحقق من بريدك الإلكتروني أولاً. يمكنك طلب إرسال رمز جديد.")
     profile = db.get(models.Profile, user.id)
     if profile is None:
         raise HTTPException(status_code=409, detail="ملف الحساب غير مكتمل.")
