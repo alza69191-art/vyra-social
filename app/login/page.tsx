@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { Github } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "https://vyra-api-9pxl.onrender.com").replace(/\/$/, "");
@@ -44,6 +45,11 @@ export default function LoginPage() {
         <div className="auth-brand"><span className="brand-mark">V</span><b>VYRA</b></div>
         <h1>{mode === "login" ? "مرحباً بعودتك" : "إنشاء حساب جديد"}</h1>
         <p>{mode === "login" ? "سجّل الدخول باستخدام بريدك الإلكتروني وكلمة المرور." : "أنشئ حسابك في VYRA وابدأ التواصل مع مجتمعك."}</p>
+        <div style={{display:"grid",gap:10,margin:"18px 0"}}>
+          <a href={API_BASE + "/api/auth/oauth/google"} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:13,border:"1px solid #dfe2ef",borderRadius:12,color:"#25294b",background:"#fff",fontWeight:700,textDecoration:"none"}}><span style={{fontWeight:900,color:"#4285F4"}}>G</span> المتابعة باستخدام Google</a>
+          <a href={API_BASE + "/api/auth/oauth/github"} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:13,border:"1px solid #dfe2ef",borderRadius:12,color:"#25294b",background:"#fff",fontWeight:700,textDecoration:"none"}}><Github size={19}/> المتابعة باستخدام GitHub</a>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12,color:"#8990a8",fontSize:12,margin:"8px 0 16px"}}><span style={{height:1,background:"#e6e8f0",flex:1}}/>أو بالبريد الإلكتروني<span style={{height:1,background:"#e6e8f0",flex:1}}/></div>
         <form onSubmit={submit}>
           <label>البريد الإلكتروني
             <input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" />
