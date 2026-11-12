@@ -56,7 +56,7 @@ async def upload_media(
     elif content_type in AUDIO_TYPES:
         resource_type, max_size = "video", 25 * 1024 * 1024
     else:
-        raise HTTPException(status_code=415, detail="Only JPG, PNG, WEBP, GIF, MP4, WEBM and MOV files are allowed")
+        raise HTTPException(status_code=415, detail="Only JPG, PNG, WEBP, GIF, MP4, WEBM, MOV and supported audio files are allowed")
 
     if purpose not in {"post", "avatar", "cover", "space", "message"}:
         raise HTTPException(status_code=400, detail="Invalid upload purpose")
