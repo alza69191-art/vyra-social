@@ -11,6 +11,7 @@ const navigation = [
   { label: "الأسواق", icon: Store },
   { label: "الصفحات", icon: Compass },
   { label: "المحفوظات", icon: Bookmark },
+  { label: "مركز المساعدة", icon: CircleHelp },
 ];
 const stories = [{ name: "قصتك", initials: "+", own: true }];
 const initialPosts: Array<{ id: string | number; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean; media?: Array<{ url: string; media_type: string }> }> = [];
@@ -119,7 +120,7 @@ function HomeFeed() {
       <div className="brand-row"><Brand/><button className="collapse-button" onClick={() => setFocus(!focus)} title="وضع التركيز"><PanelLeftClose size={18}/></button></div>
       <button className="profile-switch" onClick={() => { window.location.href="/account"; }}><span className="avatar avatar-dark">V</span><span className="profile-meta"><b>حسابك الشخصي</b><small>ملفك على VYRA</small></span><ChevronDown size={16}/></button>
       <div className="nav-caption">مساحتك</div>
-      <nav className="main-nav">{navigation.map(item => { const Icon = item.icon; return <button key={item.label} className={active === item.label ? "nav-item active" : "nav-item"} onClick={() => {if(item.label === "الذكاء الاصطناعي"){window.location.href="/ai";return;}if(item.label === "المجتمعات"){window.location.href="/groups";return;}if(item.label === "الأسواق"){window.location.href="/market";return;}if(item.label === "الصفحات"){window.location.href="/pages";return;}if(item.label === "المحفوظات"){window.location.href="/saved";return;}setActive(item.label);setMobileOpen(false);}}><Icon size={19}/><span>{item.label}</span></button>; })}</nav>
+      <nav className="main-nav">{navigation.map(item => { const Icon = item.icon; return <button key={item.label} className={active === item.label ? "nav-item active" : "nav-item"} onClick={() => {if(item.label === "الذكاء الاصطناعي"){window.location.href="/ai";return;}if(item.label === "المجتمعات"){window.location.href="/groups";return;}if(item.label === "الأسواق"){window.location.href="/market";return;}if(item.label === "الصفحات"){window.location.href="/pages";return;}if(item.label === "المحفوظات"){window.location.href="/saved";return;}if(item.label === "مركز المساعدة"){window.location.href="/help";return;}setActive(item.label);setMobileOpen(false);}}><Icon size={19}/><span>{item.label}</span></button>; })}</nav>
       <div className="nav-caption secondary-caption">إدارة وتخصيص</div>
       <nav className="main-nav"><button className="nav-item" onClick={() => {window.location.href="/account";}}><Settings size={19}/><span>إعدادات الحساب</span></button></nav>
       <div className="sidebar-bottom"><div className="online-dot"/><span>مساحتك جاهزة للإبداع</span></div>
