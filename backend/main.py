@@ -68,6 +68,7 @@ def initialize_schema():
             "social_groups": {"category": "VARCHAR(60) NULL", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
             "social_pages": {"privacy": "VARCHAR(16) NOT NULL DEFAULT 'public'", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
             "direct_messages": {"media_type": "VARCHAR(16) NULL", "edited_at": "DATETIME NULL"},
+            "market_listings": {"media_url": "VARCHAR(2000) NULL", "media_type": "VARCHAR(16) NULL"},
             "conversations": {"context_type": "VARCHAR(16) NULL", "context_id": "VARCHAR(36) NULL"},
         }
         with engine.begin() as connection:
@@ -449,6 +450,8 @@ class MarketListingCreate(BaseModel):
     category: str = Field(min_length=2, max_length=60)
     condition: str = Field(default="new", pattern="^(new|used|refurbished)$")
     location: str | None = Field(default=None, max_length=120)
+    media_url: str | None = Field(default=None, max_length=2000)
+    media_type: str | None = Field(default=None, pattern="^(image|video)$")
 
 class MarketListingStatus(BaseModel):
     status: str = Field(pattern="^(active|sold)$")
@@ -467,6 +470,7 @@ def list_market_listings(limit: int = Query(default=40, ge=1, le=100), offset: i
         "price": float(listing.price), "currency": listing.currency,
         "category": listing.category, "condition": listing.condition,
         "location": listing.location, "status": listing.status,
+        "media_url": listing.media_url, "media_type": listing.media_type,
         "created_at": listing.created_at, "owner_id": listing.owner_id,
         "seller_name": profile.display_name, "seller_username": profile.username,
     } for listing, profile in rows]
@@ -480,6 +484,7 @@ def create_market_listing(payload: MarketListingCreate, claims: dict = Depends(c
         description=payload.description.strip(), price=payload.price,
         currency=payload.currency, category=payload.category.strip(),
         condition=payload.condition, location=payload.location.strip() if payload.location else None,
+        media_url=payload.media_url, media_type=payload.media_type,
     )
     db.add(listing)
     db.commit()
