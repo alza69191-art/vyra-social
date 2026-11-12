@@ -66,7 +66,7 @@ export function getComments(postId: string): Promise<VyraComment[]> {
   return request<VyraComment[]>(`/api/posts/${encodeURIComponent(postId)}/comments`);
 }
 
-export async function uploadMedia(accessToken: string, file: File, purpose: "avatar" | "cover" | "post" | "space" | "message" | "market" = "post", postId?: string) {
+export async function uploadMedia(accessToken: string, file: File, purpose: "avatar" | "cover" | "post" | "space" | "message" | "market" | "story" | "ad" = "post", postId?: string) {
   const form = new FormData();
   form.append("file", file);
   form.append("purpose", purpose);
