@@ -32,7 +32,7 @@ class Credentials(BaseModel):
     @classmethod
     def normalize_email(cls, value: str) -> str:
         value = value.strip().lower()
-        if not re.fullmatch(r"[^\\s@]+@[^\\s@]+\\.[^\\s@]+", value):
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value):
             raise ValueError("Enter a valid email address")
         return value
 
@@ -43,7 +43,7 @@ class EmailOnly(BaseModel):
 
 class VerifyEmail(BaseModel):
     email: str = Field(min_length=5, max_length=254)
-    code: str = Field(pattern=r"^\\d{6}$")
+    code: str = Field(pattern=r"^\d{6}$")
 
 
 def get_db():
@@ -77,7 +77,7 @@ def _send_verification_email(email: str, code: str):
     message["Subject"] = "رمز التحقق من بريدك - VYRA"
     message["From"] = sender
     message["To"] = email
-    message.set_content(f"مرحباً بك في VYRA. رمز التحقق الخاص بك هو: {code}\\nصلاحية الرمز 10 دقائق. إذا لم تطلب إنشاء الحساب فتجاهل هذه الرسالة.")
+    message.set_content(f"مرحباً بك في VYRA. رمز التحقق الخاص بك هو: {code}\nصلاحية الرمز 10 دقائق. إذا لم تطلب إنشاء الحساب فتجاهل هذه الرسالة.")
     with smtplib.SMTP(host, port, timeout=20) as server:
         server.starttls()
         server.login(username, password)
