@@ -173,3 +173,36 @@ def list_active_ads(db: Session = Depends(get_db), limit: int = Query(default=10
     return [{"id": a.id, "brand_name": a.brand_name, "title": a.title, "body": a.body,
              "destination_url": a.destination_url, "media_url": a.media_url, "is_sponsored": True}
             for a in rows]
+
+
+def is_admin(claims: dict, db: Session) -> bool:
+    configured_id = os.getenv("SUPPORT_ADMIN_USER_ID", "").strip()
+    configured_email = os.getenv("SUPPORT_ADMIN_EMAIL", "").strip().lower()
+    user = db.get(models.User, claims["sub"])
+    return bool(user and ((configured_id and user.id == configured_id) or
+                          (configured_email and user.email.lower() == configured_email)))
+
+
+@router.get("/ads/admin")
+def list_ads_for_review(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    if not is_admin(claims, db):
+        raise HTTPException(status_code=403, detail="Support admin only")
+    rows = db.scalars(select(models.SponsoredAd).order_by(desc(models.SponsoredAd.created_at)).limit(200)).all()
+    return [{"id": a.id, "brand_name": a.brand_name, "title": a.title, "body": a.body,
+             "destination_url": a.destination_url, "media_url": a.media_url,
+             "status": a.status, "created_at": a.created_at} for a in rows]
+
+
+@router.patch("/ads/{ad_id}/status")
+def update_ad_status(ad_id: str, status: str = Query(pattern="^(active|rejected|paused)$"),
+                     claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    if not is_admin(claims, db):
+        raise HTTPException(status_code=403, detail="Support admin only")
+    ad = db.get(models.SponsoredAd, ad_id)
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+    ad.status = status
+    db.add(models.Notification(id=str(uuid4()), user_id=ad.owner_id, actor_id=claims["sub"],
+                               kind="ad_" + status, target_id=ad.id))
+    db.commit()
+    return {"id": ad.id, "status": ad.status}
