@@ -37,6 +37,10 @@ class Credentials(BaseModel):
         return value
 
 
+class EmailOnly(BaseModel):
+    email: str = Field(min_length=5, max_length=254)
+
+
 class VerifyEmail(BaseModel):
     email: str = Field(min_length=5, max_length=254)
     code: str = Field(pattern=r"^\\d{6}$")
@@ -143,8 +147,8 @@ def verify_email(payload: VerifyEmail, db: Session = Depends(get_db)):
 
 
 @router.post("/resend-verification")
-def resend_verification(payload: BaseModel, db: Session = Depends(get_db)):
-    email = str(getattr(payload, "email", "")).strip().lower()
+def resend_verification(payload: EmailOnly, db: Session = Depends(get_db)):
+    email = payload.email.strip().lower()
     if not email:
         raise HTTPException(status_code=422, detail="أدخل البريد الإلكتروني.")
     user = db.scalar(select(models.User).where(models.User.email == email))
