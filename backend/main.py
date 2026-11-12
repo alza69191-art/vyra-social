@@ -656,7 +656,7 @@ def list_conversation_messages(conversation_id: str, claims: dict = Depends(curr
     if member is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     rows = db.scalars(select(models.DirectMessage).where(models.DirectMessage.conversation_id == conversation_id).order_by(models.DirectMessage.created_at).limit(200)).all()
-    return [{"id": m.id, "sender_id": m.sender_id, "body": m.body, "media_url": m.media_url, "media_type": m.media_type, "created_at": m.created_at, "read_at": m.read_at} for m in rows]
+    return [{"id": m.id, "sender_id": m.sender_id, "body": m.body, "media_url": m.media_url, "media_type": m.media_type, "created_at": m.created_at, "read_at": m.read_at, "edited_at": m.edited_at} for m in rows]
 
 
 @app.put("/api/conversations/{conversation_id}/read")
