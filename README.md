@@ -4,7 +4,7 @@ Arabic RTL social-platform foundation built with Next.js 15, TypeScript, FastAPI
 
 ## Render deployment
 
-The repository's `render.yaml` describes:
+The repository's `render.yaml` describes the active deployment services only:
 - `vyra-api`: FastAPI backend.
 - `vyra-web`: Next.js frontend.
 
@@ -15,7 +15,6 @@ If the API service and TiDB database already exist, do not create duplicates. Ke
 Set these variables on the existing `vyra-api` service:
 - `DATABASE_URL1`: TiDB Cloud connection URL using `mysql+pymysql://`; keep it private.
 - `JWT_SECRET`: a randomly generated secret with at least 32 characters. Generate it in Render and never put it in GitHub.
-- `CORS_ORIGINS`: include the frontend's exact origin, for example `https://vyra-web-rs1b.onrender.com`.
 
 VYRA uses TiDB Cloud as its only database. The API requires TLS for the TiDB public endpoint and creates missing tables from the SQLAlchemy models at startup.
 
