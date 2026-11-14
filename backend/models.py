@@ -321,3 +321,13 @@ class SponsoredAd(Base):
     media_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(16), default="pending", nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+class AdminAuditLog(Base):
+    __tablename__ = "admin_audit_logs"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), index=True)
+    action: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    target_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    target_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
