@@ -1,0 +1,103 @@
+/* VYRA NEXUS — additive design layer
+   This layer refines the existing UI without changing routes, components or data flows. */
+:root {
+  --nexus-primary: #6659e8;
+  --nexus-primary-strong: #5145ce;
+  --nexus-cyan: #38add2;
+  --nexus-ink: #202541;
+  --nexus-muted: #7b83a0;
+  --nexus-line: rgba(94, 104, 151, .15);
+  --nexus-surface: rgba(255, 255, 255, .94);
+  --nexus-page: #f4f6fc;
+  --nexus-radius-sm: 12px;
+  --nexus-radius-md: 18px;
+  --nexus-radius-lg: 24px;
+  --nexus-shadow: 0 12px 34px rgba(35, 43, 91, .07);
+  --nexus-shadow-hover: 0 20px 46px rgba(65, 66, 150, .13);
+}
+html { scroll-padding-top: 84px; }
+body {
+  color: var(--nexus-ink);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+::selection { background: rgba(102, 89, 232, .18); color: var(--nexus-ink); }
+:where(button, a, input, textarea, select, [role="button"]):focus-visible {
+  outline: 3px solid rgba(102, 89, 232, .38) !important;
+  outline-offset: 3px !important;
+}
+:where(.sidebar, .topbar, .stories-panel, .composer-card, .post-card, .side-card, .auth-card) {
+  border-color: var(--nexus-line) !important;
+}
+.sidebar {
+  box-shadow: 10px 0 42px rgba(25, 31, 75, .12);
+  border-left: 1px solid rgba(255,255,255,.08) !important;
+}
+.sidebar .nav-item { min-height: 44px; border-radius: 13px; }
+.sidebar .nav-item.active {
+  background: linear-gradient(110deg, rgba(129,117,255,.30), rgba(64,185,223,.16)) !important;
+  border-color: rgba(190,190,255,.16) !important;
+  box-shadow: inset 3px 0 0 #8d83ff;
+}
+.topbar {
+  background: rgba(250, 251, 255, .82) !important;
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+}
+.search-box {
+  border-radius: 13px !important;
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.search-box:focus-within {
+  border-color: rgba(102,89,232,.45) !important;
+  box-shadow: 0 0 0 4px rgba(102,89,232,.08);
+}
+.stories-panel, .composer-card, .post-card, .side-card {
+  border-radius: var(--nexus-radius-md) !important;
+  box-shadow: var(--nexus-shadow);
+  transition: box-shadow .22s ease, transform .22s ease, border-color .22s ease;
+}
+.post-card:hover, .side-card:hover {
+  box-shadow: var(--nexus-shadow-hover);
+  border-color: rgba(102,89,232,.22) !important;
+}
+.story-ring { transition: transform .2s ease, box-shadow .2s ease; }
+.story:hover .story-ring {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(102,89,232,.16);
+}
+.black-button, .publish-button, .auth-card form button {
+  background: linear-gradient(112deg, var(--nexus-primary), #527fe9 58%, var(--nexus-cyan)) !important;
+  border: 0 !important;
+  box-shadow: 0 8px 20px rgba(100,105,230,.20);
+  border-radius: 12px !important;
+}
+.black-button:hover, .publish-button:hover, .auth-card form button:hover:not(:disabled) {
+  filter: brightness(1.04);
+  box-shadow: 0 12px 25px rgba(100,105,230,.25);
+}
+.outline-button, .sort-button {
+  border-radius: 11px !important;
+  transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+.avatar, .brand-mark { flex-shrink: 0; }
+.post-text { overflow-wrap: anywhere; }
+.post-actions button { min-height: 38px; }
+.toast {
+  border-radius: 14px !important;
+  backdrop-filter: blur(14px);
+}
+.auth-card { border-radius: var(--nexus-radius-lg) !important; }
+@media (max-width: 800px) {
+  .topbar { backdrop-filter: blur(18px); }
+  .content-wrap { padding-bottom: max(48px, env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
