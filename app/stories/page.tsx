@@ -120,7 +120,7 @@ function StoriesPageInner(){
    <button className="story-nav story-nav-prev" onClick={e=>{e.stopPropagation();advance(-1);setProgressKey(v=>v+1)}} aria-label="القصة السابقة"><ArrowRight/></button>
    <article className="story-viewer-card" onClick={e=>e.stopPropagation()}>
     <div className="story-progress">{groups[viewer.group].stories.map((s,i)=><span key={s.id}><i className={i<viewer.item?"done":i===viewer.item?"current":""}/></span>)}</div>
-    <header><span className="story-viewer-avatar">{groups[viewer.group].avatar?<img src={groups[viewer.group].avatar} alt=""/>:groups[viewer.group].authorName.slice(0,1)}</span><div><b>{groups[viewer.group].authorName}</b><small>{new Date(current.created_at).toLocaleString("ar")}</small></div><span className="story-view-count"><EyeIcon/> {current.views_count}</span></header>
+    <header><span className="story-viewer-avatar">{groups[viewer.group].avatar?<img src={groups[viewer.group].avatar || undefined} alt=""/>:groups[viewer.group].authorName.slice(0,1)}</span><div><b>{groups[viewer.group].authorName}</b><small>{new Date(current.created_at).toLocaleString("ar")}</small></div><span className="story-view-count"><EyeIcon/> {current.views_count}</span></header>
     <div className="story-viewer-media">{current.media_type==="video"?<video key={current.id} src={current.media_url} autoPlay playsInline controls onEnded={()=>advance(1)}/>:<img src={current.media_url} alt={current.caption||"قصة"}/>}</div>
     {current.caption&&<p className="story-viewer-caption">{current.caption}</p>}
    </article>
