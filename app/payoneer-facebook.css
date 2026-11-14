@@ -1,0 +1,79 @@
+/* VYRA Payoneer-inspired orange identity + familiar social-network layout */
+:root{
+ --vyra-brand:#ff4800!important;--vyra-brand-strong:#e63f00!important;--vyra-accent:#ff8a00!important;
+ --vyra-primary:#ff4800!important;--vyra-primary-dark:#d83d00!important;
+ --vyra-blue:#ff8a00!important;--vyra-ink:#1d252c!important;--vyra-text:#1d252c!important;
+ --vyra-muted:#66727c!important;--vyra-border:#e6e9ec!important;
+ --vyra-canvas:#f4f6f8!important;--vyra-page:#f4f6f8!important;
+ --nexus-primary:#ff4800!important;--nexus-primary-strong:#dc3e00!important;--nexus-cyan:#ff9a00!important;
+ --nexus-ink:#1d252c!important;--nexus-page:#f4f6f8!important;
+}
+html,body{background:#f4f6f8!important;color:#1d252c!important}
+body{background-image:radial-gradient(ellipse at 8% 0%,rgba(255,72,0,.075),transparent 32%),radial-gradient(ellipse at 95% 24%,rgba(255,154,0,.07),transparent 30%)!important}
+.sidebar{background:linear-gradient(180deg,#202a32 0%,#172129 100%)!important;color:#fff!important}
+.sidebar .brand-mark{background:linear-gradient(135deg,#ff8a00,#ff4800)!important;color:#fff!important}
+.sidebar .brand-word,.sidebar .profile-meta b,.sidebar .collapse-button,.sidebar .nav-caption,.sidebar .sidebar-bottom{color:#fff!important}
+.sidebar .nav-item{color:#d4dce1!important}
+.sidebar .nav-item.active{background:linear-gradient(110deg,#ff6a00,#ff4800)!important;color:#fff!important;box-shadow:0 8px 22px rgba(255,72,0,.25)!important}
+.sidebar .nav-item:hover{background:rgba(255,255,255,.1)!important;color:#fff!important}
+.sidebar .online-dot{background:#ff8a00!important}
+.topbar{background:rgba(255,255,255,.94)!important;border-color:#e6e9ec!important}
+.search-box,.composer-input{background:#f4f6f8!important;border-color:#e6e9ec!important}
+.search-box:focus-within{border-color:#ff7a00!important;box-shadow:0 0 0 4px rgba(255,72,0,.1)!important}
+.black-button,.publish-button,.auth-card form button,.ai-form button,
+main button[type=submit],main button.primary,main .primary-button{
+ background:linear-gradient(112deg,#ff8a00 0%,#ff5a00 48%,#ed3d00 100%)!important;
+ color:#fff!important;border:0!important;border-radius:12px!important;
+ box-shadow:0 8px 20px rgba(255,72,0,.22)!important;
+}
+.black-button:hover,.publish-button:hover,.auth-card form button:hover:not(:disabled),.ai-form button:hover{
+ background:linear-gradient(112deg,#f07800,#e63d00)!important;box-shadow:0 12px 26px rgba(255,72,0,.28)!important
+}
+.avatar-dark,.brand-mark,.auth-brand .brand-mark,.ai-brand>span{background:linear-gradient(135deg,#ff8a00,#ff4800)!important;color:#fff!important}
+.welcome-row{background:linear-gradient(115deg,#fff 0%,#fff8f3 60%,#fff0e7 100%)!important;border-color:#ffe0d1!important}
+.eyebrow,.welcome-row h1 span{color:#f05200!important}
+.composer-card,.post-card,.side-card,.stories-panel,.auth-card{border-color:#e6e9ec!important;background:#fff!important}
+.post-card:hover,.side-card:hover{border-color:rgba(255,72,0,.25)!important}
+.composer-tools button:hover,.post-actions button:hover,.quick-card>button:hover,.icon-button:hover{background:#fff1e9!important;color:#e94700!important}
+.post-actions button.liked{color:#e94700!important;background:#fff0e8!important}
+.post-tag,.quick-icon,.outline-button:hover,.sort-button:hover{background:#fff1e9!important;color:#e94700!important;border-color:#ffd2bd!important}
+.outline-button:hover,.sort-button:hover{border-color:#ff8a00!important}
+.progress-track span{background:linear-gradient(90deg,#ff9a00,#ff4800)!important}
+.toast{background:linear-gradient(110deg,#202a32,#3a4146)!important;border-color:rgba(255,255,255,.15)!important}
+:where(button,a,input,textarea,select,[role=button]):focus-visible{outline:3px solid rgba(255,72,0,.32)!important;outline-offset:3px!important}
+.auth-page{display:block!important;min-height:100vh!important;padding:0!important;background:#f4f6f8!important}
+.vyra-public-header{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,6vw,88px);background:#fff;border-bottom:1px solid #e7eaed;position:sticky;top:0;z-index:20}
+.vyra-public-brand{display:flex;align-items:center;gap:10px;direction:ltr;font:800 22px Arial;letter-spacing:1.5px;color:#202a32}
+.vyra-public-brand .brand-mark{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:24px}
+.vyra-public-login{min-height:43px;padding:0 22px;border-radius:12px;background:linear-gradient(110deg,#ff8a00,#ff4800);color:#fff;font-weight:800;box-shadow:0 7px 18px rgba(255,72,0,.2)}
+.vyra-public-hero{max-width:1180px;margin:0 auto;padding:clamp(60px,10vh,110px) 24px 70px;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;min-height:calc(100vh - 76px)}
+.vyra-hero-copy h1{font-size:clamp(38px,5vw,66px);line-height:1.18;letter-spacing:-1.5px;margin:0 0 20px;color:#1d252c;font-weight:800}
+.vyra-hero-copy h1 span{color:#f04a00}
+.vyra-hero-copy p{font-size:clamp(15px,1.5vw,18px);line-height:2;color:#66727c;max-width:580px;margin:0 0 28px}
+.vyra-hero-kicker{display:inline-flex;align-items:center;gap:8px;color:#e84b08;background:#fff0e8;border:1px solid #ffdfcf;border-radius:30px;padding:8px 13px;font-weight:700;font-size:12px;margin-bottom:20px}
+.vyra-hero-visual{min-height:390px;border-radius:34px;background:linear-gradient(145deg,#ff9a00,#ff5a00 50%,#e63c00);padding:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 28px 65px rgba(224,75,0,.2);position:relative;overflow:hidden}
+.vyra-hero-visual:before,.vyra-hero-visual:after{content:"";position:absolute;border:1px solid rgba(255,255,255,.22);border-radius:50%;width:340px;height:340px}
+.vyra-hero-visual:after{width:470px;height:470px}
+.vyra-social-preview{position:relative;z-index:1;width:min(100%,360px);background:#fff;border-radius:22px;padding:18px;box-shadow:0 20px 50px #7b26004a;direction:rtl}
+.vyra-preview-top{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid #edf0f2}
+.vyra-preview-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ff9a00,#ff4800)}
+.vyra-preview-lines{flex:1}.vyra-preview-lines i{display:block;height:7px;background:#e9edf0;border-radius:8px;margin:6px 0}.vyra-preview-lines i:first-child{width:45%}.vyra-preview-lines i:last-child{width:28%}
+.vyra-preview-content{height:145px;border-radius:14px;margin:16px 0;background:linear-gradient(135deg,#fff1e8,#ffe0ca 55%,#ffb37d)}
+.vyra-preview-actions{display:flex;justify-content:space-around;color:#7b858d;font-size:11px}
+.vyra-auth-modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:18px;background:rgba(19,27,33,.58);backdrop-filter:blur(7px)}
+.vyra-auth-dialog{position:relative;width:min(100%,460px);padding:32px;background:#fff;border:1px solid #e9edf0;border-radius:24px;box-shadow:0 30px 90px #1115;max-height:92vh;overflow:auto}
+.vyra-auth-close{position:absolute;top:15px;left:15px;width:34px;height:34px;border-radius:50%;background:#f2f4f5;color:#48545c;font-size:22px}
+.vyra-auth-dialog h2{margin:0 0 8px;color:#202a32;font-size:24px}
+.vyra-auth-dialog>p{margin:0 0 22px;color:#77828a;line-height:1.8;font-size:13px}
+.vyra-provider-list{display:grid;gap:10px;margin:18px 0}
+.vyra-provider{height:49px;display:flex;align-items:center;justify-content:center;gap:11px;border:1px solid #e2e6e9;border-radius:12px;background:#fff;color:#25313a;text-decoration:none;font-weight:700;transition:.2s}
+.vyra-provider:hover{border-color:#ff8a00;background:#fff8f3;transform:translateY(-1px)}
+.vyra-provider-email{width:100%;cursor:pointer}
+.vyra-auth-dialog .auth-card{width:100%;padding:0;border:0!important;box-shadow:none!important;background:transparent!important;backdrop-filter:none}
+.vyra-auth-dialog .auth-brand{display:none}
+.vyra-auth-dialog .auth-card h1{font-size:22px}
+.vyra-auth-dialog .auth-card>p{margin-bottom:18px}
+.vyra-auth-dialog .auth-card>small{margin-top:16px}
+.vyra-auth-divider{display:flex;align-items:center;gap:12px;color:#8a949b;font-size:11px;margin:16px 0}
+.vyra-auth-divider:before,.vyra-auth-divider:after{content:"";height:1px;background:#e8ecef;flex:1}
+@media(max-width:760px){.vyra-public-hero{grid-template-columns:1fr;gap:28px;padding-top:55px;min-height:auto}.vyra-hero-visual{min-height:300px}.vyra-hero-copy h1{font-size:39px}.vyra-public-header{height:66px}.vyra-auth-dialog{padding:25px 20px}}
