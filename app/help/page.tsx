@@ -25,7 +25,7 @@ const sections = [
  { title:"الخصوصية والأمان", icon:ShieldCheck, items:[
   ["كيف أحمي حسابي؟","استخدم كلمة مرور فريدة، لا تشارك رمز التحقق أو كلمة المرور، وسجّل الخروج من الأجهزة المشتركة."],
   ["كيف أتعامل مع رابط مشبوه؟","لا تفتح الروابط غير الموثوقة ولا تدخل بيانات الدخول في صفحات وصلت إليها عبر رسائل مجهولة. تحقق من عنوان الموقع."],
-  ["كيف أبلغ عن إساءة؟","احتفظ برابط المحتوى أو تفاصيله، ثم تواصل مع فريق الدعم عبر قناة الدعم المتاحة في المنصة. أدوات الإبلاغ المباشر داخل المنشورات قيد التطوير إذا لم يظهر زر الإبلاغ."]
+  ["كيف أبلغ عن إساءة؟","افتح مركز الدعم واختر «إبلاغ عن منشور أو محتوى» أو «إبلاغ عن حساب»، ثم أرفق الرابط واشرح السبب. يصل البلاغ بشكل خاص إلى فريق الدعم ويمكنك متابعة الرد من سجل طلباتك."]
  ]},
  { title:"الميزات والتنقل", icon:CircleHelp, items:[
   ["ما الأقسام المتاحة حالياً؟","الصفحة الرئيسية، الذكاء الاصطناعي، المجتمعات، الأسواق، الصفحات، المحفوظات، الملف الشخصي ومركز المساعدة."],
@@ -45,10 +45,10 @@ export default function HelpPage(){
    <section style={{background:"#fff",border:"1px solid #e8e8e8",borderRadius:22,padding:"38px 24px",marginTop:22,textAlign:"center"}}>
     <div style={{width:54,height:54,borderRadius:17,background:"#111",color:"#fff",display:"grid",placeItems:"center",margin:"0 auto 14px"}}><CircleHelp size={27}/></div>
     <p style={{color:"#777",margin:"0 0 8px"}}>مركز مساعدة VYRA</p><h1 style={{fontSize:30,margin:"0 0 10px"}}>كيف يمكننا مساعدتك؟</h1>
-    <p style={{color:"#777",margin:"0 auto 20px",maxWidth:600,lineHeight:1.9}}>ابحث عن إجابات حول الحساب والمنشورات والمجتمعات والصفحات والخصوصية.</p>
+    <p style={{color:"#777",margin:"0 auto 20px",maxWidth:600,lineHeight:1.9}}>ابحث عن إجابات حول الحساب والمنشورات والمجتمعات والصفحات والخصوصية، أو أرسل شكوى وبلاغاً خاصاً لفريق الدعم.</p>
     <label style={{maxWidth:620,margin:"auto",display:"flex",alignItems:"center",gap:10,padding:"0 14px",height:50,border:"1px solid #ddd",borderRadius:12,background:"#fafafa"}}><Search size={19}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="ابحث في مواضيع المساعدة..." style={{flex:1,minWidth:0,border:0,outline:0,background:"transparent",font:"inherit"}}/></label>
    </section>
-   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,margin:"28px 2px 14px",flexWrap:"wrap"}}><h2 style={{fontSize:20,margin:0}}>تصفح موضوعات المساعدة</h2><span style={{fontSize:12,color:"#777"}}>{filtered.reduce((n,s)=>n+s.items.length,0)} مقالة</span></div>
+   <section style={{...cardStyle,marginTop:16,display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexWrap:"wrap"}}><div><b style={{display:"block",fontSize:16}}>لم تجد الإجابة؟</b><p style={{margin:"5px 0 0",color:"#777",lineHeight:1.8}}>أرسل شكوى أو بلاغاً عن محتوى أو حساب، وتابع رد فريق الدعم من مكان واحد.</p></div><Link href="/support" style={{...linkStyle,background:"#e49a32",borderColor:"#e49a32",color:"#fff"}}><Flag size={17}/> الشكاوى والإبلاغ والدعم</Link></section>\n   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,margin:"28px 2px 14px",flexWrap:"wrap"}}><h2 style={{fontSize:20,margin:0}}>تصفح موضوعات المساعدة</h2><span style={{fontSize:12,color:"#777"}}>{filtered.reduce((n,s)=>n+s.items.length,0)} مقالة</span></div>
    <div style={{display:"grid",gap:14}}>
     {filtered.map(section=>{const Icon=section.icon;return <section key={section.title} style={cardStyle}>
      <h3 style={{display:"flex",alignItems:"center",gap:10,fontSize:16,margin:"0 0 10px"}}><span style={iconStyle}><Icon size={19}/></span>{section.title}</h3>
