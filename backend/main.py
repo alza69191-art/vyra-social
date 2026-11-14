@@ -33,6 +33,7 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",
     "https://vyra-web-rs1b.onrender.com",
+    "https://vyra-nexus-preview.onrender.com",
 ]
 app.add_middleware(
     CORSMiddleware,
