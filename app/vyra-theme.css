@@ -1,11 +1,13 @@
 /* VYRA theme preferences — loaded after the legacy and brand layers. */
 :root[data-vyra-theme="light"] {
   color-scheme: light !important;
-  --vyra-text: #1d252c;
-  --vyra-muted: #66727c;
-  --vyra-border: #e6e9ec;
-  --vyra-page: #f4f6f8;
-  --vyra-surface: #fff;
+  --vyra-ink: #1d252c !important;
+  --vyra-text: #1d252c !important;
+  --vyra-muted: #66727c !important;
+  --vyra-border: #e6e9ec !important;
+  --vyra-canvas: #f4f6f8 !important;
+  --vyra-page: #f4f6f8 !important;
+  --vyra-surface: #fff !important;
 }
 html[data-vyra-theme="light"],
 html[data-vyra-theme="light"] body {
@@ -118,16 +120,18 @@ html[data-vyra-theme="light"] main[style] textarea {
 
 :root[data-vyra-theme="dark"] {
   color-scheme: dark !important;
-  --vyra-text: #edf2f5;
-  --vyra-muted: #aab6bd;
-  --vyra-border: #35434b;
-  --vyra-page: #11191f;
-  --vyra-surface: #1b272e;
-  --nexus-ink: #edf2f5;
-  --nexus-muted: #aab6bd;
-  --nexus-line: rgba(190,205,214,.16);
-  --nexus-page: #11191f;
-  --nexus-surface: #1b272e;
+  --vyra-ink: #edf2f5 !important;
+  --vyra-text: #edf2f5 !important;
+  --vyra-muted: #aab6bd !important;
+  --vyra-border: #35434b !important;
+  --vyra-canvas: #11191f !important;
+  --vyra-page: #11191f !important;
+  --vyra-surface: #1b272e !important;
+  --nexus-ink: #edf2f5 !important;
+  --nexus-muted: #aab6bd !important;
+  --nexus-line: rgba(190,205,214,.16) !important;
+  --nexus-page: #11191f !important;
+  --nexus-surface: #1b272e !important;
 }
 html[data-vyra-theme="dark"],
 html[data-vyra-theme="dark"] body {
