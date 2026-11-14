@@ -6,7 +6,7 @@ import AuthGate from "@/components/auth-gate";
 import { uploadMedia } from "@/lib/vyra-api";
 import { ArrowLeft, ArrowRight, Camera, Check, Clock3, ImagePlus, Loader2, Play, Plus, X } from "lucide-react";
 
-const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/+$/, "");
+const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/+$/, "");
 const IMAGE_LIMIT=15*1024*1024;
 const VIDEO_LIMIT=100*1024*1024;
 type Story={id:string;author_id:string;author_name:string;username?:string;avatar_url?:string|null;media_url:string;media_type:"image"|"video";caption:string|null;views_count:number;expires_at:string;created_at:string;viewed:boolean};
