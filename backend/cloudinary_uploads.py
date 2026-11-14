@@ -102,9 +102,11 @@ async def upload_media(
         profile.avatar_url = url
     elif purpose == "cover":
         profile.cover_url = url
-    elif purpose in {"space", "message", "market"}:
+    elif purpose in {"space", "message", "market", "story", "ad"}:
+        # Story and ad assets are linked by their dedicated API endpoints.
+        # Never attach them to a post or require a post_id for these uploads.
         pass
-    else:
+    elif purpose == "post":
         db.add(models.PostMedia(
             id=str(uuid4()),
             post_id=post.id,
