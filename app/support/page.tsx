@@ -4,7 +4,7 @@ import Link from "next/link";
 import AuthGate from "@/components/auth-gate";
 import { ArrowRight, Headset, Send, Plus, MessageCircle, ShieldAlert, FileWarning, LifeBuoy, Clock3, CheckCircle2, Search } from "lucide-react";
 
-const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/$/,"");
+const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/+$/, "");
 type Ticket={id:string;subject:string;status:string;last_message:string;created_at:string;updated_at?:string};
 type Msg={id:string;sender_id:string;sender_role:string;message:string;created_at:string};
 const categories=["استفسار عام","شكوى","إبلاغ عن منشور أو محتوى","إبلاغ عن حساب","مشكلة تقنية","الأمان والخصوصية","اقتراح أو ملاحظة"];
