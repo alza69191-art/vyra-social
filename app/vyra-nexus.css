@@ -103,9 +103,10 @@ body {
 }
 
 
-/* VYRA NEXUS — dark surfaces for OS dark preference and an explicit theme hook. */
+
+/* VYRA NEXUS — follow the operating-system light/dark preference. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-vyra-theme="light"]) {
+  :root {
     color-scheme: dark;
     --nexus-ink: #eef0ff;
     --nexus-muted: #a5acc8;
@@ -115,134 +116,46 @@ body {
     --nexus-shadow: 0 12px 34px rgba(0, 0, 0, .22);
     --nexus-shadow-hover: 0 20px 46px rgba(0, 0, 0, .34);
   }
+  html, body { color-scheme: dark !important; background: var(--nexus-page) !important; color: var(--nexus-ink) !important; }
+  .main-area, .content-wrap, main, main[style], .ai-page, .auth-page, .auth-loading {
+    background: var(--nexus-page) !important; color: var(--nexus-ink) !important;
+  }
+  .sidebar { background: linear-gradient(165deg,#101426,#1b2140 62%,#24234b) !important; border-color: var(--nexus-line) !important; }
+  .topbar, .mobile-header { background: rgba(27,32,53,.9) !important; border-color: var(--nexus-line) !important; }
+  .breadcrumb, .breadcrumb b, .welcome-row h1, .feed-heading h2, .side-card-title h3,
+  .post-author b, .quick-card>button b, .auth-card h1, .ai-intro h1, .ai-brand {
+    color: var(--nexus-ink) !important;
+  }
+  .welcome-row, .stories-panel, .composer-card, .post-card, .side-card, .auth-card,
+  .ai-form, .bot-message, .empty-state {
+    background: var(--nexus-surface) !important; color: var(--nexus-ink) !important;
+    border-color: var(--nexus-line) !important;
+  }
+  .welcome-row p, .section-heading p, .feed-heading span, .post-text, .post-author small,
+  .post-stats, .profile-meta small, .footer-links, .auth-card>p, .ai-intro p {
+    color: var(--nexus-muted) !important;
+  }
+  .search-box, .composer-input, .auth-card input, .ai-form textarea,
+  main input, main textarea, main select {
+    background: #171c31 !important; color: var(--nexus-ink) !important;
+    border-color: var(--nexus-line) !important;
+  }
+  .outline-button, .sort-button, .post-tag, .quick-icon {
+    background: #292f4b !important; color: #c5caff !important; border-color: var(--nexus-line) !important;
+  }
+  .composer-footer, .post-stats, .post-actions, .quick-card>button { border-color: var(--nexus-line) !important; }
+  .post-actions button, .composer-tools button, .icon-button { color: #c0c6e0 !important; }
+  .post-actions button:hover, .composer-tools button:hover, .quick-card>button:hover {
+    background: #303657 !important; color: #b9b2ff !important;
+  }
+  .progress-track { background: #343a56; }
+  .progress-label b, .trend-row b { color: var(--nexus-ink); }
+  .ai-message.bot-message { background: #252b45 !important; color: var(--nexus-ink) !important; }
+  .auth-brand { color: var(--nexus-ink) !important; }
+  main article, main form, main aside {
+    background: var(--nexus-surface) !important; color: var(--nexus-ink) !important;
+    border-color: var(--nexus-line) !important;
+  }
+  main h1, main h2, main h3, main h4, main p, main label, main small { color: var(--nexus-ink) !important; }
+  main a { color: #aaa3ff !important; }
 }
-:root[data-vyra-theme="dark"] {
-  color-scheme: dark;
-  --nexus-ink: #eef0ff;
-  --nexus-muted: #a5acc8;
-  --nexus-line: rgba(178, 187, 230, .16);
-  --nexus-surface: #20243a;
-  --nexus-page: #14182a;
-  --nexus-shadow: 0 12px 34px rgba(0, 0, 0, .22);
-  --nexus-shadow-hover: 0 20px 46px rgba(0, 0, 0, .34);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-vyra-theme="light"]) html,
-  :root:not([data-vyra-theme="light"]) body { color-scheme: dark !important; }
-}
-:root[data-vyra-theme="dark"] body,
-@media (prefers-color-scheme: dark) {
-  body { background: var(--nexus-page) !important; color: var(--nexus-ink) !important; }
-}
-:root[data-vyra-theme="dark"] .main-area,
-:root[data-vyra-theme="dark"] .content-wrap,
-:root[data-vyra-theme="dark"] main,
-:root[data-vyra-theme="dark"] main[style],
-:root[data-vyra-theme="dark"] .ai-page,
-:root[data-vyra-theme="dark"] .auth-page,
-:root[data-vyra-theme="dark"] .auth-loading {
-  background: var(--nexus-page) !important;
-  color: var(--nexus-ink) !important;
-}
-:root[data-vyra-theme="dark"] .sidebar {
-  background: linear-gradient(165deg, #101426, #1b2140 62%, #24234b) !important;
-  border-color: var(--nexus-line) !important;
-}
-:root[data-vyra-theme="dark"] .topbar,
-:root[data-vyra-theme="dark"] .mobile-header {
-  background: rgba(27, 32, 53, .9) !important;
-  border-color: var(--nexus-line) !important;
-}
-:root[data-vyra-theme="dark"] .breadcrumb,
-:root[data-vyra-theme="dark"] .breadcrumb b,
-:root[data-vyra-theme="dark"] .welcome-row h1,
-:root[data-vyra-theme="dark"] .feed-heading h2,
-:root[data-vyra-theme="dark"] .side-card-title h3,
-:root[data-vyra-theme="dark"] .post-author b,
-:root[data-vyra-theme="dark"] .quick-card>button b,
-:root[data-vyra-theme="dark"] .auth-card h1,
-:root[data-vyra-theme="dark"] .ai-intro h1,
-:root[data-vyra-theme="dark"] .ai-brand {
-  color: var(--nexus-ink) !important;
-}
-:root[data-vyra-theme="dark"] .welcome-row,
-:root[data-vyra-theme="dark"] .stories-panel,
-:root[data-vyra-theme="dark"] .composer-card,
-:root[data-vyra-theme="dark"] .post-card,
-:root[data-vyra-theme="dark"] .side-card,
-:root[data-vyra-theme="dark"] .auth-card,
-:root[data-vyra-theme="dark"] .ai-form,
-:root[data-vyra-theme="dark"] .bot-message,
-:root[data-vyra-theme="dark"] .empty-state {
-  background: var(--nexus-surface) !important;
-  color: var(--nexus-ink) !important;
-  border-color: var(--nexus-line) !important;
-}
-:root[data-vyra-theme="dark"] .welcome-row p,
-:root[data-vyra-theme="dark"] .section-heading p,
-:root[data-vyra-theme="dark"] .feed-heading span,
-:root[data-vyra-theme="dark"] .post-text,
-:root[data-vyra-theme="dark"] .post-author small,
-:root[data-vyra-theme="dark"] .post-stats,
-:root[data-vyra-theme="dark"] .profile-meta small,
-:root[data-vyra-theme="dark"] .footer-links,
-:root[data-vyra-theme="dark"] .auth-card>p,
-:root[data-vyra-theme="dark"] .ai-intro p {
-  color: var(--nexus-muted) !important;
-}
-:root[data-vyra-theme="dark"] .search-box,
-:root[data-vyra-theme="dark"] .composer-input,
-:root[data-vyra-theme="dark"] .auth-card input,
-:root[data-vyra-theme="dark"] .ai-form textarea,
-:root[data-vyra-theme="dark"] main input,
-:root[data-vyra-theme="dark"] main textarea,
-:root[data-vyra-theme="dark"] main select {
-  background: #171c31 !important;
-  color: var(--nexus-ink) !important;
-  border-color: var(--nexus-line) !important;
-}
-:root[data-vyra-theme="dark"] .outline-button,
-:root[data-vyra-theme="dark"] .sort-button,
-:root[data-vyra-theme="dark"] .post-tag,
-:root[data-vyra-theme="dark"] .quick-icon {
-  background: #292f4b !important;
-  color: #c5caff !important;
-  border-color: var(--nexus-line) !important;
-}
-:root[data-vyra-theme="dark"] .composer-footer,
-:root[data-vyra-theme="dark"] .post-stats,
-:root[data-vyra-theme="dark"] .post-actions,
-:root[data-vyra-theme="dark"] .quick-card>button {
-  border-color: var(--nexus-line) !important;
-}
-:root[data-vyra-theme="dark"] .post-actions button,
-:root[data-vyra-theme="dark"] .composer-tools button,
-:root[data-vyra-theme="dark"] .icon-button {
-  color: #c0c6e0 !important;
-}
-:root[data-vyra-theme="dark"] .post-actions button:hover,
-:root[data-vyra-theme="dark"] .composer-tools button:hover,
-:root[data-vyra-theme="dark"] .quick-card>button:hover {
-  background: #303657 !important;
-  color: #b9b2ff !important;
-}
-:root[data-vyra-theme="dark"] .progress-track { background: #343a56; }
-:root[data-vyra-theme="dark"] .progress-label b,
-:root[data-vyra-theme="dark"] .trend-row b { color: var(--nexus-ink); }
-:root[data-vyra-theme="dark"] .ai-message.bot-message { background: #252b45 !important; color: var(--nexus-ink) !important; }
-:root[data-vyra-theme="dark"] .auth-brand { color: var(--nexus-ink) !important; }
-:root[data-vyra-theme="dark"] main article,
-:root[data-vyra-theme="dark"] main form,
-:root[data-vyra-theme="dark"] main aside {
-  background: var(--nexus-surface) !important;
-  color: var(--nexus-ink) !important;
-  border-color: var(--nexus-line) !important;
-}
-:root[data-vyra-theme="dark"] main h1,
-:root[data-vyra-theme="dark"] main h2,
-:root[data-vyra-theme="dark"] main h3,
-:root[data-vyra-theme="dark"] main h4,
-:root[data-vyra-theme="dark"] main p,
-:root[data-vyra-theme="dark"] main label,
-:root[data-vyra-theme="dark"] main small { color: var(--nexus-ink) !important; }
-:root[data-vyra-theme="dark"] main a { color: #aaa3ff !important; }
