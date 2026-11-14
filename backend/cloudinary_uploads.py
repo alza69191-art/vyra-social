@@ -102,9 +102,11 @@ async def upload_media(
         profile.avatar_url = url
     elif purpose == "cover":
         profile.cover_url = url
-    elif purpose in {"space", "message", "market"}:
+    elif purpose in {"space", "message", "market", "story", "ad"}:
+        # Stories and ad creatives are attached to their own records by their
+        # dedicated endpoints. They must never be inserted into post_media.
         pass
-    else:
+    elif purpose == "post":
         db.add(models.PostMedia(
             id=str(uuid4()),
             post_id=post.id,
