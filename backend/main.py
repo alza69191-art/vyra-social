@@ -18,6 +18,7 @@ from backend.ai_router import generate_reply
 from backend.cloudinary_uploads import router as uploads_router
 from backend.security_controls import SecurityControlsMiddleware
 from backend.support_router import router as support_router
+from backend.admin_router import router as admin_router
 from backend.stories_channel_ads import router as stories_channel_ads_router
 
 app = FastAPI(
@@ -50,6 +51,7 @@ app.include_router(auth_router)
 app.include_router(oauth_router)
 app.include_router(uploads_router)
 app.include_router(support_router)
+app.include_router(admin_router)
 app.include_router(stories_channel_ads_router)
 
 
