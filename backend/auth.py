@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import logging
 import os
 import re
@@ -106,6 +107,7 @@ def _send_verification_email(email: str, code: str):
         server.login(username, password)
         server.send_message(message)
 
+
 def _issue_verification(db: Session, user: models.User):
     code = f"{secrets.randbelow(1_000_000):06d}"
     token = models.EmailVerificationToken(
@@ -140,8 +142,6 @@ def register(payload: Credentials, db: Session = Depends(get_db)):
         db.rollback()
         logger.exception("Registration failed: database integrity constraint rejected user/profile insert")
         raise HTTPException(status_code=409, detail="تعذر إنشاء الحساب بهذه البيانات.")
-    # Email verification is temporarily disabled by product decision.
-    # Return a session immediately after successful account creation.
     return auth_result(user, profile)
 
 
@@ -188,6 +188,23 @@ def login(payload: Credentials, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="البريد الإلكتروني أو كلمة المرور غير صحيحة.")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="هذا الحساب موقوف.")
+    profile = db.get(models.Profile, user.id)
+    if profile is None:
+        raise HTTPException(status_code=409, detail="ملف الحساب غير مكتمل.")
+    return auth_result(user, profile)
+
+
+@router.post("/admin-login")
+def admin_login(payload: Credentials, db: Session = Depends(get_db)):
+    admin_email = (os.getenv("ADMIN_EMAIL") or os.getenv("SUPPORT_ADMIN_EMAIL") or "").strip().lower()
+    configured_password = os.getenv("ADMIN_PASSWORD", "")
+    if (not admin_email or not configured_password
+            or not hmac.compare_digest(payload.email, admin_email)
+            or not hmac.compare_digest(payload.password, configured_password)):
+        raise HTTPException(status_code=401, detail="البريد الإلكتروني أو كلمة المرور غير صحيحة.")
+    user = db.scalar(select(models.User).where(models.User.email == admin_email))
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=403, detail="الحساب الإداري غير متاح.")
     profile = db.get(models.Profile, user.id)
     if profile is None:
         raise HTTPException(status_code=409, detail="ملف الحساب غير مكتمل.")
