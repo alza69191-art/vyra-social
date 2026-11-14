@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./vyra-nexus.css";
+import "./payoneer-facebook.css";
 
 export const metadata: Metadata = {
   title: {
