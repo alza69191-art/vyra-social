@@ -1,0 +1,283 @@
+/* VYRA theme preferences — loaded after the legacy and brand layers. */
+:root[data-vyra-theme="light"] {
+  color-scheme: light !important;
+  --vyra-text: #1d252c;
+  --vyra-muted: #66727c;
+  --vyra-border: #e6e9ec;
+  --vyra-page: #f4f6f8;
+  --vyra-surface: #fff;
+}
+html[data-vyra-theme="light"],
+html[data-vyra-theme="light"] body {
+  color-scheme: light !important;
+  background: #f4f6f8 !important;
+  color: #1d252c !important;
+}
+html[data-vyra-theme="light"] .main-area,
+html[data-vyra-theme="light"] .content-wrap,
+html[data-vyra-theme="light"] .feed-column,
+html[data-vyra-theme="light"] .right-column,
+html[data-vyra-theme="light"] .ai-page {
+  background: transparent !important;
+  color: #1d252c !important;
+}
+html[data-vyra-theme="light"] .topbar,
+html[data-vyra-theme="light"] .mobile-header,
+html[data-vyra-theme="light"] .vyra-public-header {
+  background: rgba(255,255,255,.96) !important;
+  color: #1d252c !important;
+  border-color: #e6e9ec !important;
+}
+html[data-vyra-theme="light"] .welcome-row {
+  background: linear-gradient(115deg,#fff 0%,#fff8f3 60%,#fff0e7 100%) !important;
+  border-color: #ffe0d1 !important;
+}
+html[data-vyra-theme="light"] .composer-card,
+html[data-vyra-theme="light"] .post-card,
+html[data-vyra-theme="light"] .side-card,
+html[data-vyra-theme="light"] .stories-panel,
+html[data-vyra-theme="light"] .auth-card,
+html[data-vyra-theme="light"] .ai-form,
+html[data-vyra-theme="light"] .bot-message,
+html[data-vyra-theme="light"] .vyra-auth-dialog,
+html[data-vyra-theme="light"] .vyra-social-preview {
+  background: #fff !important;
+  color: #1d252c !important;
+  border-color: #e6e9ec !important;
+}
+html[data-vyra-theme="light"] .breadcrumb,
+html[data-vyra-theme="light"] .breadcrumb b,
+html[data-vyra-theme="light"] .welcome-row h1,
+html[data-vyra-theme="light"] .feed-heading h2,
+html[data-vyra-theme="light"] .side-card-title h3,
+html[data-vyra-theme="light"] .post-author b,
+html[data-vyra-theme="light"] .ai-intro h1,
+html[data-vyra-theme="light"] .vyra-hero-copy h1 {
+  color: #1d252c !important;
+}
+html[data-vyra-theme="light"] .welcome-row p,
+html[data-vyra-theme="light"] .post-text,
+html[data-vyra-theme="light"] .post-author small,
+html[data-vyra-theme="light"] .post-stats,
+html[data-vyra-theme="light"] .feed-heading span,
+html[data-vyra-theme="light"] .ai-intro p,
+html[data-vyra-theme="light"] .vyra-hero-copy p {
+  color: #66727c !important;
+}
+html[data-vyra-theme="light"] .search-box,
+html[data-vyra-theme="light"] .composer-input,
+html[data-vyra-theme="light"] .auth-card input,
+html[data-vyra-theme="light"] .ai-form textarea,
+html[data-vyra-theme="light"] main input,
+html[data-vyra-theme="light"] main textarea,
+html[data-vyra-theme="light"] main select {
+  background: #f4f6f8 !important;
+  color: #1d252c !important;
+  border-color: #e6e9ec !important;
+}
+html[data-vyra-theme="light"] .post-tag,
+html[data-vyra-theme="light"] .quick-icon,
+html[data-vyra-theme="light"] .outline-button,
+html[data-vyra-theme="light"] .sort-button {
+  background: #fff1e9 !important;
+  color: #e94700 !important;
+  border-color: #ffd2bd !important;
+}
+html[data-vyra-theme="light"] .vyra-auth-dialog h2,
+html[data-vyra-theme="light"] .vyra-auth-dialog > p,
+html[data-vyra-theme="light"] .vyra-provider {
+  color: #25313a !important;
+}
+html[data-vyra-theme="light"] main[style] {
+  background: #f4f6f8 !important;
+  color: #1d252c !important;
+}
+html[data-vyra-theme="light"] main[style] nav,
+html[data-vyra-theme="light"] main[style] section,
+html[data-vyra-theme="light"] main[style] article {
+  background: #fff !important;
+  color: #1d252c !important;
+  border-color: #e6e9ec !important;
+}
+html[data-vyra-theme="light"] main[style] :where(h1,h2,h3,h4,b,strong,label) {
+  color: #1d252c !important;
+}
+html[data-vyra-theme="light"] main[style] :where(p,small) {
+  color: #66727c !important;
+}
+html[data-vyra-theme="light"] main[style] a {
+  color: #e94700 !important;
+}
+html[data-vyra-theme="light"] main[style] input,
+html[data-vyra-theme="light"] main[style] select,
+html[data-vyra-theme="light"] main[style] textarea {
+  background: #f4f6f8 !important;
+  color: #1d252c !important;
+  border-color: #e6e9ec !important;
+}
+
+:root[data-vyra-theme="dark"] {
+  color-scheme: dark !important;
+  --vyra-text: #edf2f5;
+  --vyra-muted: #aab6bd;
+  --vyra-border: #35434b;
+  --vyra-page: #11191f;
+  --vyra-surface: #1b272e;
+  --nexus-ink: #edf2f5;
+  --nexus-muted: #aab6bd;
+  --nexus-line: rgba(190,205,214,.16);
+  --nexus-page: #11191f;
+  --nexus-surface: #1b272e;
+}
+html[data-vyra-theme="dark"],
+html[data-vyra-theme="dark"] body {
+  color-scheme: dark !important;
+  background: #11191f !important;
+  color: #edf2f5 !important;
+}
+html[data-vyra-theme="dark"] body {
+  background-image: radial-gradient(ellipse at 8% 0%,rgba(255,120,0,.09),transparent 32%),radial-gradient(ellipse at 95% 24%,rgba(255,154,0,.06),transparent 30%) !important;
+}
+html[data-vyra-theme="dark"] .main-area,
+html[data-vyra-theme="dark"] .content-wrap,
+html[data-vyra-theme="dark"] .feed-column,
+html[data-vyra-theme="dark"] .right-column,
+html[data-vyra-theme="dark"] .ai-page,
+html[data-vyra-theme="dark"] .auth-page,
+html[data-vyra-theme="dark"] .auth-loading {
+  background: transparent !important;
+  color: #edf2f5 !important;
+}
+html[data-vyra-theme="dark"] .topbar,
+html[data-vyra-theme="dark"] .mobile-header,
+html[data-vyra-theme="dark"] .vyra-public-header {
+  background: rgba(27,39,46,.96) !important;
+  color: #edf2f5 !important;
+  border-color: #35434b !important;
+}
+html[data-vyra-theme="dark"] .welcome-row {
+  background: linear-gradient(115deg,#1b272e 0%,#2b2928 65%,#35261f 100%) !important;
+  border-color: #574033 !important;
+}
+html[data-vyra-theme="dark"] .composer-card,
+html[data-vyra-theme="dark"] .post-card,
+html[data-vyra-theme="dark"] .side-card,
+html[data-vyra-theme="dark"] .stories-panel,
+html[data-vyra-theme="dark"] .auth-card,
+html[data-vyra-theme="dark"] .ai-form,
+html[data-vyra-theme="dark"] .bot-message,
+html[data-vyra-theme="dark"] .vyra-auth-dialog,
+html[data-vyra-theme="dark"] .vyra-social-preview {
+  background: #1b272e !important;
+  color: #edf2f5 !important;
+  border-color: #35434b !important;
+  box-shadow: 0 14px 38px rgba(0,0,0,.2) !important;
+}
+html[data-vyra-theme="dark"] .breadcrumb,
+html[data-vyra-theme="dark"] .breadcrumb b,
+html[data-vyra-theme="dark"] .welcome-row h1,
+html[data-vyra-theme="dark"] .feed-heading h2,
+html[data-vyra-theme="dark"] .side-card-title h3,
+html[data-vyra-theme="dark"] .post-author b,
+html[data-vyra-theme="dark"] .ai-intro h1,
+html[data-vyra-theme="dark"] .vyra-hero-copy h1,
+html[data-vyra-theme="dark"] .vyra-auth-dialog h2 {
+  color: #edf2f5 !important;
+}
+html[data-vyra-theme="dark"] .welcome-row p,
+html[data-vyra-theme="dark"] .post-text,
+html[data-vyra-theme="dark"] .post-author small,
+html[data-vyra-theme="dark"] .post-stats,
+html[data-vyra-theme="dark"] .feed-heading span,
+html[data-vyra-theme="dark"] .ai-intro p,
+html[data-vyra-theme="dark"] .vyra-hero-copy p,
+html[data-vyra-theme="dark"] .vyra-auth-dialog > p {
+  color: #aab6bd !important;
+}
+html[data-vyra-theme="dark"] .search-box,
+html[data-vyra-theme="dark"] .composer-input,
+html[data-vyra-theme="dark"] .auth-card input,
+html[data-vyra-theme="dark"] .ai-form textarea,
+html[data-vyra-theme="dark"] main input,
+html[data-vyra-theme="dark"] main textarea,
+html[data-vyra-theme="dark"] main select {
+  background: #11191f !important;
+  color: #edf2f5 !important;
+  border-color: #35434b !important;
+}
+html[data-vyra-theme="dark"] .post-tag,
+html[data-vyra-theme="dark"] .quick-icon,
+html[data-vyra-theme="dark"] .outline-button,
+html[data-vyra-theme="dark"] .sort-button {
+  background: #293942 !important;
+  color: #ffb17b !important;
+  border-color: #594331 !important;
+}
+html[data-vyra-theme="dark"] .post-actions button,
+html[data-vyra-theme="dark"] .composer-tools button,
+html[data-vyra-theme="dark"] .icon-button {
+  color: #c3cdd2 !important;
+}
+html[data-vyra-theme="dark"] .post-actions button:hover,
+html[data-vyra-theme="dark"] .composer-tools button:hover,
+html[data-vyra-theme="dark"] .quick-card > button:hover,
+html[data-vyra-theme="dark"] .icon-button:hover {
+  background: #293942 !important;
+  color: #ff9b58 !important;
+}
+html[data-vyra-theme="dark"] .vyra-hero-copy h1 span,
+html[data-vyra-theme="dark"] .eyebrow,
+html[data-vyra-theme="dark"] .welcome-row h1 span {
+  color: #ff8a00 !important;
+}
+html[data-vyra-theme="dark"] .vyra-provider {
+  background: #24323a !important;
+  color: #edf2f5 !important;
+  border-color: #3b4b55 !important;
+}
+html[data-vyra-theme="dark"] .vyra-auth-close {
+  background: #293942 !important;
+  color: #edf2f5 !important;
+}
+html[data-vyra-theme="dark"] main[style] {
+  background: #11191f !important;
+  color: #edf2f5 !important;
+}
+html[data-vyra-theme="dark"] main[style] nav,
+html[data-vyra-theme="dark"] main[style] section,
+html[data-vyra-theme="dark"] main[style] article {
+  background: #1b272e !important;
+  color: #edf2f5 !important;
+  border-color: #35434b !important;
+}
+html[data-vyra-theme="dark"] main[style] :where(h1,h2,h3,h4,b,strong,label) {
+  color: #edf2f5 !important;
+}
+html[data-vyra-theme="dark"] main[style] :where(p,small) {
+  color: #aab6bd !important;
+}
+html[data-vyra-theme="dark"] main[style] a {
+  color: #ff9a52 !important;
+}
+html[data-vyra-theme="dark"] main[style] button:not([role="switch"]) {
+  background: #293942 !important;
+  color: #edf2f5 !important;
+  border-color: #3b4b55 !important;
+}
+html[data-vyra-theme="dark"] main[style] button[style*="background:#292742"],
+html[data-vyra-theme="dark"] main[style] button[style*="background: #292742"] {
+  background: linear-gradient(112deg,#ff8a00,#ff4800) !important;
+  color: #fff !important;
+}
+html[data-vyra-theme="dark"] main[style] button[style*="#d9d7ff"] {
+  background: #3a302c !important;
+  color: #ffb17b !important;
+  border-color: #8a4d2b !important;
+}
+html[data-vyra-theme="dark"] main[style] input,
+html[data-vyra-theme="dark"] main[style] select,
+html[data-vyra-theme="dark"] main[style] textarea {
+  background: #11191f !important;
+  color: #edf2f5 !important;
+  border-color: #35434b !important;
+}
