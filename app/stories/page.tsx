@@ -100,7 +100,7 @@ function StoriesPageInner(){
     <section className="story-create-card">
      <div className="story-section-title"><div><small>ابدأ المشاركة</small><h2>إنشاء قصة جديدة</h2></div><span className="story-plus"><Plus size={19}/></span></div>
      <label className="story-upload-zone">
-      {file?<div className="story-preview">{file.type.startsWith("video/")?<video src={previewUrl} controls/>:<img src={preview} alt="معاينة القصة"/>}<span>{file.name}</span></div>:<><ImagePlus size={31}/><b>اختر صورة أو فيديو</b><small>JPG · PNG · WEBP · GIF · MP4 · WEBM · MOV</small><small>حتى 15 MB للصورة و100 MB للفيديو</small></>}
+      {file?<div className="story-preview">{file.type.startsWith("video/")?<video src={previewUrl} controls/>:<img src={previewUrl} alt="معاينة القصة"/>}<span>{file.name}</span></div>:<><ImagePlus size={31}/><b>اختر صورة أو فيديو</b><small>JPG · PNG · WEBP · GIF · MP4 · WEBM · MOV</small><small>حتى 15 MB للصورة و100 MB للفيديو</small></>}
       <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" onChange={e=>selectFile(e.target.files?.[0]||null)} hidden/>
      </label>
      <label className="story-caption-label">أضف وصفاً <span>اختياري</span><textarea value={caption} maxLength={500} onChange={e=>setCaption(e.target.value)} placeholder="اكتب شيئاً يرافق لحظتك..." rows={3}/></label>
