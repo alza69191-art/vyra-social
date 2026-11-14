@@ -43,6 +43,19 @@ def current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer)):
         )
         if claims.get("type") != "access":
             raise HTTPException(status_code=401, detail="Invalid access token")
+        # Enforce account suspension on every authenticated API request,
+        # including access tokens issued before an administrator action.
+        from backend.database import SessionLocal
+        from backend import models
+        if SessionLocal is None:
+            raise HTTPException(status_code=503, detail="Database is not configured")
+        db = SessionLocal()
+        try:
+            user = db.get(models.User, claims["sub"])
+            if user is None or not user.is_active:
+                raise HTTPException(status_code=403, detail="This account is suspended or unavailable")
+        finally:
+            db.close()
         return claims
     except HTTPException:
         raise
