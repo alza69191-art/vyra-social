@@ -18,6 +18,7 @@ function StoriesPageInner(){
  const [caption,setCaption]=useState("");
  const [busy,setBusy]=useState(false);
  const [notice,setNotice]=useState("");
+ const [previewUrl,setPreviewUrl]=useState("");
  const [viewer,setViewer]=useState<{group:number;item:number}|null>(null);
  const [progressKey,setProgressKey]=useState(0);
  const token=()=>typeof window!=="undefined"?(sessionStorage.getItem("vyra_access_token")||""):"";
@@ -37,7 +38,7 @@ function StoriesPageInner(){
   setRows(await r.json());
  },[]);
  useEffect(()=>{load().catch(e=>setNotice(e instanceof Error?e.message:"تعذر تحميل القصص."));},[load]);
- useEffect(()=>{if(!file)return;const url=URL.createObjectURL(file);return()=>URL.revokeObjectURL(url)},[file]);
+ useEffect(()=>{if(!file){setPreviewUrl("");return}const url=URL.createObjectURL(file);setPreviewUrl(url);return()=>URL.revokeObjectURL(url)},[file]);
  const closeViewer=useCallback(()=>setViewer(null),[]);
  const advance=useCallback((direction:number)=>{
   setViewer(current=>{
@@ -91,7 +92,6 @@ function StoriesPageInner(){
   }catch(e){setNotice(e instanceof Error?e.message:"تعذر نشر القصة.");}
   finally{setBusy(false)}
  }
- const preview=file?URL.createObjectURL(file):"";
  return <main className="vyra-stories" dir="rtl">
   <div className="story-shell">
    <header className="story-header"><Link href="/" className="story-back"><ArrowRight size={17}/> العودة للرئيسية</Link><div className="story-wordmark">VYRA <span>STORIES</span></div><span className="story-header-note">لحظاتك، لمدة 24 ساعة</span></header>
@@ -100,7 +100,7 @@ function StoriesPageInner(){
     <section className="story-create-card">
      <div className="story-section-title"><div><small>ابدأ المشاركة</small><h2>إنشاء قصة جديدة</h2></div><span className="story-plus"><Plus size={19}/></span></div>
      <label className="story-upload-zone">
-      {file?<div className="story-preview">{file.type.startsWith("video/")?<video src={preview} controls/>:<img src={preview} alt="معاينة القصة"/>}<span>{file.name}</span></div>:<><ImagePlus size={31}/><b>اختر صورة أو فيديو</b><small>JPG · PNG · WEBP · GIF · MP4 · WEBM · MOV</small><small>حتى 15 MB للصورة و100 MB للفيديو</small></>}
+      {file?<div className="story-preview">{file.type.startsWith("video/")?<video src={previewUrl} controls/>:<img src={preview} alt="معاينة القصة"/>}<span>{file.name}</span></div>:<><ImagePlus size={31}/><b>اختر صورة أو فيديو</b><small>JPG · PNG · WEBP · GIF · MP4 · WEBM · MOV</small><small>حتى 15 MB للصورة و100 MB للفيديو</small></>}
       <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" onChange={e=>selectFile(e.target.files?.[0]||null)} hidden/>
      </label>
      <label className="story-caption-label">أضف وصفاً <span>اختياري</span><textarea value={caption} maxLength={500} onChange={e=>setCaption(e.target.value)} placeholder="اكتب شيئاً يرافق لحظتك..." rows={3}/></label>
