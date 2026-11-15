@@ -77,7 +77,7 @@ main [style*="color:#625bd0"],main [style*="color: #625bd0"],
 main [style*="color:#66543d"],main [style*="color: #66543d"]{color:var(--vyra-primary-dark)!important}
 main [style*="background:#f0efff"],main [style*="background: #f0efff"],
 main [style*="background:#e9e9ff"],main [style*="background: #e9e9ff"]{background:var(--vyra-orange-wash)!important}
-main [style*="background:#292742"],main [style*="background: #292742"]{background:var(--vyra-ink)!important}
+main [style*="background:#292742"],main [style*="background: #292742"]{background:var(--vyra-primary)!important;color:#fff!important}
 main [style*="border-color:#d9d7ff"],main [style*="border-color: #d9d7ff"]{border-color:#ffc4a8!important}
 
 /* Responsive behavior */
