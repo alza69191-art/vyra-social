@@ -73,6 +73,25 @@ export default function HomePage() {
         <a href="/help" style={{ color: "#6657e8" }}>مركز المساعدة</a>
         <a href="/help/glossary" style={{ color: "#6657e8" }}>دليل المصطلحات</a>
       </section>
+      <section style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px 56px", color: "#42485b" }}>
+        <h2 style={{ fontSize: 30, color: "#171923", marginBottom: 14 }}>ما هي منصة VYRA؟</h2>
+        <p style={{ lineHeight: 2, fontSize: 17 }}>VYRA مساحة اجتماعية رقمية تساعد الأفراد على بناء حضورهم والتواصل مع الآخرين ومشاركة الأفكار والوسائط. تجمع المنصة أدوات النشر والتفاعل واكتشاف المجتمعات والصفحات في واجهة واحدة، مع إمكانية الوصول إلى الحساب من المتصفح.</p>
+        <h2 style={{ fontSize: 25, color: "#171923", margin: "28px 0 12px" }}>كيف تستخدم VYRA؟</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
+          <article style={{ background: "#fff", border: "1px solid #e9eaf2", borderRadius: 16, padding: 20 }}><h3>أنشئ حضورك</h3><p style={{ lineHeight: 1.9 }}>أنشئ حساباً، وأكمل ملفك الشخصي، وحدد المعلومات التي ترغب في مشاركتها وفق إعدادات الحساب المتاحة.</p></article>
+          <article style={{ background: "#fff", border: "1px solid #e9eaf2", borderRadius: 16, padding: 20 }}><h3>شارك المحتوى</h3><p style={{ lineHeight: 1.9 }}>انشر تحديثات نصية وأرفق الصور أو مقاطع الفيديو المدعومة، ثم تابع التفاعل والتعليقات على منشوراتك.</p></article>
+          <article style={{ background: "#fff", border: "1px solid #e9eaf2", borderRadius: 16, padding: 20 }}><h3>اكتشف المجتمعات</h3><p style={{ lineHeight: 1.9 }}>تصفح المجتمعات والصفحات المتاحة للعثور على موضوعات واهتمامات مشتركة مع أعضاء آخرين.</p></article>
+          <article style={{ background: "#fff", border: "1px solid #e9eaf2", borderRadius: 16, padding: 20 }}><h3>تحكم بحسابك</h3><p style={{ lineHeight: 1.9 }}>استخدم إعدادات الحساب والخصوصية وأدوات الدعم المتاحة لإدارة تجربتك والإبلاغ عن المشكلات.</p></article>
+        </div>
+        <h2 style={{ fontSize: 25, color: "#171923", margin: "30px 0 12px" }}>الخصوصية والاستخدام الآمن</h2>
+        <p style={{ lineHeight: 2, fontSize: 16 }}>احرص على استخدام كلمة مرور قوية وفريدة، ولا تشارك رموز التحقق أو بيانات الدخول. راجع إعدادات الخصوصية قبل نشر محتوى شخصي، وتجنب فتح الروابط المشبوهة. توفر VYRA صفحات مساعدة لتوضيح التنقل والوظائف الأساسية، كما يمكن للمستخدمين تسجيل الدخول للوصول إلى ميزات الحساب.</p>
+        <h2 style={{ fontSize: 25, color: "#171923", margin: "30px 0 12px" }}>أسئلة شائعة عن VYRA</h2>
+        <div style={{ display: "grid", gap: 14, lineHeight: 1.9 }}>
+          <div><h3>هل يمكن استخدام VYRA من المتصفح؟</h3><p>نعم، يمكن فتح المنصة من متصفح الويب عبر رابطها، ثم تسجيل الدخول أو إنشاء حساب للوصول إلى المساحة الاجتماعية.</p></div>
+          <div><h3>هل أحتاج إلى حساب للمشاركة؟</h3><p>تصفح الصفحة التعريفية ومركز المساعدة متاح دون تسجيل الدخول، أما النشر والتفاعل وإدارة الحساب فتتطلب تسجيل الدخول.</p></div>
+          <div><h3>أين أجد شرحاً للميزات؟</h3><p>يمكنك زيارة <a href="/help" style={{ color: "#6657e8" }}>مركز مساعدة VYRA</a> أو <a href="/help/glossary" style={{ color: "#6657e8" }}>قاموس المصطلحات</a> للحصول على معلومات إضافية.</p></div>
+        </div>
+      </section>
       <footer style={{ borderTop: "1px solid #e7e8ef", padding: 24, textAlign: "center", color: "#7a8092" }}>© 2026 VYRA — منصة اجتماعية للتواصل ومشاركة المحتوى.</footer>
     </main>
   );
