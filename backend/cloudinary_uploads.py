@@ -134,7 +134,7 @@ class DirectUploadSignature(BaseModel):
     post_id: str = Field(min_length=1, max_length=36)
     resource_type: str = Field(default="video", pattern="^video$")
     content_type: str = Field(pattern="^video/(mp4|webm|quicktime)$")
-    file_size: int = Field(gt=0, le=524288000)
+    file_size: int = Field(gt=0, le=104857600)
 
 
 class DirectUploadComplete(BaseModel):
