@@ -312,3 +312,30 @@ main[dir="rtl"] [style*="border-radius: 20px"]{border-radius:13px!important}
 
 .vyra-public-brand img{display:block;width:132px;height:auto}
 @media(max-width:760px){.vyra-public-brand img{width:116px}}
+
+/* Shared authenticated-area navigation across every internal route */
+.vyra-workspace-bar{
+  position:sticky;top:0;z-index:80;min-height:66px;padding:0 clamp(14px,3vw,38px);
+  display:flex;align-items:center;gap:clamp(16px,2.5vw,34px);
+  background:rgba(255,255,255,.97);border-bottom:1px solid #e0e3e5;
+  box-shadow:0 3px 15px rgba(22,30,36,.035);backdrop-filter:blur(14px);
+}
+.vyra-workspace-logo{display:flex;align-items:center;flex:0 0 auto}
+.vyra-workspace-logo img{display:block;width:112px;height:auto}
+.vyra-workspace-links{display:flex;align-items:center;gap:5px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.vyra-workspace-links::-webkit-scrollbar{display:none}
+.vyra-workspace-links a,.vyra-workspace-support{
+  flex:0 0 auto;padding:10px 12px;border-radius:7px;text-decoration:none!important;
+  color:#515b62!important;font-size:12px;font-weight:700;white-space:nowrap;
+  transition:background .16s,color .16s;
+}
+.vyra-workspace-links a:hover,.vyra-workspace-support:hover{background:#fff1e9;color:#e94a0a!important}
+.vyra-workspace-links a.active{background:#fff0e8;color:#e94a0a!important;box-shadow:inset 0 -2px #ff4b0a}
+.vyra-workspace-support{border:1px solid #e0e3e5;background:#fff}
+@media(max-width:760px){
+ .vyra-workspace-bar{min-height:58px;padding:0 12px;gap:12px}
+ .vyra-workspace-logo img{width:90px}
+ .vyra-workspace-links{gap:2px}
+ .vyra-workspace-links a,.vyra-workspace-support{font-size:10px;padding:9px 8px}
+ .vyra-workspace-support{display:none}
+}
