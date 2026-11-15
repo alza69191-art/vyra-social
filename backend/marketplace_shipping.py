@@ -220,6 +220,11 @@ def admin_create_or_update_shipment(order_id: str, payload: ShipmentInput, claim
     order = db.get(MarketplaceOrder, order_id)
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
+    existing_shipment = db.scalar(select(MarketplaceShipment).where(MarketplaceShipment.order_id == order.id))
+    if existing_shipment is None and order.status in {"cancelled", "refunded", "completed"}:
+        raise HTTPException(status_code=409, detail="لا يمكن إنشاء شحنة لطلب في حالة نهائية")
+    if order.payment_method != "cash_on_delivery" and order.payment_status != "paid":
+        raise HTTPException(status_code=409, detail="يجب تأكيد الدفع قبل إنشاء الشحنة")
     lines = db.scalars(select(MarketplaceOrderLine).where(MarketplaceOrderLine.order_id == order.id)).all()
     if not any(x.item_type == "product" for x in lines):
         raise HTTPException(status_code=409, detail="This order does not contain shippable products")
@@ -229,9 +234,10 @@ def admin_create_or_update_shipment(order_id: str, payload: ShipmentInput, claim
     shipment = db.scalar(select(MarketplaceShipment).where(MarketplaceShipment.order_id == order.id))
     now = datetime.now(timezone.utc)
     if shipment is None:
+        estimated = payload.estimated_delivery_at or (now + timedelta(days=cfg["estimated_delivery_days_min"]))
         shipment = MarketplaceShipment(id=str(uuid4()), order_id=order.id, carrier=payload.carrier,
             tracking_number=payload.tracking_number.strip(), tracking_url=payload.tracking_url,
-            status=payload.status, estimated_delivery_at=payload.estimated_delivery_at,
+            status=payload.status, estimated_delivery_at=estimated,
             shipping_cost=payload.shipping_cost, notes=payload.notes)
         db.add(shipment)
         db.flush()
@@ -239,7 +245,7 @@ def admin_create_or_update_shipment(order_id: str, payload: ShipmentInput, claim
         shipment.carrier = payload.carrier
         shipment.tracking_number = payload.tracking_number.strip()
         shipment.tracking_url = payload.tracking_url
-        shipment.estimated_delivery_at = payload.estimated_delivery_at
+        shipment.estimated_delivery_at = payload.estimated_delivery_at or shipment.estimated_delivery_at or (now + timedelta(days=cfg["estimated_delivery_days_min"]))
         shipment.shipping_cost = payload.shipping_cost
         shipment.notes = payload.notes
         shipment.status = payload.status
