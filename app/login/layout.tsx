@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "تسجيل الدخول أو إنشاء حساب — VYRA",
-  description: "سجّل الدخول إلى حساب VYRA أو أنشئ حساباً جديداً.",
+  description: "افتح حسابك على VYRA بأمان، أو أنشئ حساباً جديداً باستخدام البريد الإلكتروني أو خيارات تسجيل الدخول المتاحة.",
   alternates: { canonical: "/login" },
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
