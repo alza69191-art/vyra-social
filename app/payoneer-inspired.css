@@ -339,3 +339,73 @@ main[dir="rtl"] [style*="border-radius: 20px"]{border-radius:13px!important}
  .vyra-workspace-links a,.vyra-workspace-support{font-size:10px;padding:9px 8px}
  .vyra-workspace-support{display:none}
 }
+
+
+/* VYRA enterprise workspace — Payoneer-inspired information architecture */
+body:has(.vyra-workspace-sidebar){padding-right:252px;background:#f4f5f6}
+.vyra-workspace-sidebar{
+  position:fixed;inset:0 0 0 auto;width:252px;z-index:100;
+  display:flex;flex-direction:column;padding:22px 16px 15px;
+  background:#fff;border-left:1px solid #e2e5e7;
+  box-shadow:-5px 0 24px rgba(28,38,45,.035);overflow-y:auto;
+}
+.vyra-sidebar-brand{display:flex;align-items:center;justify-content:flex-start;padding:2px 10px 22px;border-bottom:1px solid #edf0f1}
+.vyra-sidebar-brand img{display:block;width:132px;height:auto}
+.vyra-sidebar-account{
+  display:flex;align-items:center;gap:10px;padding:15px 9px;margin:8px 0 12px;
+  background:#f7f8f8;border:1px solid #edf0f1;border-radius:10px;
+}
+.vyra-sidebar-avatar{width:35px;height:35px;display:grid;place-items:center;border-radius:9px;background:#ff4b0b;color:#fff;font-weight:900}
+.vyra-sidebar-account>span:nth-child(2){display:grid;gap:4px;flex:1;min-width:0}
+.vyra-sidebar-account b{font-size:12px;color:#263039}
+.vyra-sidebar-account small{font-size:10px;color:#7c858b}
+.vyra-sidebar-account>svg{color:#e94a0a}
+.vyra-sidebar-nav{display:grid;gap:13px;overflow:visible}
+.vyra-sidebar-group{display:grid;gap:3px}
+.vyra-sidebar-group h2{margin:0 9px 5px;font-size:10px;letter-spacing:.02em;color:#929ba1;font-weight:800}
+.vyra-sidebar-group a,.vyra-sidebar-bottom a{
+  min-height:39px;display:flex;align-items:center;gap:11px;padding:0 11px;
+  color:#56616a;text-decoration:none!important;border-radius:8px;
+  font-size:12px;font-weight:650;transition:background .16s,color .16s;
+}
+.vyra-sidebar-group a svg,.vyra-sidebar-bottom a svg{flex:0 0 auto;color:#7c878e}
+.vyra-sidebar-group a:hover,.vyra-sidebar-bottom a:hover{background:#fff3ed;color:#df480d}
+.vyra-sidebar-group a.active{background:#fff0e8;color:#e94a0a;box-shadow:inset -3px 0 #ff4b0b}
+.vyra-sidebar-group a.active svg{color:#e94a0a}
+.vyra-sidebar-bottom{margin-top:auto;padding-top:13px;border-top:1px solid #edf0f1}
+.vyra-sidebar-bottom a{color:#e94a0a}
+.vyra-sidebar-bottom a svg{color:#e94a0a}
+.vyra-sidebar-bottom small{display:block;padding:12px 10px 0;color:#a0a8ad;font-size:9px}
+@media(max-width:1100px){
+ body:has(.vyra-workspace-sidebar){padding-right:78px}
+ .vyra-workspace-sidebar{width:78px;padding:18px 9px 12px;align-items:center}
+ .vyra-sidebar-brand{width:100%;justify-content:center;padding:4px 0 18px}
+ .vyra-sidebar-brand img{width:54px}
+ .vyra-sidebar-account{width:100%;justify-content:center;padding:9px 4px}
+ .vyra-sidebar-account>span:nth-child(2),.vyra-sidebar-account>svg{display:none}
+ .vyra-sidebar-nav{width:100%;gap:9px}
+ .vyra-sidebar-group{width:100%;gap:4px}
+ .vyra-sidebar-group h2,.vyra-sidebar-group a span,.vyra-sidebar-bottom span,.vyra-sidebar-bottom small{display:none}
+ .vyra-sidebar-group a,.vyra-sidebar-bottom a{justify-content:center;padding:0;min-height:42px}
+ .vyra-sidebar-group a.active{box-shadow:inset -3px 0 #ff4b0b}
+ .vyra-sidebar-bottom{width:100%;display:flex;justify-content:center}
+}
+@media(max-width:650px){
+ body:has(.vyra-workspace-sidebar){padding-right:0;padding-top:58px}
+ .vyra-workspace-sidebar{
+   inset:0 0 auto 0;width:100%;height:58px;min-height:58px;
+   flex-direction:row;align-items:center;gap:10px;padding:0 10px;
+   border-left:0;border-bottom:1px solid #e2e5e7;box-shadow:0 3px 14px rgba(28,38,45,.05);
+   overflow:visible;
+ }
+ .vyra-sidebar-brand{width:auto;flex:0 0 auto;border:0;padding:0 3px}
+ .vyra-sidebar-brand img{width:82px}
+ .vyra-sidebar-account,.vyra-sidebar-bottom{display:none}
+ .vyra-sidebar-nav{display:flex;flex:1;min-width:0;overflow-x:auto;gap:4px;scrollbar-width:none}
+ .vyra-sidebar-nav::-webkit-scrollbar{display:none}
+ .vyra-sidebar-group{display:contents}
+ .vyra-sidebar-group h2{display:none}
+ .vyra-sidebar-group a{display:flex;flex:0 0 43px;width:43px;min-height:42px;justify-content:center;padding:0}
+ .vyra-sidebar-group a span{display:none}
+ .vyra-sidebar-group a.active{box-shadow:inset 0 -3px #ff4b0b}
+}
