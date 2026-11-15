@@ -96,6 +96,8 @@ def view_story(story_id: str, claims: dict = Depends(current_user), db: Session 
     story = db.get(models.Story, story_id)
     if not story or story.expires_at <= datetime.now(timezone.utc):
         raise HTTPException(status_code=404, detail="Story not found or expired")
+    if story.visibility == "private" and story.author_id != claims["sub"]:
+        raise HTTPException(status_code=404, detail="Story not found")
     if story.author_id != claims["sub"]:
         exists = db.scalar(select(models.StoryView.id).where(
             models.StoryView.story_id == story_id, models.StoryView.viewer_id == claims["sub"]).limit(1))
