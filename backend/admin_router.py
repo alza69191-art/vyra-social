@@ -112,30 +112,6 @@ def remove_post(post_id: str, payload: ModerationAction,
     db.commit()
     return {"deleted": True, "id": post_id}
 
-@router.get("/messages")
-def messages(claims: dict = Depends(current_user), db: Session = Depends(get_db),
-             limit: int = Query(default=50, ge=1, le=100), offset: int = Query(default=0, ge=0)):
-    require_admin(claims, db)
-    rows = db.scalars(select(models.DirectMessage).order_by(desc(models.DirectMessage.created_at))
-                      .limit(limit).offset(offset)).all()
-    return [{
-        "id": row.id, "sender_id": row.sender_id, "recipient_id": row.recipient_id,
-        "conversation_id": row.conversation_id, "body": row.body,
-        "media_type": row.media_type, "created_at": row.created_at,
-    } for row in rows]
-
-@router.delete("/messages/{message_id}")
-def remove_message(message_id: str, payload: ModerationAction,
-                   claims: dict = Depends(current_user), db: Session = Depends(get_db)):
-    actor = require_admin(claims, db)
-    message = db.get(models.DirectMessage, message_id)
-    if message is None:
-        raise HTTPException(status_code=404, detail="Message not found")
-    audit(db, actor, "message_removed", "message", message.id, payload.reason)
-    db.delete(message)
-    db.commit()
-    return {"deleted": True, "id": message_id}
-
 @router.get("/audit")
 def audit_events(claims: dict = Depends(current_user), db: Session = Depends(get_db),
                  limit: int = Query(default=100, ge=1, le=200)):
