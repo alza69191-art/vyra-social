@@ -4,6 +4,7 @@ import "./vyra-nexus.css";
 import "./payoneer-facebook.css";
 import "./vyra-brand.css";
 import "./payoneer-inspired.css";
+import VyraWorkspaceNav from "@/components/vyra-workspace-nav";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vyra-web-rs1b.onrender.com"),
@@ -37,7 +38,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body>{children}</body>
+      <body><VyraWorkspaceNav />{children}</body>
     </html>
   );
 }
