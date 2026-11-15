@@ -5,7 +5,12 @@ const apiHost = process.env.API_INTERNAL_HOSTPORT || "localhost:8000";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
-    return [{
+    return [
+      ...["admin", "account", "settings", "messages", "notifications", "support", "saved", "call", "login"].map((path) => ({
+        source: `/${path}/:path*`,
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      })),
+      {
       source: "/:path*",
       headers: [
         { key: "X-Content-Type-Options", value: "nosniff" },
@@ -14,7 +19,8 @@ const nextConfig: NextConfig = {
         { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
         { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
       ],
-    }];
+      },
+    ];
   },
   async rewrites() {
     return [
