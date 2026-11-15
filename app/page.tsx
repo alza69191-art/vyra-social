@@ -23,7 +23,60 @@ const navigation = [
 const stories = [{ name: "قصتك", initials: "+", own: true }];
 const initialPosts: Array<{ id: string | number; authorId?: string; visibility?: "public"|"followers"|"private"; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean; media?: Array<{ url: string; media_type: string }> }> = [];
 
-export default function HomePage() { return <AuthGate><HomeFeed /></AuthGate>; }
+export default function HomePage() {
+  const [checked, setChecked] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  useEffect(() => {
+    setAuthenticated(Boolean(sessionStorage.getItem("vyra_access_token")));
+    setChecked(true);
+  }, []);
+  if (checked && authenticated) return <AuthGate><HomeFeed /></AuthGate>;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "VYRA",
+    url: "https://vyra-web-rs1b.onrender.com/",
+    description: "منصة اجتماعية للتواصل ومشاركة المحتوى واكتشاف المجتمعات والقصص والريلز."
+  };
+  return (
+    <main dir="rtl" lang="ar" style={{ minHeight: "100vh", background: "#f7f8fc", color: "#202338", fontFamily: "Arial, sans-serif" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <header style={{ maxWidth: 1120, margin: "auto", padding: "24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <a href="/" aria-label="VYRA الصفحة الرئيسية" style={{ color: "#171923", fontSize: 27, fontWeight: 900, textDecoration: "none", letterSpacing: 2 }}>VYRA</a>
+        <nav aria-label="التنقل الرئيسي" style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+          <a href="/help" style={{ color: "#50566b", textDecoration: "none" }}>مركز المساعدة</a>
+          <a href="/help/glossary" style={{ color: "#50566b", textDecoration: "none" }}>دليل المصطلحات</a>
+          <a href="/login" style={{ background: "#6657e8", color: "#fff", padding: "11px 20px", borderRadius: 10, textDecoration: "none", fontWeight: 700 }}>تسجيل الدخول</a>
+        </nav>
+      </header>
+      <section style={{ maxWidth: 1120, margin: "36px auto 0", padding: "64px 24px 72px", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,380px),1fr))", gap: 42, alignItems: "center" }}>
+        <div>
+          <p style={{ color: "#6657e8", fontWeight: 800, letterSpacing: 1 }}>منصتك الاجتماعية المتكاملة</p>
+          <h1 style={{ fontSize: "clamp(38px,6vw,64px)", lineHeight: 1.2, margin: "14px 0 20px", color: "#171923" }}>تواصل وشارك واكتشف مجتمعك على <span style={{ color: "#6657e8" }}>VYRA</span></h1>
+          <p style={{ fontSize: 19, lineHeight: 1.9, color: "#626a7e", maxWidth: 650 }}>VYRA منصة اجتماعية تجمع التواصل مع الأصدقاء، ومشاركة الصور والفيديوهات، والقصص والريلز، واكتشاف المجتمعات والصفحات في مساحة رقمية واحدة.</p>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 28 }}>
+            <a href="/login" style={{ background: "#6657e8", color: "#fff", padding: "14px 25px", borderRadius: 11, textDecoration: "none", fontWeight: 800 }}>تسجيل الدخول أو إنشاء حساب</a>
+            <a href="/help" style={{ background: "#fff", color: "#34384b", border: "1px solid #e2e4ed", padding: "14px 25px", borderRadius: 11, textDecoration: "none", fontWeight: 700 }}>تعرف على المنصة</a>
+          </div>
+        </div>
+        <div aria-label="مزايا VYRA" style={{ background: "#fff", border: "1px solid #e9eaf2", borderRadius: 24, padding: 28, boxShadow: "0 20px 60px #25254a0d" }}>
+          <h2 style={{ fontSize: 25, margin: "0 0 18px" }}>كل ما يهم مجتمعك في مكان واحد</h2>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 16, color: "#51586d", lineHeight: 1.7 }}>
+            <li><strong style={{ color: "#25283a" }}>التواصل:</strong> رسائل ومتابعة وتفاعل مع الأصدقاء.</li>
+            <li><strong style={{ color: "#25283a" }}>المحتوى:</strong> منشورات وصور وفيديوهات وقصص وريلز.</li>
+            <li><strong style={{ color: "#25283a" }}>المجتمعات:</strong> اكتشف المساحات والصفحات وشارك اهتماماتك.</li>
+            <li><strong style={{ color: "#25283a" }}>الذكاء الاصطناعي:</strong> أدوات مساعدة ضمن تجربة VYRA.</li>
+          </ul>
+        </div>
+      </section>
+      <section style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px 64px", display: "flex", flexWrap: "wrap", gap: 14 }}>
+        <a href="/help" style={{ color: "#6657e8" }}>مركز المساعدة</a>
+        <a href="/help/glossary" style={{ color: "#6657e8" }}>دليل المصطلحات</a>
+      </section>
+      <footer style={{ borderTop: "1px solid #e7e8ef", padding: 24, textAlign: "center", color: "#7a8092" }}>© 2026 VYRA — منصة اجتماعية للتواصل ومشاركة المحتوى.</footer>
+    </main>
+  );
+}
 
 function HomeFeed() {
   const [active, setActive] = useState("الرئيسية");
