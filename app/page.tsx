@@ -117,14 +117,17 @@ function HomeFeed() {
     if(!token)return;
     setSharePost(post);setShareTargets([]);setSelectedShareTarget("");setShareNote("");
     try {
-      const [friendsResponse,conversationsResponse]=await Promise.all([
+      const [friendsResponse,conversationsResponse,groupsResponse]=await Promise.all([
         fetch(API_BASE+"/api/friends",{headers:{Authorization:"Bearer "+token},cache:"no-store"}),
-        fetch(API_BASE+"/api/conversations",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
+        fetch(API_BASE+"/api/conversations",{headers:{Authorization:"Bearer "+token},cache:"no-store"}),
+        fetch(API_BASE+"/api/my/groups",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
       ]);
       const friends=friendsResponse.ok?await friendsResponse.json():[];
       const conversations=conversationsResponse.ok?await conversationsResponse.json():[];
-      const targets: Array<{key:string;kind:"friend"|"group";label:string;conversationId?:string;recipientId?:string;groupId?:string}>=[...friends.filter((x:any)=>x.status==="accepted").map((x:any)=>({key:"friend:"+x.user_id,kind:"friend" as const,label:x.display_name,recipientId:x.user_id,conversationId:conversations.find((v:any)=>!v.is_group&&v.other_user_id===x.user_id)?.id})),
-        ...Array.from(new Map(conversations.filter((x:any)=>x.is_group&&x.context_type==="group"&&x.context_id).map((x:any)=>[x.context_id,{key:"group:"+x.context_id,kind:"group" as const,label:x.title,groupId:x.context_id,conversationId:x.id}])).values())];
+      const groups=groupsResponse.ok?await groupsResponse.json():[];
+      const friendTargets=friends.filter((x:any)=>x.status==="accepted").map((x:any)=>({key:"friend:"+x.user_id,kind:"friend" as const,label:x.display_name,recipientId:x.user_id,conversationId:conversations.find((v:any)=>!v.is_group&&v.other_user_id===x.user_id)?.id}));
+      const groupTargets=groups.map((g:any)=>({key:"group:"+g.id,kind:"group" as const,label:g.name,groupId:g.id,conversationId:conversations.find((v:any)=>v.is_group&&v.context_type==="group"&&v.context_id===g.id)?.id||g.conversation_id||undefined}));
+      const targets: Array<{key:string;kind:"friend"|"group";label:string;conversationId?:string;recipientId?:string;groupId?:string}>=[...friendTargets,...groupTargets];
       setShareTargets(targets);if(targets.length)setSelectedShareTarget(targets[0].key);
     } catch { setNotice("تعذر تحميل قائمة الأصدقاء والمجتمعات."); }
   }
