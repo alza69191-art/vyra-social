@@ -42,7 +42,7 @@ export default function HomePage() {
     <main dir="rtl" lang="ar" style={{ minHeight: "100vh", background: "#f7f7f8", color: "#20232b", fontFamily: "Arial, sans-serif" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <header style={{ maxWidth: 1120, margin: "auto", padding: "24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-        <a href="/" aria-label="VYRA الصفحة الرئيسية" style={{ color: "#171923", fontSize: 27, fontWeight: 900, textDecoration: "none", letterSpacing: 2 }}>VYRA</a>
+        <a href="/" aria-label="VYRA الصفحة الرئيسية" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}><img src="/brand/vyra-logo.svg" alt="VYRA" width="142" height="41" style={{ display: "block", width: 142, height: "auto" }} /></a>
         <nav aria-label="التنقل الرئيسي" style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
           <a href="/help" style={{ color: "#50566b", textDecoration: "none" }}>مركز المساعدة</a>
           <a href="/help/glossary" style={{ color: "#50566b", textDecoration: "none" }}>دليل المصطلحات</a>
