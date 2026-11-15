@@ -309,3 +309,6 @@ main[dir="rtl"] [style*="border-radius: 20px"]{border-radius:13px!important}
  .vyra-hero-visual{min-height:280px!important}
  .vyra-auth-dialog{padding:25px 19px!important}
 }
+
+.vyra-public-brand img{display:block;width:132px;height:auto}
+@media(max-width:760px){.vyra-public-brand img{width:116px}}
