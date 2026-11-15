@@ -33,6 +33,8 @@ class SecurityControlsMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         path = request.url.path
         limit = LIMITS.get(path)
+        if limit is None and path.startswith("/api/friends/request/"):
+            limit = LIMITS["/api/friends/request"]
         if limit is not None and request.method == "POST":
             host = request.client.host if request.client else "unknown"
             key = (host, path)
