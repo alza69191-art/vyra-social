@@ -260,3 +260,22 @@ main button:hover:not(:disabled),[class*="settings"] button:hover:not(:disabled)
 
 html[data-vyra-reduce-motion="true"] *,html[data-vyra-reduce-motion="true"] *::before,html[data-vyra-reduce-motion="true"] *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 html[data-vyra-compact-feed="true"] .post-card,html[data-vyra-compact-feed="true"] .composer-card{padding:11px!important}
+
+/* VYRA unified violet / cyan visual system */
+:root{--black:#6657f5;--ink:#222642;--muted:#7b829e;--line:#e5e8f4;--paper:#fff;--canvas:#f5f6fc;--soft:#f0efff}
+body{background:var(--canvas);color:var(--ink)}
+.brand-mark{background:linear-gradient(135deg,#7165f5,#45b9e8);color:#fff}
+.brand-word{color:#25294a}
+.nav-item{color:#68708e}
+.nav-item:hover{background:#f0efff;color:#6255e8}
+.nav-item.active{background:linear-gradient(120deg,#7165f5,#45b9e8);color:#fff}
+.black-button,.publish-button{background:linear-gradient(120deg,#7165f5,#45b9e8);color:#fff}
+.black-button:hover,.publish-button:hover{background:linear-gradient(120deg,#5f52e8,#329fce)}
+.icon-button:hover,.collapse-button:hover{background:#f0efff;color:#6255e8}
+.search-box{background:#f8f8ff;border-color:#e5e8f4}
+.stories-panel,.composer-card,.post-card,.side-card{border-color:#e5e8f4;box-shadow:0 12px 35px rgba(40,48,100,.035)}
+.story-ring{border-color:#7165f5}
+.story-ring.own-story{border-color:#b9b8e9}
+.online-dot{background:#45b9e8}
+.notification-icon i{background:#7165f5}
+:focus-visible{outline-color:#7165f5}
