@@ -20,7 +20,7 @@ from backend.security_controls import SecurityControlsMiddleware
 from backend.support_router import router as support_router
 from backend.admin_router import router as admin_router
 from backend.stories_channel_ads import router as stories_channel_ads_router
-from backend.marketplace_admin import router as marketplace_router, admin_router as marketplace_admin_router
+from backend.marketplace_admin import router as marketplace_router, admin_router as marketplace_admin_router, read_settings as read_marketplace_settings
 
 app = FastAPI(
     title="VYRA API",
@@ -552,6 +552,8 @@ class MarketListingStatus(BaseModel):
 
 @app.get("/api/market/listings")
 def list_market_listings(limit: int = Query(default=40, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db)):
+    if not read_marketplace_settings(db)["marketplace_enabled"]:
+        return []
     rows = db.execute(
         select(models.MarketListing, models.Profile)
         .join(models.Profile, models.Profile.id == models.MarketListing.owner_id)
@@ -571,6 +573,12 @@ def list_market_listings(limit: int = Query(default=40, ge=1, le=100), offset: i
 
 @app.post("/api/market/listings", status_code=201)
 def create_market_listing(payload: MarketListingCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    if payload.group_id is None:
+        settings = read_marketplace_settings(db)
+        if not settings["marketplace_enabled"]:
+            raise HTTPException(status_code=403, detail="Marketplace is currently disabled")
+        if settings["admin_only_publishing"] or not settings["user_product_publishing"]:
+            raise HTTPException(status_code=403, detail="User product publishing is disabled by the platform administrator")
     if db.get(models.Profile, claims["sub"]) is None:
         raise HTTPException(status_code=409, detail="Profile not found")
     if payload.group_id:
@@ -590,6 +598,7 @@ def create_market_listing(payload: MarketListingCreate, claims: dict = Depends(c
         currency=payload.currency, category=payload.category.strip(),
         condition=payload.condition, location=payload.location.strip() if payload.location else None,
         media_url=payload.media_url, media_type=payload.media_type,
+        status="pending" if payload.group_id is None and read_marketplace_settings(db)["product_approval_required"] else "active",
     )
     db.add(listing)
     db.commit()
