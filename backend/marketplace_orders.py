@@ -390,6 +390,8 @@ def admin_update_order_status(order_id: str, payload: AdminOrderStatus, claims: 
     previous = order.status
     if previous in {"cancelled", "refunded", "completed"}:
         raise HTTPException(status_code=409, detail="هذا الطلب في حالة نهائية")
+    if payload.status == "completed" and order.payment_method == "cash_on_delivery" and order.payment_status != "paid":
+        raise HTTPException(status_code=409, detail="يجب تأكيد تحصيل مبلغ الدفع عند الاستلام قبل إكمال الطلب")
     if payload.status == "paid":
         order.payment_status = "paid"
         payment = db.scalar(select(MarketplacePaymentRecord).where(MarketplacePaymentRecord.order_id == order.id))
