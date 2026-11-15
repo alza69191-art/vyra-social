@@ -198,6 +198,12 @@ function AIChat() {
         video.onerror = () => reject(new Error("تعذر قراءة ملف الفيديو."));
       });
       if (!Number.isFinite(video.duration) || video.duration <= 0) throw new Error("مدة الفيديو غير صالحة.");
+      if (video.readyState < 2) {
+        await new Promise<void>((resolve, reject) => {
+          video.onloadeddata = () => resolve();
+          video.onerror = () => reject(new Error("تعذر تحميل إطارات الفيديو."));
+        });
+      }
       const width = 640, height = 360;
       const canvas = document.createElement("canvas");
       canvas.width = width * 2;
