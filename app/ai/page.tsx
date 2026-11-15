@@ -132,7 +132,7 @@ function AIChat() {
     } finally { setBusy(false); }
   }
 
-  function startVoiceInput() {
+  function startVoiceInput(autoSend = voiceMode) {
     const speechWindow = window as any;
     const Recognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
     if (!Recognition) { setError("الإملاء الصوتي غير مدعوم في هذا المتصفح. جرّب Chrome أو Edge حديثاً."); return; }
@@ -144,7 +144,7 @@ function AIChat() {
       recognition.onresult = (event: any) => {
         const transcript = event.results?.[0]?.[0]?.transcript || "";
         if (transcript) {
-          if (voiceMode) send(undefined, transcript);
+          if (autoSend) send(undefined, transcript);
           else setInput(value => (value ? value + " " : "") + transcript);
         }
       };
@@ -281,7 +281,7 @@ function AIChat() {
         <div style={chatPanel}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", borderBottom: "1px solid #eee", paddingBottom: 16 }}>
             <div><small style={{ color: "#a47742", fontWeight: 800, letterSpacing: 1 }}>VYRA INTELLIGENCE</small><h1 style={{ fontSize: 25, margin: "5px 0" }}>صديقك الذكي</h1><p style={{ color: "#888", margin: 0 }}>محادثة ذكية وتحليل الصور وتوليدها عبر Puter.</p></div>
-            <button onClick={()=>{const next=!voiceMode;setVoiceMode(next);if(next)startVoiceInput();else stopVoiceInput();}} style={{...smallButton,background:voiceMode?"#7165f5":"#fff",color:voiceMode?"#fff":"#625746"}}><Volume2 size={14}/>{voiceMode?"إيقاف المحادثة الصوتية":"محادثة صوتية"}</button>{connectedUser ? <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><span style={{ color: "#18794e", fontSize: 12 }}>● متصل {connectedUser.username ? "بـ " + connectedUser.username : "بحساب Puter"}</span><button onClick={disconnectPuter} style={smallButton}><Unplug size={14} /> فصل</button></div> : <button onClick={connectPuter} disabled={!puterReady || connecting} style={connectButton}>{connecting ? <LoaderCircle size={16} className="animate-spin" /> : <Link2 size={16} />}{puterReady ? "ربط حساب Puter" : "جارٍ تحميل Puter..."}</button>}
+            <button onClick={()=>{const next=!voiceMode;setVoiceMode(next);if(next)startVoiceInput(true);else stopVoiceInput();}} style={{...smallButton,background:voiceMode?"#7165f5":"#fff",color:voiceMode?"#fff":"#625746"}}><Volume2 size={14}/>{voiceMode?"إيقاف المحادثة الصوتية":"محادثة صوتية"}</button>{connectedUser ? <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><span style={{ color: "#18794e", fontSize: 12 }}>● متصل {connectedUser.username ? "بـ " + connectedUser.username : "بحساب Puter"}</span><button onClick={disconnectPuter} style={smallButton}><Unplug size={14} /> فصل</button></div> : <button onClick={connectPuter} disabled={!puterReady || connecting} style={connectButton}>{connecting ? <LoaderCircle size={16} className="animate-spin" /> : <Link2 size={16} />}{puterReady ? "ربط حساب Puter" : "جارٍ تحميل Puter..."}</button>}
           </div>
 
           {!connectedUser && <div style={{ marginTop: 14, padding: 13, borderRadius: 12, background: "#f8f4ec", color: "#70552f", fontSize: 13, lineHeight: 1.8 }}>اربط حساب Puter مرة واحدة لتفعيل الصديق الذكي. الربط اختياري ولا يؤثر على بقية VYRA. تتم معالجة طلبات الذكاء الاصطناعي وفق نظام Puter وحصة حسابك.</div>}
