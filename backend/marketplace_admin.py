@@ -215,6 +215,8 @@ def admin_update_settings(payload: SettingsInput, claims: dict = Depends(current
             raise HTTPException(status_code=422, detail="Categories cannot be empty")
         if key in values:
             values[key] = list(dict.fromkeys(str(x).strip() for x in values[key]))
+    if "commission_percent" in values:
+        values["commission_percent"] = float(values["commission_percent"])
     for key, value in values.items():
         save_setting(db, key, value)
     audit(db, actor, "marketplace_settings_updated", "platform", "marketplace", "Updated marketplace publishing and payment controls")
