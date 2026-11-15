@@ -12,7 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column, Session
 from backend.database import Base, SessionLocal
 from backend import models
 from backend.security import current_user
-from backend.marketplace_admin import MarketplaceProduct, read_settings
+from backend.marketplace_admin import MarketplaceProduct, read_settings, save_setting
 from backend.marketplace_catalog import MarketplaceProductMeta, MarketplaceStockMovement
 
 router = APIRouter(tags=["marketplace-orders"])
@@ -140,6 +140,10 @@ class CheckoutInput(BaseModel):
 
 class PaymentReferenceInput(BaseModel):
     reference: str = Field(min_length=3, max_length=180)
+
+
+class FinanceInput(BaseModel):
+    commission_percent: Decimal = Field(ge=0, le=50)
 
 
 class AdminOrderStatus(BaseModel):
@@ -321,6 +325,33 @@ def submit_payment_reference(order_id: str, payload: PaymentReferenceInput, clai
         payment.external_reference = order.payment_reference
     db.commit()
     return {"submitted": True, "status": "awaiting_admin_review"}
+
+
+
+@admin_router.get("/finance")
+def admin_finance_settings(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    _admin(claims, db)
+    settings = read_settings(db)
+    configured = bool(os.getenv("PAYONEER_MARKETPLACE_PROGRAM_ID") and os.getenv("PAYONEER_CLIENT_ID") and os.getenv("PAYONEER_CLIENT_SECRET"))
+    approved = os.getenv("PAYONEER_MARKETPLACE_ENABLED", "").lower() == "true"
+    return {
+        "commission_percent": float(settings.get("commission_percent", 10)),
+        "payoneer": {
+            "program_configured": configured,
+            "approval_flag": approved,
+            "api_integration_active": False,
+            "status": "awaiting_official_payoneer_program_approval" if not approved else "api_integration_not_implemented",
+        },
+        "note": "لا يتم استخدام حساب الاستلام الشخصي كوسيط أو حساب ضمان. يلزم اعتماد Payoneer Marketplace ودمج API الرسمي قبل التحصيل أو صرف مستحقات البائعين."
+    }
+
+
+@admin_router.patch("/finance")
+def update_admin_finance_settings(payload: FinanceInput, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    _admin(claims, db)
+    save_setting(db, "commission_percent", float(payload.commission_percent))
+    db.commit()
+    return admin_finance_settings(claims, db)
 
 
 @admin_router.get("")
