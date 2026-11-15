@@ -22,7 +22,7 @@ def get_db():
 
 def is_support_admin(claims: dict, db: Session) -> bool:
     configured_id = os.getenv("SUPPORT_ADMIN_USER_ID", "").strip()
-    configured_email = os.getenv("SUPPORT_ADMIN_EMAIL", "").strip().lower()
+    configured_email = (os.getenv("SUPPORT_ADMIN_EMAIL") or os.getenv("ADMIN_EMAIL") or "").strip().lower()
     user = db.get(models.User, claims["sub"])
     return bool(user and ((configured_id and user.id == configured_id) or (configured_email and user.email.lower() == configured_email)))
 
@@ -30,7 +30,7 @@ def support_admin_profile_id(db: Session):
     configured_id = os.getenv("SUPPORT_ADMIN_USER_ID", "").strip()
     if configured_id and db.get(models.Profile, configured_id):
         return configured_id
-    configured_email = os.getenv("SUPPORT_ADMIN_EMAIL", "").strip().lower()
+    configured_email = (os.getenv("SUPPORT_ADMIN_EMAIL") or os.getenv("ADMIN_EMAIL") or "").strip().lower()
     if configured_email:
         return db.scalar(select(models.User.id).where(func.lower(models.User.email) == configured_email))
     return None
