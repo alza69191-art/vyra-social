@@ -228,7 +228,19 @@ def admin_list_products(status: str | None = Query(default=None), db: Session = 
     if status and status in {"pending", "active", "paused", "rejected"}:
         query = query.where(MarketplaceProduct.status == status)
     rows = db.scalars(query.order_by(desc(MarketplaceProduct.created_at)).limit(200)).all()
-    return [product_out(row) for row in rows]
+    output = [product_out(row) for row in rows]
+    legacy_rows = db.scalars(select(models.MarketListing)
+        .where(models.MarketListing.group_id.is_(None))
+        .order_by(desc(models.MarketListing.created_at)).limit(200)).all()
+    output.extend([{
+        "id": row.id, "owner_id": row.owner_id, "title": row.title,
+        "description": row.description, "item_type": "product",
+        "price": float(row.price), "currency": row.currency, "category": row.category,
+        "payment_methods": ["manual_transfer"], "image_url": row.media_url,
+        "status": row.status, "created_by_admin": False, "created_at": row.created_at,
+        "legacy_listing": True
+    } for row in legacy_rows if not status or row.status == status])
+    return output
 
 
 @admin_router.post("/products", status_code=201)
@@ -256,9 +268,15 @@ def admin_create_product(payload: ProductInput, claims: dict = Depends(current_u
 def admin_product_status(product_id: str, payload: ProductStatus, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     actor = require_admin(claims, db)
     item = db.get(MarketplaceProduct, product_id)
-    if item is None:
+    if item is not None:
+        item.status = payload.status
+        audit(db, actor, "marketplace_item_status_changed", "marketplace_product", item.id, payload.reason)
+        db.commit()
+        return product_out(item)
+    legacy = db.get(models.MarketListing, product_id)
+    if legacy is None or legacy.group_id is not None:
         raise HTTPException(status_code=404, detail="Item not found")
-    item.status = payload.status
-    audit(db, actor, "marketplace_item_status_changed", "marketplace_product", item.id, payload.reason)
+    legacy.status = payload.status
+    audit(db, actor, "marketplace_listing_status_changed", "market_listing", legacy.id, payload.reason)
     db.commit()
-    return product_out(item)
+    return {"id": legacy.id, "status": legacy.status, "legacy_listing": True}
