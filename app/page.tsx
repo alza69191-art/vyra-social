@@ -28,6 +28,7 @@ export default function HomePage() { return <AuthGate><HomeFeed /></AuthGate>; }
 function HomeFeed() {
   const [active, setActive] = useState("الرئيسية");
   const [posts, setPosts] = useState<Array<{ id: string | number; authorId?: string; visibility?: "public"|"followers"|"private"; name: string; handle: string; avatar: string; time: string; text: string; likes: number; comments: number; shares: number; tag: string; liked: boolean; media?: Array<{ url: string; media_type: string }> }>>(initialPosts);
+  const [storyRows,setStoryRows]=useState<Array<{id:string;author_id:string;author_name:string;avatar_url?:string|null;viewed:boolean;media_type:string}>>([]);
   const [draft, setDraft] = useState("");
   const [visibility, setVisibility] = useState<"public" | "followers" | "private">("public");
   useEffect(()=>{const saved=localStorage.getItem("vyra_default_audience");if(saved==="public"||saved==="followers"||saved==="private")setVisibility(saved);},[]);
@@ -58,7 +59,10 @@ function HomeFeed() {
   const [commentDraft, setCommentDraft] = useState("");
   useEffect(() => {
     const token = sessionStorage.getItem("vyra_access_token");
-    if (token) getMyProfile(token).then(profile => setCurrentUserId(profile.id)).catch(() => undefined);
+    if (token) {
+      getMyProfile(token).then(profile => setCurrentUserId(profile.id)).catch(() => undefined);
+      fetch(API_BASE+"/api/stories",{headers:{Authorization:"Bearer "+token},cache:"no-store"}).then(r=>r.ok?r.json():[]).then(setStoryRows).catch(()=>setStoryRows([]));
+    }
     let activeRequest = true;
     getPublicPosts(30, 0).then(rows => {
       if (!activeRequest) return;
@@ -213,9 +217,12 @@ function HomeFeed() {
       <div className="content-wrap">
         <div className="welcome-row"><div><div className="eyebrow"><Sparkles size={14}/> مساحتك الاجتماعية</div><h1>مرحباً بعودتك<span>.</span></h1><p>اكتشف الجديد، وشارك لحظاتك مع مجتمعك.</p></div><button className="black-button" onClick={() => document.getElementById("composer")?.scrollIntoView({behavior:"smooth"})}><Plus size={18}/> إنشاء منشور</button></div>
         <div className="content-grid"><div className="feed-column">
-          <section style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,background:"#fff",border:"1px solid #eee7df",borderRadius:16,padding:15,marginBottom:14}}>
-            <div><b>القصص</b><small style={{display:"block",color:"#888",marginTop:4}}>شارك صورة أو فيديو لمدة 24 ساعة</small></div>
-            <div style={{display:"flex",gap:8}}><button className="black-button" onClick={()=>window.location.href="/stories"}><Plus size={16}/> قصتك</button><button className="icon-button" onClick={()=>window.location.href="/stories"} title="عرض القصص"><Clapperboard size={18}/></button></div>
+          <section className="stories-panel">
+            <div className="section-heading"><div><h2>القصص</h2><p>لحظات تختفي بعد 24 ساعة</p></div><button className="text-button" onClick={()=>window.location.href="/stories"}>عرض الكل</button></div>
+            <div className="stories-row">
+              <button className="story" onClick={()=>window.location.href="/stories"}><span className="story-ring own-story"><span className="story-avatar own-avatar">+</span></span><small>قصتك</small></button>
+              {storyRows.map(story=><button className="story" key={story.id} onClick={()=>window.location.href="/stories?story="+story.id}><span className="story-ring" style={{borderColor:story.viewed?"#b9bdd0":"#7165f5"}}>{story.avatar_url?<img src={story.avatar_url} alt="" style={{width:44,height:44,borderRadius:"50%",objectFit:"cover"}}/>:<span className="story-avatar story-c">{(story.author_name||"V").slice(0,1)}</span>}</span><small>{story.author_name||"عضو"}</small></button>)}
+            </div>
           </section>
           
           <section className="composer-card" id="composer"><div className="composer-top"><span className="avatar avatar-dark">أ</span><button className="composer-input" onClick={()=>document.getElementById("post-input")?.focus()}>بماذا تفكر اليوم؟</button></div>
