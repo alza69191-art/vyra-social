@@ -32,6 +32,7 @@ function AIChat() {
   const [copied, setCopied] = useState(-1);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [toolMode, setToolMode] = useState<"chat" | "image">("chat");
   const bottom = useRef<HTMLDivElement>(null);
   const imageInput = useRef<HTMLInputElement>(null);
@@ -94,12 +95,13 @@ function AIChat() {
   async function send(event?: FormEvent, override?: string) {
     event?.preventDefault();
     const prompt = (override ?? input).trim();
-    if ((!prompt && !image) || busy) return;
+    if ((!prompt && !image && !videoFile) || busy) return;
     if (!window.puter?.auth.isSignedIn()) { setError("اربط حساب Puter أولاً لاستخدام الصديق الذكي."); return; }
     setInput(""); setError("");
     const preview = imagePreview;
     const selectedImage = image;
-    const next = [...messages, { role: "user" as const, content: prompt || "حلّل الصورة المرفقة.", ...(preview ? { imageUrl: preview } : {}) }];
+    const selectedVideo = videoFile;
+    const next = [...messages, { role: "user" as const, content: prompt || (selectedVideo ? "حلّل الفيديو المرفق بصرياً." : "حلّل الصورة المرفقة."), ...(preview ? { imageUrl: preview } : {}) }];
     setMessages(next); setBusy(true);
     try {
       if (toolMode === "image") {
@@ -108,14 +110,19 @@ function AIChat() {
         if (!generated) throw new Error("اكتمل الطلب لكن لم يرجع Puter رابط الصورة.");
         setMessages([...next, { role: "assistant", content: "تم إنشاء الصورة بنجاح. يمكنك عرضها أو تنزيلها من الزر أدناه.", imageUrl: generated }]);
       } else {
+        const videoFrames = selectedVideo ? await createVideoContactSheet(selectedVideo) : null;
+        const mediaForAI = videoFrames || selectedImage || undefined;
+        const promptForAI = selectedVideo
+          ? "حلّل الفيديو بصرياً اعتماداً على ورقة الاتصال التي تعرض خمس لقطات زمنية. اشرح تسلسل المشاهد والحركة والعناصر الظاهرة، واذكر أن التحليل مبني على عينات إطارات ولا يشمل الصوت. " + (prompt || "")
+          : prompt || "حلّل الصورة المرفقة ووصف ما تراه بدقة.";
         const result = await window.puter.ai.chat(
-          prompt || "حلّل الصورة المرفقة ووصف ما تراه بدقة.",
-          selectedImage || undefined,
+          promptForAI,
+          mediaForAI,
           { model: "gpt-5.4-nano" }
         );
         setMessages([...next, { role: "assistant", content: responseText(result) }]);
       }
-      setImage(null); setImagePreview("");
+      setImage(null); setImagePreview(""); setVideoFile(null);
       if (imageInput.current) imageInput.current.value = "";
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذر تنفيذ الطلب عبر Puter. تحقق من ربط الحساب وحصته.");
@@ -179,7 +186,66 @@ function AIChat() {
     }
   }
 
-  function chooseImage(file?: File) {
+  async function createVideoContactSheet(file: File): Promise<File> {
+    const objectUrl = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "auto";
+    video.muted = true;
+    video.src = objectUrl;
+    try {
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve();
+        video.onerror = () => reject(new Error("تعذر قراءة ملف الفيديو."));
+      });
+      if (!Number.isFinite(video.duration) || video.duration <= 0) throw new Error("مدة الفيديو غير صالحة.");
+      const width = 640, height = 360;
+      const canvas = document.createElement("canvas");
+      canvas.width = width * 2;
+      canvas.height = height * 3;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("تعذر تجهيز إطارات الفيديو.");
+      context.fillStyle = "#111";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      const times = [0, 0.25, 0.5, 0.75, 0.95].map(part => Math.min(Math.max(0, video.duration - 0.05), video.duration * part));
+      for (let index = 0; index < times.length; index++) {
+        await new Promise<void>((resolve, reject) => {
+          video.onseeked = () => resolve();
+          video.onerror = () => reject(new Error("تعذر استخراج إطارات الفيديو."));
+          video.currentTime = times[index];
+        });
+        const x = (index % 2) * width;
+        const y = Math.floor(index / 2) * height;
+        context.drawImage(video, x, y, width, height);
+        context.fillStyle = "rgba(0,0,0,.65)";
+        context.fillRect(x + 8, y + height - 34, 120, 25);
+        context.fillStyle = "#fff";
+        context.font = "16px Arial";
+        context.fillText("Frame " + (index + 1) + " · " + times[index].toFixed(1) + "s", x + 15, y + height - 16);
+      }
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error("تعذر تجهيز صورة إطارات الفيديو.")), "image/jpeg", 0.84));
+      return new File([blob], "vyra-video-frames.jpg", { type: "image/jpeg" });
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+      video.removeAttribute("src");
+      video.load();
+    }
+  }
+
+  function chooseAttachment(file?: File) {
+    if (!file) return;
+    if (file.type.startsWith("image/")) {
+      if (file.size > 7 * 1024 * 1024) { setError("الحد الأقصى لحجم الصورة 7 ميجابايت."); return; }
+      setError(""); setImage(file); setImagePreview(URL.createObjectURL(file)); setVideoFile(null); setToolMode("chat");
+      return;
+    }
+    if (file.type.startsWith("video/")) {
+      if (file.size > 50 * 1024 * 1024) { setError("الحد الأقصى لحجم الفيديو 50 ميجابايت."); return; }
+      setError(""); setVideoFile(file); setImage(null); setImagePreview(""); setToolMode("chat");
+      return;
+    }
+    setError("اختر صورة أو ملف فيديو مدعوماً.");
+  }
+
     if (!file) return;
     if (!file.type.startsWith("image/")) { setError("يمكن إرفاق الصور فقط حالياً."); return; }
     if (file.size > 7 * 1024 * 1024) { setError("الحد الأقصى لحجم الصورة 7 ميجابايت."); return; }
@@ -209,18 +275,19 @@ function AIChat() {
 
           {error && <p role="alert" style={{ background: "#fff2f0", color: "#b42318", padding: 11, borderRadius: 10 }}>{error}</p>}
           {imagePreview && <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "#f7f5f1", borderRadius: 12, marginBottom: 8 }}><img src={imagePreview} alt="معاينة الصورة" style={{ width: 54, height: 54, objectFit: "cover", borderRadius: 8 }} /><span style={{ fontSize: 12, flex: 1 }}>{image?.name}</span><button type="button" onClick={() => { setImage(null); setImagePreview(""); if (imageInput.current) imageInput.current.value = ""; }} aria-label="إزالة الصورة"><X size={17} /></button></div>}
+          {videoFile && <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"#f7f5f1",borderRadius:12,marginBottom:8}}><Video size={20}/><span style={{fontSize:12,flex:1}}>{videoFile.name} · سيتم تحليل خمس لقطات بصرية</span><button type="button" onClick={()=>setVideoFile(null)} aria-label="إزالة الفيديو"><X size={17}/></button></div>}
           <div style={{ display: "flex", gap: 8, marginBottom: 9 }}>
             <button type="button" onClick={() => setToolMode("chat")} style={toolMode === "chat" ? activeTool : inactiveTool}><Bot size={15} /> محادثة وتحليل</button>
             <button type="button" onClick={() => { setToolMode("image"); setImage(null); setImagePreview(""); }} style={toolMode === "image" ? activeTool : inactiveTool}><ImageIcon size={15} /> توليد صورة</button>
           </div>
           <form onSubmit={send} style={{ display: "flex", gap: 9, alignItems: "end", padding: 9, border: "1px solid #e8e1d7", borderRadius: 15, background: "#faf9f6" }}>
-            <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onChange={e => chooseImage(e.target.files?.[0])} />
-            <button type="button" title="إرفاق صورة للتحليل" onClick={() => imageInput.current?.click()} style={{ width: 42, height: 42, borderRadius: 11, display: "grid", placeItems: "center", background: "#eee9df", color: "#72552f" }}><ImagePlus size={19} /></button>
+            <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime" hidden onChange={e => chooseAttachment(e.target.files?.[0])} />
+            <button type="button" title="إرفاق صورة أو فيديو للتحليل" onClick={() => imageInput.current?.click()} style={{ width: 42, height: 42, borderRadius: 11, display: "grid", placeItems: "center", background: "#eee9df", color: "#72552f" }}><ImagePlus size={19} /></button>
             <button type="button" title={voiceRecording?"إيقاف الإملاء الصوتي":"الإملاء الصوتي"} onClick={voiceRecording?stopVoiceInput:startVoiceInput} style={{ width: 42, height: 42, borderRadius: 11, display: "grid", placeItems: "center", background: voiceRecording?"#b42318":"#eee9df", color: voiceRecording?"#fff":"#72552f" }}>{voiceRecording?<MicOff size={19}/>:<Mic size={19}/>}</button>
-            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder={toolMode === "image" ? "صف الصورة التي تريد إنشاءها..." : "اكتب رسالتك أو أرفق صورة..."} rows={2} maxLength={12000} style={{ flex: 1, minWidth: 0, resize: "vertical", border: 0, outline: 0, background: "transparent", font: "inherit", padding: 9 }} />
-            <button disabled={(!input.trim() && !image) || busy || !connectedUser} aria-label="إرسال" style={{ width: 43, height: 43, borderRadius: 12, display: "grid", placeItems: "center", background: "#211f1b", color: "#fff", opacity: ((!input.trim() && !image) || busy || !connectedUser) ? .5 : 1 }}><Send size={18} /></button>
+            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder={toolMode === "image" ? "صف الصورة التي تريد إنشاءها..." : "اكتب رسالتك أو أرفق صورة أو فيديو..."} rows={2} maxLength={12000} style={{ flex: 1, minWidth: 0, resize: "vertical", border: 0, outline: 0, background: "transparent", font: "inherit", padding: 9 }} />
+            <button disabled={(!input.trim() && !image && !videoFile) || busy || !connectedUser} aria-label="إرسال" style={{ width: 43, height: 43, borderRadius: 12, display: "grid", placeItems: "center", background: "#211f1b", color: "#fff", opacity: ((!input.trim() && !image && !videoFile) || busy || !connectedUser) ? .5 : 1 }}><Send size={18} /></button>
           </form>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",marginTop:10}}><small style={{color:"#999"}}>الإملاء الصوتي والقراءة الصوتية يعتمدان على دعم المتصفح وإذنك للميكروفون.</small><button type="button" onClick={speakLatestAnswer} style={smallButton}><Volume2 size={14}/> قراءة آخر إجابة</button></div><small style={{ display: "block", color: "#999", marginTop: 6 }}>تُرسل الملفات التي تختارها إلى Puter لمعالجتها. لا ترفق معلومات شخصية حساسة.</small>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",marginTop:10}}><small style={{color:"#999"}}>الإملاء والقراءة الصوتية يعتمدان على دعم المتصفح. تحليل الفيديو يعتمد على خمس لقطات بصرية ولا يحلل الصوت.</small><button type="button" onClick={speakLatestAnswer} style={smallButton}><Volume2 size={14}/> قراءة آخر إجابة</button></div><small style={{ display: "block", color: "#999", marginTop: 6 }}>تُرسل الملفات التي تختارها إلى Puter لمعالجتها. لا ترفق معلومات شخصية حساسة.</small>
         </div>
 
         <aside style={{ display: "grid", alignContent: "start", gap: 12 }}>
