@@ -4,12 +4,24 @@ import "./vyra-nexus.css";
 import "./payoneer-facebook.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://vyra-web-rs1b.onrender.com"),
   title: {
-    default: "VYRA — مساحتك الاجتماعية",
+    default: "VYRA — منصة اجتماعية للتواصل ومشاركة المحتوى",
     template: "%s | VYRA",
   },
-  description: "VYRA مساحة اجتماعية للتواصل والمشاركة واكتشاف المجتمعات.",
+  description: "اكتشف VYRA، منصة اجتماعية للتواصل مع الأصدقاء ومشاركة المنشورات والصور والفيديوهات والقصص والريلز واكتشاف المجتمعات.",
   applicationName: "VYRA",
+  keywords: ["VYRA", "منصة اجتماعية", "شبكة اجتماعية", "مشاركة الصور والفيديو", "مجتمعات رقمية", "تواصل اجتماعي"],
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "VYRA",
+    title: "VYRA — منصتك الاجتماعية",
+    description: "تواصل وشارك واكتشف مجتمعك على VYRA.",
+    locale: "ar_AR",
+  },
   appleWebApp: { capable: true, statusBarStyle: "default", title: "VYRA" },
 };
 
