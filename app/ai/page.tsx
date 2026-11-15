@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { ArrowRight, Bot, LoaderCircle, Send, Sparkles, Copy, Plus, WandSparkles, BrainCircuit, Check, ImagePlus, X, Link2, Unplug, Image as ImageIcon, Download } from "lucide-react";
+import { ArrowRight, Bot, LoaderCircle, Send, Sparkles, Copy, Plus, WandSparkles, BrainCircuit, Check, ImagePlus, X, Link2, Unplug, Image as ImageIcon, Download, Mic, MicOff, Volume2 } from "lucide-react";
 import Link from "next/link";
 import AuthGate from "@/components/auth-gate";
 
@@ -35,6 +35,8 @@ function AIChat() {
   const [toolMode, setToolMode] = useState<"chat" | "image">("chat");
   const bottom = useRef<HTMLDivElement>(null);
   const imageInput = useRef<HTMLInputElement>(null);
+  const speechRecognition = useRef<any>(null);
+  const [voiceRecording,setVoiceRecording] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -120,6 +122,44 @@ function AIChat() {
     } finally { setBusy(false); }
   }
 
+  function startVoiceInput() {
+    const speechWindow = window as any;
+    const Recognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+    if (!Recognition) { setError("الإملاء الصوتي غير مدعوم في هذا المتصفح. جرّب Chrome أو Edge حديثاً."); return; }
+    try {
+      const recognition = new Recognition();
+      recognition.lang = "ar";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript || "";
+        if (transcript) setInput(value => (value ? value + " " : "") + transcript);
+      };
+      recognition.onerror = () => setError("تعذر التقاط الصوت. تحقق من إذن الميكروفون.");
+      recognition.onend = () => setVoiceRecording(false);
+      speechRecognition.current = recognition;
+      setVoiceRecording(true);
+      setError("");
+      recognition.start();
+    } catch { setVoiceRecording(false); setError("تعذر بدء الإملاء الصوتي."); }
+  }
+
+  function stopVoiceInput() {
+    try { speechRecognition.current?.stop(); } catch {}
+    setVoiceRecording(false);
+  }
+
+  function speakLatestAnswer() {
+    const answer = [...messages].reverse().find(message => message.role === "assistant")?.content;
+    if (!answer) { setError("لا توجد إجابة لقراءتها صوتياً بعد."); return; }
+    if (!("speechSynthesis" in window)) { setError("القراءة الصوتية غير مدعومة في هذا المتصفح."); return; }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(answer);
+    utterance.lang = "ar";
+    utterance.rate = 1;
+    window.speechSynthesis.speak(utterance);
+  }
+
   async function downloadGeneratedImage(url: string, index: number) {
     try {
       const response = await fetch(url);
@@ -176,10 +216,11 @@ function AIChat() {
           <form onSubmit={send} style={{ display: "flex", gap: 9, alignItems: "end", padding: 9, border: "1px solid #e8e1d7", borderRadius: 15, background: "#faf9f6" }}>
             <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onChange={e => chooseImage(e.target.files?.[0])} />
             <button type="button" title="إرفاق صورة للتحليل" onClick={() => imageInput.current?.click()} style={{ width: 42, height: 42, borderRadius: 11, display: "grid", placeItems: "center", background: "#eee9df", color: "#72552f" }}><ImagePlus size={19} /></button>
+            <button type="button" title={voiceRecording?"إيقاف الإملاء الصوتي":"الإملاء الصوتي"} onClick={voiceRecording?stopVoiceInput:startVoiceInput} style={{ width: 42, height: 42, borderRadius: 11, display: "grid", placeItems: "center", background: voiceRecording?"#b42318":"#eee9df", color: voiceRecording?"#fff":"#72552f" }}>{voiceRecording?<MicOff size={19}/>:<Mic size={19}/>}</button>
             <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder={toolMode === "image" ? "صف الصورة التي تريد إنشاءها..." : "اكتب رسالتك أو أرفق صورة..."} rows={2} maxLength={12000} style={{ flex: 1, minWidth: 0, resize: "vertical", border: 0, outline: 0, background: "transparent", font: "inherit", padding: 9 }} />
             <button disabled={(!input.trim() && !image) || busy || !connectedUser} aria-label="إرسال" style={{ width: 43, height: 43, borderRadius: 12, display: "grid", placeItems: "center", background: "#211f1b", color: "#fff", opacity: ((!input.trim() && !image) || busy || !connectedUser) ? .5 : 1 }}><Send size={18} /></button>
           </form>
-          <small style={{ display: "block", color: "#999", marginTop: 10 }}>تُرسل الملفات التي تختارها إلى Puter لمعالجتها. لا ترفق معلومات شخصية حساسة.</small>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",marginTop:10}}><small style={{color:"#999"}}>الإملاء الصوتي والقراءة الصوتية يعتمدان على دعم المتصفح وإذنك للميكروفون.</small><button type="button" onClick={speakLatestAnswer} style={smallButton}><Volume2 size={14}/> قراءة آخر إجابة</button></div><small style={{ display: "block", color: "#999", marginTop: 6 }}>تُرسل الملفات التي تختارها إلى Puter لمعالجتها. لا ترفق معلومات شخصية حساسة.</small>
         </div>
 
         <aside style={{ display: "grid", alignContent: "start", gap: 12 }}>
