@@ -37,7 +37,6 @@ type DirectUploadSignature = {
   api_key: string;
   timestamp: number;
   signature: string;
-  folder: string;
   public_id: string;
   resource_type: "image" | "video";
 };
@@ -115,7 +114,6 @@ export async function uploadVideoDirect(
     form.append("api_key", signature.api_key);
     form.append("timestamp", String(signature.timestamp));
     form.append("signature", signature.signature);
-    form.append("folder", signature.folder);
     form.append("public_id", signature.public_id);
     const isChunked = file.size > chunkSize;
     const headers: Record<string, string> = {};
