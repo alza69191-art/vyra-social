@@ -4,7 +4,7 @@ import Link from "next/link";
 import AuthGate from "@/components/auth-gate";
 import {ArrowRight,PackageCheck,RefreshCw,Truck,Clock3} from "lucide-react";
 
-const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/$/,"");
+const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/$/,"");
 type Row=Record<string,any>;
 const orderLabels:Record<string,string>={pending_payment:"بانتظار الدفع",paid:"مدفوع",processing:"قيد التجهيز",shipped:"تم الشحن",completed:"مكتمل",cancelled:"ملغي",refunded:"مسترد"};
 const shipmentLabels:Record<string,string>={label_created:"تم إنشاء بوليصة الشحن",picked_up:"استلمت شركة الشحن الطرد",in_transit:"الشحنة في الطريق",out_for_delivery:"خرجت للتسليم",delivered:"تم التسليم",exception:"تعثر التوصيل",returned:"أعيدت الشحنة"};
