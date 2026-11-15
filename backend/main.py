@@ -188,6 +188,59 @@ def list_posts(limit: int = Query(default=20, ge=1, le=100), offset: int = Query
         "media": media_by_post.get(post.id, []),
     } for post, profile in rows]
 
+@app.get("/api/reels", response_model=list[PostFeedOut])
+def list_reels(limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db)):
+    # Query only public posts that actually contain video media; do not download/filter
+    # a full mixed feed in the browser.
+    video_post_ids = select(models.PostMedia.post_id).where(models.PostMedia.media_type == "video")
+    rows = db.execute(
+        select(models.Post, models.Profile)
+        .join(models.Profile, models.Profile.id == models.Post.author_id)
+        .where(
+            models.Post.visibility == "public",
+            models.Profile.is_private.is_(False),
+            models.Post.id.in_(video_post_ids),
+        )
+        .order_by(desc(models.Post.created_at))
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    post_ids = [post.id for post, _profile in rows]
+    if not post_ids:
+        return []
+    likes = dict(db.execute(
+        select(models.Reaction.post_id, func.count(models.Reaction.id))
+        .where(models.Reaction.post_id.in_(post_ids))
+        .group_by(models.Reaction.post_id)
+    ).all())
+    comments = dict(db.execute(
+        select(models.Comment.post_id, func.count(models.Comment.id))
+        .where(models.Comment.post_id.in_(post_ids))
+        .group_by(models.Comment.post_id)
+    ).all())
+    media_rows = db.scalars(
+        select(models.PostMedia)
+        .where(models.PostMedia.post_id.in_(post_ids), models.PostMedia.media_type == "video")
+        .order_by(models.PostMedia.created_at)
+    ).all()
+    media_by_post: dict[str, list[dict]] = {}
+    for media in media_rows:
+        media_by_post.setdefault(media.post_id, []).append({"url": media.media_url, "media_type": "video"})
+    return [{
+        "id": post.id,
+        "author_id": post.author_id,
+        "author_name": profile.display_name,
+        "author_username": profile.username,
+        "avatar_url": profile.avatar_url,
+        "body": post.body,
+        "visibility": post.visibility,
+        "created_at": post.created_at,
+        "likes_count": likes.get(post.id, 0),
+        "comments_count": comments.get(post.id, 0),
+        "media": media_by_post.get(post.id, []),
+    } for post, profile in rows]
+
+
 @app.post("/api/posts", response_model=PostOut, status_code=201)
 def create_post(payload: PostCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     if db.get(models.Profile, claims["sub"]) is None:
