@@ -121,3 +121,108 @@ async def upload_media(
         "purpose": purpose,
         "post_id": post.id if post else None,
     }
+
+
+# Direct-to-Cloudinary uploads keep large media bodies off the API worker.
+# The API secret remains server-side; only short-lived upload signatures reach the browser.
+from pydantic import BaseModel, Field
+from urllib.parse import urlparse
+import time
+
+
+class DirectUploadSignature(BaseModel):
+    post_id: str = Field(min_length=1, max_length=36)
+    resource_type: str = Field(default="video", pattern="^(image|video)$")
+
+
+class DirectUploadComplete(BaseModel):
+    post_id: str = Field(min_length=1, max_length=36)
+    public_id: str = Field(min_length=1, max_length=255)
+    secure_url: str = Field(min_length=12, max_length=2048)
+    version: int = Field(gt=0)
+    signature: str = Field(min_length=32, max_length=128)
+    resource_type: str = Field(pattern="^(image|video)$")
+
+
+@router.post("/uploads/signature")
+def sign_direct_upload(
+    payload: DirectUploadSignature,
+    claims: dict = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME", "").strip()
+    api_key = os.getenv("CLOUDINARY_API_KEY", "").strip()
+    api_secret = os.getenv("CLOUDINARY_API_SECRET", "").strip()
+    if not all((cloud_name, api_key, api_secret)):
+        raise HTTPException(status_code=503, detail="Cloudinary is not configured")
+
+    post = db.get(models.Post, payload.post_id)
+    if post is None or post.author_id != claims["sub"]:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
+    folder = f"vyra/posts/{claims['sub']}/{post.id}"
+    public_id = uuid4().hex
+    timestamp = int(time.time())
+    signed_params = {"folder": folder, "public_id": public_id, "timestamp": timestamp}
+    signature = cloudinary.utils.api_sign_request(signed_params, api_secret)
+    return {
+        "cloud_name": cloud_name,
+        "api_key": api_key,
+        "timestamp": timestamp,
+        "signature": signature,
+        "folder": folder,
+        "public_id": public_id,
+        "resource_type": payload.resource_type,
+    }
+
+
+@router.post("/uploads/complete", status_code=201)
+def complete_direct_upload(
+    payload: DirectUploadComplete,
+    claims: dict = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME", "").strip()
+    api_key = os.getenv("CLOUDINARY_API_KEY", "").strip()
+    api_secret = os.getenv("CLOUDINARY_API_SECRET", "").strip()
+    if not all((cloud_name, api_key, api_secret)):
+        raise HTTPException(status_code=503, detail="Cloudinary is not configured")
+
+    post = db.get(models.Post, payload.post_id)
+    if post is None or post.author_id != claims["sub"]:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    expected_prefix = f"vyra/posts/{claims['sub']}/{post.id}/"
+    if not payload.public_id.startswith(expected_prefix):
+        raise HTTPException(status_code=403, detail="Uploaded asset does not belong to this post")
+
+    parsed = urlparse(payload.secure_url)
+    expected_path = f"/{cloud_name}/{payload.resource_type}/upload/"
+    if parsed.scheme != "https" or parsed.hostname != "res.cloudinary.com" or expected_path not in parsed.path:
+        raise HTTPException(status_code=422, detail="Invalid Cloudinary media URL")
+
+    cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
+    try:
+        verified = cloudinary.utils.verify_api_response_signature(
+            payload.public_id, payload.version, payload.signature
+        )
+    except Exception:
+        verified = False
+    if not verified:
+        raise HTTPException(status_code=403, detail="Cloudinary upload signature verification failed")
+
+    existing = db.query(models.PostMedia).filter(
+        models.PostMedia.post_id == post.id,
+        models.PostMedia.media_url == payload.secure_url,
+    ).first()
+    if existing is None:
+        db.add(models.PostMedia(
+            id=str(uuid4()),
+            post_id=post.id,
+            media_url=payload.secure_url,
+            media_type=payload.resource_type,
+        ))
+        db.commit()
+
+    return {"url": payload.secure_url, "media_type": payload.resource_type, "post_id": post.id}
