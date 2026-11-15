@@ -617,6 +617,99 @@ class DirectMessageUpdate(BaseModel):
     media_type: str | None = Field(default=None, pattern="^(image|video|audio)$")
 
 
+@app.get("/api/friends")
+def list_friends(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    user_id = claims["sub"]
+    sent = db.execute(
+        select(models.Friendship, models.Profile)
+        .join(models.Profile, models.Profile.id == models.Friendship.addressee_id)
+        .where(models.Friendship.requester_id == user_id)
+    ).all()
+    received = db.execute(
+        select(models.Friendship, models.Profile)
+        .join(models.Profile, models.Profile.id == models.Friendship.requester_id)
+        .where(models.Friendship.addressee_id == user_id)
+    ).all()
+    rows = [
+        {"id": friendship.id, "user_id": profile.id, "username": profile.username,
+         "display_name": profile.display_name, "avatar_url": profile.avatar_url,
+         "status": friendship.status, "direction": "sent", "created_at": friendship.created_at}
+        for friendship, profile in sent
+    ] + [
+        {"id": friendship.id, "user_id": profile.id, "username": profile.username,
+         "display_name": profile.display_name, "avatar_url": profile.avatar_url,
+         "status": friendship.status, "direction": "received", "created_at": friendship.created_at}
+        for friendship, profile in received
+    ]
+    return sorted(rows, key=lambda row: row["created_at"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+
+
+@app.post("/api/friends/request/{user_id}", status_code=201)
+def send_friend_request(user_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    requester_id = claims["sub"]
+    if user_id == requester_id:
+        raise HTTPException(status_code=400, detail="لا يمكنك إرسال طلب صداقة إلى نفسك.")
+    target = db.get(models.Profile, user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود.")
+    blocked = db.scalar(select(models.Block).where(
+        ((models.Block.blocker_id == requester_id) & (models.Block.blocked_id == user_id))
+        | ((models.Block.blocker_id == user_id) & (models.Block.blocked_id == requester_id))
+    ))
+    if blocked:
+        raise HTTPException(status_code=403, detail="لا يمكن إرسال طلب الصداقة بسبب إعدادات الحظر.")
+    existing = db.scalar(select(models.Friendship).where(
+        ((models.Friendship.requester_id == requester_id) & (models.Friendship.addressee_id == user_id))
+        | ((models.Friendship.requester_id == user_id) & (models.Friendship.addressee_id == requester_id))
+    ))
+    if existing:
+        if existing.status == "accepted":
+            raise HTTPException(status_code=409, detail="هذا المستخدم ضمن قائمة أصدقائك بالفعل.")
+        if existing.status == "pending":
+            raise HTTPException(status_code=409, detail="يوجد طلب صداقة معلّق بالفعل.")
+        raise HTTPException(status_code=409, detail="سبق رفض طلب الصداقة.")
+    friendship = models.Friendship(
+        id=str(uuid4()), requester_id=requester_id, addressee_id=user_id, status="pending"
+    )
+    db.add(friendship)
+    db.add(models.Notification(
+        id=str(uuid4()), user_id=user_id, actor_id=requester_id,
+        kind="friend_request", target_id=friendship.id
+    ))
+    db.commit()
+    return {"id": friendship.id, "status": "pending", "user_id": user_id}
+
+
+@app.post("/api/friends/{friendship_id}/respond")
+def respond_friend_request(
+    friendship_id: str,
+    action: str = Query(pattern="^(accept|reject)$"),
+    claims: dict = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    friendship = db.get(models.Friendship, friendship_id)
+    if friendship is None or friendship.addressee_id != claims["sub"] or friendship.status != "pending":
+        raise HTTPException(status_code=404, detail="طلب الصداقة غير موجود أو لم يعد متاحاً.")
+    friendship.status = "accepted" if action == "accept" else "rejected"
+    if action == "accept":
+        db.add(models.Notification(
+            id=str(uuid4()), user_id=friendship.requester_id, actor_id=claims["sub"],
+            kind="friend_accepted", target_id=friendship.id
+        ))
+    db.commit()
+    return {"id": friendship.id, "status": friendship.status}
+
+
+@app.delete("/api/friends/{friendship_id}")
+def remove_friend(friendship_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    friendship = db.get(models.Friendship, friendship_id)
+    if friendship is None or claims["sub"] not in (friendship.requester_id, friendship.addressee_id):
+        raise HTTPException(status_code=404, detail="علاقة الصداقة غير موجودة.")
+    db.delete(friendship)
+    db.commit()
+    return {"deleted": True}
+
+
 @app.get("/api/people")
 def search_people(q: str = Query(default="", max_length=80), claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     query = select(models.Profile).where(models.Profile.id != claims["sub"])
