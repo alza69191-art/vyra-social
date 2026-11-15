@@ -253,7 +253,9 @@ def admin_create_or_update_shipment(order_id: str, payload: ShipmentInput, claim
         shipment.shipped_at = now
     if payload.status == "delivered":
         shipment.delivered_at = now
-        order.status = "completed"
+        # COD is not financially settled merely because the carrier marked delivery.
+        # Keep the order shipped until an administrator confirms cash collection.
+        order.status = "shipped" if order.payment_method == "cash_on_delivery" and order.payment_status != "paid" else "completed"
     elif payload.status in {"picked_up", "in_transit", "out_for_delivery"}:
         order.status = "shipped"
     elif order.status in {"pending_payment", "paid"}:
@@ -283,7 +285,7 @@ def admin_add_shipment_event(shipment_id: str, payload: ShipmentStatusInput, cla
     order = db.get(MarketplaceOrder, shipment.order_id)
     if order:
         if payload.status == "delivered":
-            order.status = "completed"
+            order.status = "shipped" if order.payment_method == "cash_on_delivery" and order.payment_status != "paid" else "completed"
         elif payload.status in {"picked_up", "in_transit", "out_for_delivery"}:
             order.status = "shipped"
         elif payload.status == "returned":
