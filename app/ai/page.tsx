@@ -246,12 +246,6 @@ function AIChat() {
     setError("اختر صورة أو ملف فيديو مدعوماً.");
   }
 
-    if (!file) return;
-    if (!file.type.startsWith("image/")) { setError("يمكن إرفاق الصور فقط حالياً."); return; }
-    if (file.size > 7 * 1024 * 1024) { setError("الحد الأقصى لحجم الصورة 7 ميجابايت."); return; }
-    setError(""); setImage(file); setImagePreview(URL.createObjectURL(file)); setToolMode("chat");
-  }
-
   return <main dir="rtl" style={{ minHeight: "100vh", background: "#f4f2ed", color: "#211f1b", padding: "22px 16px" }}>
     <div style={{ maxWidth: 1050, margin: "auto" }}>
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
