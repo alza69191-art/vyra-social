@@ -94,7 +94,7 @@ export async function uploadVideoDirect(
   onProgress: (percent: number) => void = () => undefined,
 ): Promise<{ url: string; media_type: "video"; purpose: "post"; post_id: string }> {
   if (!["video/mp4", "video/webm", "video/quicktime"].includes(file.type)) throw new Error("الصيغ المدعومة: MP4 وWEBM وMOV.");
-  if (file.size > 524288000) throw new Error("الحد الأقصى لحجم الفيديو 500 ميغابايت.");
+  if (file.size > 104857600) throw new Error("الحد الأقصى لحجم الفيديو 100 ميغابايت في إعداد التخزين المجاني الحالي.");
   const signature = await request<DirectUploadSignature>(
     "/api/uploads/signature",
     { method: "POST", body: JSON.stringify({ post_id: postId, resource_type: "video", content_type: file.type, file_size: file.size }) },
