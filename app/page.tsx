@@ -39,60 +39,63 @@ export default function HomePage() {
     description: "منصة اجتماعية للتواصل ومشاركة المحتوى واكتشاف المجتمعات والقصص والريلز."
   };
   return (
-    <main dir="rtl" lang="ar" style={{ minHeight: "100vh", background: "#f7f7f8", color: "#20232b", fontFamily: "Arial, sans-serif" }}>
+    <main className="vyra-marketing" dir="rtl" lang="ar">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <header style={{ maxWidth: 1120, margin: "auto", padding: "24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-        <a href="/" aria-label="VYRA الصفحة الرئيسية" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}><img src="/brand/vyra-logo.svg" alt="VYRA" width="142" height="41" style={{ display: "block", width: 142, height: "auto" }} /></a>
-        <nav aria-label="التنقل الرئيسي" style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
-          <a href="/help" style={{ color: "#50566b", textDecoration: "none" }}>مركز المساعدة</a>
-          <a href="/help/glossary" style={{ color: "#50566b", textDecoration: "none" }}>دليل المصطلحات</a>
-          <a href="/login" style={{ background: "#f26a21", color: "#fff", padding: "11px 20px", borderRadius: 10, textDecoration: "none", fontWeight: 700 }}>تسجيل الدخول</a>
+      <header className="vyra-marketing-header">
+        <a href="/" className="vyra-marketing-logo" aria-label="VYRA الصفحة الرئيسية"><img src="/brand/vyra-logo.svg" alt="VYRA" /></a>
+        <nav aria-label="التنقل الرئيسي">
+          <a href="#features">مزايا VYRA</a>
+          <a href="#experience">كيف تعمل</a>
+          <a href="/help">مركز المساعدة</a>
         </nav>
+        <div className="vyra-marketing-actions">
+          <a className="vyra-login-link" href="/login">تسجيل الدخول</a>
+          <a className="vyra-cta" href="/login">ابدأ الآن <span>←</span></a>
+        </div>
       </header>
-      <section style={{ maxWidth: 1120, margin: "36px auto 0", padding: "64px 24px 72px", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,380px),1fr))", gap: 42, alignItems: "center" }}>
-        <div>
-          <p style={{ color: "#f26a21", fontWeight: 800, letterSpacing: 1 }}>منصتك الاجتماعية المتكاملة</p>
-          <h1 style={{ fontSize: "clamp(38px,6vw,64px)", lineHeight: 1.2, margin: "14px 0 20px", color: "#171923" }}>تواصل وشارك واكتشف مجتمعك على <span style={{ color: "#f26a21" }}>VYRA</span></h1>
-          <p style={{ fontSize: 19, lineHeight: 1.9, color: "#626a7e", maxWidth: 650 }}>VYRA منصة اجتماعية تجمع التواصل مع الأصدقاء، ومشاركة الصور والفيديوهات، والقصص والريلز، واكتشاف المجتمعات والصفحات في مساحة رقمية واحدة.</p>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 28 }}>
-            <a href="/login" style={{ background: "#f26a21", color: "#fff", padding: "14px 25px", borderRadius: 11, textDecoration: "none", fontWeight: 800 }}>تسجيل الدخول أو إنشاء حساب</a>
-            <a href="/help" style={{ background: "#fff", color: "#34384b", border: "1px solid #e2e4ed", padding: "14px 25px", borderRadius: 11, textDecoration: "none", fontWeight: 700 }}>تعرف على المنصة</a>
+      <section className="vyra-marketing-hero">
+        <div className="vyra-hero-copy">
+          <span className="vyra-overline"><i/> مساحة رقمية تجمع مجتمعك</span>
+          <h1>كل علاقاتك ومحتواك<br/><em>في مكان واحد.</em></h1>
+          <p>اكتشف طريقة أكثر تنظيماً للتواصل، ومشاركة اللحظات، وبناء المجتمعات. VYRA تجمع أدواتك الاجتماعية في تجربة واحدة واضحة وسهلة.</p>
+          <div className="vyra-hero-actions">
+            <a className="vyra-cta vyra-cta-large" href="/login">أنشئ حسابك مجاناً <span>←</span></a>
+            <a className="vyra-text-link" href="/help">اكتشف المنصة <span>←</span></a>
           </div>
+          <div className="vyra-hero-assurance"><span><Check size={15}/> تجربة عربية متكاملة</span><span><ShieldCheck size={15}/> إعدادات خصوصية واضحة</span></div>
         </div>
-        <div aria-label="مزايا VYRA" style={{ background: "#fff", border: "1px solid #e9eaf2", borderRadius: 24, padding: 28, boxShadow: "0 20px 60px #25254a0d" }}>
-          <h2 style={{ fontSize: 25, margin: "0 0 18px" }}>كل ما يهم مجتمعك في مكان واحد</h2>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 16, color: "#51586d", lineHeight: 1.7 }}>
-            <li><strong style={{ color: "#25283a" }}>التواصل:</strong> رسائل ومتابعة وتفاعل مع الأصدقاء.</li>
-            <li><strong style={{ color: "#25283a" }}>المحتوى:</strong> منشورات وصور وفيديوهات وقصص وريلز.</li>
-            <li><strong style={{ color: "#25283a" }}>المجتمعات:</strong> اكتشف المساحات والصفحات وشارك اهتماماتك.</li>
-            <li><strong style={{ color: "#25283a" }}>الذكاء الاصطناعي:</strong> أدوات مساعدة ضمن تجربة VYRA.</li>
-          </ul>
-        </div>
-      </section>
-      <section style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px 64px", display: "flex", flexWrap: "wrap", gap: 14 }}>
-        <a href="/help" style={{ color: "#f26a21" }}>مركز المساعدة</a>
-        <a href="/help/glossary" style={{ color: "#f26a21" }}>دليل المصطلحات</a>
-      </section>
-      <section style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px 56px", color: "#42485b" }}>
-        <h2 style={{ fontSize: 30, color: "#171923", marginBottom: 14 }}>ما هي منصة VYRA؟</h2>
-        <p style={{ lineHeight: 2, fontSize: 17 }}>VYRA مساحة اجتماعية رقمية تساعد الأفراد على بناء حضورهم والتواصل مع الآخرين ومشاركة الأفكار والوسائط. تجمع المنصة أدوات النشر والتفاعل واكتشاف المجتمعات والصفحات في واجهة واحدة، مع إمكانية الوصول إلى الحساب من المتصفح.</p>
-        <h2 style={{ fontSize: 25, color: "#171923", margin: "28px 0 12px" }}>كيف تستخدم VYRA؟</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
-          <article style={{ background: "#fff", border: "1px solid #e9eaf2", borderRadius: 16, padding: 20 }}><h3>أنشئ حضورك</h3><p style={{ lineHeight: 1.9 }}>أنشئ حساباً، وأكمل ملفك الشخصي، وحدد المعلومات التي ترغب في مشاركتها وفق إعدادات الحساب المتاحة.</p></article>
-          <article style={{ background: "#fff", border: "1px solid #e9eaf2", borderRadius: 16, padding: 20 }}><h3>شارك المحتوى</h3><p style={{ lineHeight: 1.9 }}>انشر تحديثات نصية وأرفق الصور أو مقاطع الفيديو المدعومة، ثم تابع التفاعل والتعليقات على منشوراتك.</p></article>
-          <article style={{ background: "#fff", border: "1px solid #e9eaf2", borderRadius: 16, padding: 20 }}><h3>اكتشف المجتمعات</h3><p style={{ lineHeight: 1.9 }}>تصفح المجتمعات والصفحات المتاحة للعثور على موضوعات واهتمامات مشتركة مع أعضاء آخرين.</p></article>
-          <article style={{ background: "#fff", border: "1px solid #e9eaf2", borderRadius: 16, padding: 20 }}><h3>تحكم بحسابك</h3><p style={{ lineHeight: 1.9 }}>استخدم إعدادات الحساب والخصوصية وأدوات الدعم المتاحة لإدارة تجربتك والإبلاغ عن المشكلات.</p></article>
-        </div>
-        <h2 style={{ fontSize: 25, color: "#171923", margin: "30px 0 12px" }}>الخصوصية والاستخدام الآمن</h2>
-        <p style={{ lineHeight: 2, fontSize: 16 }}>احرص على استخدام كلمة مرور قوية وفريدة، ولا تشارك رموز التحقق أو بيانات الدخول. راجع إعدادات الخصوصية قبل نشر محتوى شخصي، وتجنب فتح الروابط المشبوهة. توفر VYRA صفحات مساعدة لتوضيح التنقل والوظائف الأساسية، كما يمكن للمستخدمين تسجيل الدخول للوصول إلى ميزات الحساب.</p>
-        <h2 style={{ fontSize: 25, color: "#171923", margin: "30px 0 12px" }}>أسئلة شائعة عن VYRA</h2>
-        <div style={{ display: "grid", gap: 14, lineHeight: 1.9 }}>
-          <div><h3>هل يمكن استخدام VYRA من المتصفح؟</h3><p>نعم، يمكن فتح المنصة من متصفح الويب عبر رابطها، ثم تسجيل الدخول أو إنشاء حساب للوصول إلى المساحة الاجتماعية.</p></div>
-          <div><h3>هل أحتاج إلى حساب للمشاركة؟</h3><p>تصفح الصفحة التعريفية ومركز المساعدة متاح دون تسجيل الدخول، أما النشر والتفاعل وإدارة الحساب فتتطلب تسجيل الدخول.</p></div>
-          <div><h3>أين أجد شرحاً للميزات؟</h3><p>يمكنك زيارة <a href="/help" style={{ color: "#f26a21" }}>مركز مساعدة VYRA</a> أو <a href="/help/glossary" style={{ color: "#f26a21" }}>قاموس المصطلحات</a> للحصول على معلومات إضافية.</p></div>
+        <div className="vyra-hero-product" aria-label="معاينة واجهة VYRA">
+          <div className="vyra-product-glow"/>
+          <div className="vyra-product-window">
+            <div className="vyra-window-top"><span className="vyra-window-brand"><b>V</b> VYRA</span><span className="vyra-window-dots">•••</span></div>
+            <div className="vyra-window-body">
+              <aside className="vyra-window-nav"><i/><i/><i/><i/><i/></aside>
+              <div className="vyra-window-feed">
+                <div className="vyra-window-greeting"><small>مساحتك الاجتماعية</small><b>مرحباً بعودتك 👋</b></div>
+                <div className="vyra-window-stats"><span><i/><b>تواصل</b><small>مع مجتمعك</small></span><span><i/><b>شارك</b><small>لحظاتك</small></span><span><i/><b>اكتشف</b><small>اهتمامات جديدة</small></span></div>
+                <div className="vyra-window-post"><div className="vyra-post-head"><i/><span><b/><small/></span><strong>•••</strong></div><div className="vyra-post-lines"><i/><i/><i/></div><div className="vyra-post-art"><span>مساحة لأفكارك</span></div><div className="vyra-post-foot"><span>♡ إعجاب</span><span>◯ تعليق</span><span>↗ مشاركة</span></div></div>
+              </div>
+            </div>
+          </div>
+          <div className="vyra-float-card"><span><TrendingUp size={17}/></span><div><b>كل شيء مترابط</b><small>منشورات · رسائل · مجتمعات</small></div><Check size={17}/></div>
         </div>
       </section>
-      <footer style={{ borderTop: "1px solid #e7e8ef", padding: 24, textAlign: "center", color: "#7a8092" }}>© 2026 VYRA — منصة اجتماعية للتواصل ومشاركة المحتوى.</footer>
+      <section className="vyra-trust-strip"><span>تجربة واحدة متكاملة</span><i/><span>واجهة عربية من اليمين إلى اليسار</span><i/><span>تعمل على الهاتف والحاسوب</span></section>
+      <section className="vyra-feature-section" id="features">
+        <div className="vyra-section-heading"><span className="vyra-overline">منصة واحدة، إمكانيات متعددة</span><h2>كل ما تحتاجه لتبقى<br/><em>على اتصال.</em></h2><p>انتقل بسلاسة بين التواصل والمحتوى والاكتشاف دون تشتيت.</p></div>
+        <div className="vyra-feature-grid">
+          <article><span className="vyra-feature-icon"><MessageCircle/></span><h3>تواصل مباشر</h3><p>تابع محادثاتك ورسائلك وتنبيهاتك من مساحة موحدة.</p><a href="/login">استكشف الرسائل ←</a></article>
+          <article><span className="vyra-feature-icon"><Clapperboard/></span><h3>قصص وريلز</h3><p>شارك الصور ومقاطع الفيديو واللحظات السريعة مع مجتمعك.</p><a href="/login">اكتشف المحتوى ←</a></article>
+          <article><span className="vyra-feature-icon"><UsersRound/></span><h3>مجتمعات وصفحات</h3><p>اكتشف مجموعات الاهتمام وابنِ حضورك الرقمي.</p><a href="/login">تعرّف على المجتمعات ←</a></article>
+          <article><span className="vyra-feature-icon"><Sparkles/></span><h3>أدوات ذكية</h3><p>استفد من مساحة أدوات الذكاء الاصطناعي ضمن تجربة VYRA.</p><a href="/login">افتح الأدوات ←</a></article>
+        </div>
+      </section>
+      <section className="vyra-experience" id="experience">
+        <div className="vyra-experience-card"><div className="vyra-experience-mark">V</div><span className="vyra-overline">مصممة لتكون واضحة</span><h2>تجربة بسيطة.<br/><em>تحكم أكبر.</em></h2><p>تنقل منظم، واجهات متناسقة، وإعدادات تساعدك على إدارة حسابك وخصوصيتك.</p><ul><li><Check size={16}/> تحكم في جمهور منشوراتك</li><li><Check size={16}/> إدارة ملفك وإعداداتك</li><li><Check size={16}/> دعم الشاشات المختلفة</li></ul><a className="vyra-cta" href="/login">ابدأ تجربتك <span>←</span></a></div>
+        <div className="vyra-experience-aside"><div><b>01</b><span>أنشئ حسابك</span><small>ابدأ بهويتك الرقمية</small></div><div><b>02</b><span>تواصل وشارك</span><small>ابقَ قريباً من اهتماماتك</small></div><div><b>03</b><span>اكتشف المزيد</span><small>وسّع دائرتك الاجتماعية</small></div></div>
+      </section>
+      <section className="vyra-final-cta"><span className="vyra-overline">مجتمعك يبدأ من هنا</span><h2>جاهز لتجربة VYRA؟</h2><p>أنشئ حسابك وابدأ التواصل ومشاركة المحتوى.</p><a className="vyra-cta vyra-cta-large" href="/login">انضم إلى VYRA <span>←</span></a></section>
+      <footer className="vyra-marketing-footer"><a href="/" className="vyra-marketing-logo"><img src="/brand/vyra-logo.svg" alt="VYRA"/></a><div><a href="/help">مركز المساعدة</a><a href="/help/glossary">دليل المصطلحات</a><a href="/login">تسجيل الدخول</a></div><small>© 2026 VYRA — منصة اجتماعية للتواصل ومشاركة المحتوى.</small></footer>
     </main>
   );
 }
