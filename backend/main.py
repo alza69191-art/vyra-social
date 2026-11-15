@@ -21,6 +21,7 @@ from backend.support_router import router as support_router
 from backend.admin_router import router as admin_router
 from backend.stories_channel_ads import router as stories_channel_ads_router
 from backend.marketplace_admin import router as marketplace_router, admin_router as marketplace_admin_router, read_settings as read_marketplace_settings
+from backend.marketplace_catalog import router as marketplace_catalog_router, admin_router as marketplace_catalog_admin_router
 
 app = FastAPI(
     title="VYRA API",
@@ -57,6 +58,8 @@ app.include_router(admin_router)
 app.include_router(stories_channel_ads_router)
 app.include_router(marketplace_router)
 app.include_router(marketplace_admin_router)
+app.include_router(marketplace_catalog_router)
+app.include_router(marketplace_catalog_admin_router)
 
 
 def get_db():
