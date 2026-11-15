@@ -54,7 +54,7 @@ export default function HelpPage(){
      <h3 style={{display:"flex",alignItems:"center",gap:10,fontSize:16,margin:"0 0 10px"}}><span style={iconStyle}><Icon size={19}/></span>{section.title}</h3>
      {section.items.map(([q,a])=>{const key=section.title+q;const active=opened===key;return <div key={key} style={{borderTop:"1px solid #eee"}}>
       <button onClick={()=>setOpened(active?null:key)} aria-expanded={active} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,padding:"15px 2px",textAlign:"right",fontWeight:600}}>{q}<ChevronDown size={18} style={{transform:active?"rotate(180deg)":"none",transition:".2s",flex:"none"}}/></button>
-      {active&&<p style={{margin:"-2px 0 16px",paddingInlineEnd:4,color:"#666",lineHeight:2}}>{a}</p>}
+      <p style={{margin:"-2px 0 16px",paddingInlineEnd:4,color:"#666",lineHeight:2}}>{a}</p>
      </div>})}
     </section>})}
     {!filtered.length&&<div style={{...cardStyle,textAlign:"center",color:"#777"}}>لا توجد نتائج مطابقة. جرّب كلمة بحث أخرى.</div>}
