@@ -468,6 +468,7 @@ class MarketListingCreate(BaseModel):
     location: str | None = Field(default=None, max_length=120)
     media_url: str | None = Field(default=None, max_length=2000)
     media_type: str | None = Field(default=None, pattern="^(image|video)$")
+    group_id: str | None = Field(default=None, max_length=36)
 
 class MarketListingStatus(BaseModel):
     status: str = Field(pattern="^(active|sold)$")
@@ -477,7 +478,7 @@ def list_market_listings(limit: int = Query(default=40, ge=1, le=100), offset: i
     rows = db.execute(
         select(models.MarketListing, models.Profile)
         .join(models.Profile, models.Profile.id == models.MarketListing.owner_id)
-        .where(models.MarketListing.status == "active")
+        .where(models.MarketListing.status == "active", models.MarketListing.group_id.is_(None))
         .order_by(desc(models.MarketListing.created_at))
         .limit(limit).offset(offset)
     ).all()
@@ -495,8 +496,19 @@ def list_market_listings(limit: int = Query(default=40, ge=1, le=100), offset: i
 def create_market_listing(payload: MarketListingCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     if db.get(models.Profile, claims["sub"]) is None:
         raise HTTPException(status_code=409, detail="Profile not found")
+    if payload.group_id:
+        group = db.get(models.SocialGroup, payload.group_id)
+        member = db.scalar(select(models.GroupMember).where(
+            models.GroupMember.group_id == payload.group_id,
+            models.GroupMember.user_id == claims["sub"],
+            models.GroupMember.status == "active",
+        ))
+        if group is None or (group.privacy == "private" and member is None):
+            raise HTTPException(status_code=404, detail="Community market not found")
+        if member is None:
+            raise HTTPException(status_code=403, detail="Join this community before listing an item")
     listing = models.MarketListing(
-        id=str(uuid4()), owner_id=claims["sub"], title=payload.title.strip(),
+        id=str(uuid4()), owner_id=claims["sub"], group_id=payload.group_id, title=payload.title.strip(),
         description=payload.description.strip(), price=payload.price,
         currency=payload.currency, category=payload.category.strip(),
         condition=payload.condition, location=payload.location.strip() if payload.location else None,
@@ -513,7 +525,68 @@ def create_market_listing(payload: MarketListingCreate, claims: dict = Depends(c
         "location": listing.location, "status": listing.status,
         "created_at": listing.created_at, "owner_id": listing.owner_id,
         "seller_name": profile.display_name, "seller_username": profile.username,
+        "group_id": listing.group_id,
     }
+
+
+@app.get("/api/groups/{group_id}/market/listings")
+def list_group_market(group_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    group = db.get(models.SocialGroup, group_id)
+    member = db.scalar(select(models.GroupMember).where(
+        models.GroupMember.group_id == group_id,
+        models.GroupMember.user_id == claims["sub"],
+        models.GroupMember.status == "active",
+    ))
+    if group is None or (group.privacy == "private" and member is None):
+        raise HTTPException(status_code=404, detail="Community market not found")
+    rows = db.execute(
+        select(models.MarketListing, models.Profile)
+        .join(models.Profile, models.Profile.id == models.MarketListing.owner_id)
+        .where(models.MarketListing.group_id == group_id, models.MarketListing.status == "active")
+        .order_by(desc(models.MarketListing.created_at)).limit(100)
+    ).all()
+    return [{
+        "id": row.id, "title": row.title, "description": row.description,
+        "price": float(row.price), "currency": row.currency, "category": row.category,
+        "condition": row.condition, "location": row.location, "status": row.status,
+        "media_url": row.media_url, "media_type": row.media_type, "group_id": row.group_id,
+        "created_at": row.created_at, "owner_id": row.owner_id,
+        "seller_name": profile.display_name, "seller_username": profile.username,
+    } for row, profile in rows]
+
+
+@app.post("/api/groups/{group_id}/market/listings", status_code=201)
+def create_group_market_listing(group_id: str, payload: MarketListingCreate, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    group = db.get(models.SocialGroup, group_id)
+    member = db.scalar(select(models.GroupMember).where(
+        models.GroupMember.group_id == group_id,
+        models.GroupMember.user_id == claims["sub"],
+        models.GroupMember.status == "active",
+    ))
+    if group is None or member is None:
+        raise HTTPException(status_code=403, detail="Join this community before listing an item")
+    profile = db.get(models.Profile, claims["sub"])
+    if profile is None:
+        raise HTTPException(status_code=409, detail="Profile not found")
+    listing = models.MarketListing(
+        id=str(uuid4()), owner_id=claims["sub"], group_id=group_id,
+        title=payload.title.strip(), description=payload.description.strip(),
+        price=payload.price, currency=payload.currency, category=payload.category.strip(),
+        condition=payload.condition, location=payload.location.strip() if payload.location else None,
+        media_url=payload.media_url, media_type=payload.media_type,
+    )
+    db.add(listing)
+    db.commit()
+    db.refresh(listing)
+    return {
+        "id": listing.id, "title": listing.title, "description": listing.description,
+        "price": float(listing.price), "currency": listing.currency, "category": listing.category,
+        "condition": listing.condition, "location": listing.location, "status": listing.status,
+        "media_url": listing.media_url, "media_type": listing.media_type, "group_id": group_id,
+        "created_at": listing.created_at, "owner_id": listing.owner_id,
+        "seller_name": profile.display_name, "seller_username": profile.username,
+    }
+
 
 @app.patch("/api/market/listings/{listing_id}/status")
 def update_market_listing_status(listing_id: str, payload: MarketListingStatus, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
