@@ -12,11 +12,9 @@ export const metadata: Metadata = {
   description: "اكتشف VYRA، منصة اجتماعية للتواصل مع الأصدقاء ومشاركة المنشورات والصور والفيديوهات والقصص والريلز واكتشاف المجتمعات.",
   applicationName: "VYRA",
   keywords: ["VYRA", "منصة اجتماعية", "شبكة اجتماعية", "مشاركة الصور والفيديو", "مجتمعات رقمية", "تواصل اجتماعي"],
-  alternates: { canonical: "/" },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   openGraph: {
     type: "website",
-    url: "/",
     siteName: "VYRA",
     title: "VYRA — منصتك الاجتماعية",
     description: "تواصل وشارك واكتشف مجتمعك على VYRA.",
