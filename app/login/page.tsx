@@ -29,7 +29,7 @@ export default function LoginPage(){
  }
  async function resendCode(){setBusy(true);setError("");try{const response=await fetch(API_BASE+"/api/auth/resend-verification",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email.trim().toLowerCase()})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.detail||"تعذر إرسال الرمز.");setMessage(data.message||"تم إرسال رمز جديد.");}catch(e){setError(e instanceof Error?e.message:"تعذر إرسال الرمز.");}finally{setBusy(false);}}
  return <main className="auth-page" dir="rtl">
-  <header className="vyra-public-header"><div className="vyra-public-brand"><span className="brand-mark">V</span><b>VYRA</b></div><button className="vyra-public-login" onClick={()=>setChooserOpen(true)}>تسجيل الدخول</button></header>
+  <header className="vyra-public-header"><a href="/" className="vyra-public-brand" aria-label="VYRA"><img src="/brand/vyra-logo.svg" alt="VYRA" /></a><button className="vyra-public-login" onClick={()=>setChooserOpen(true)}>تسجيل الدخول</button></header>
   <section className="vyra-public-hero">
    <div className="vyra-hero-copy"><div className="vyra-hero-kicker"><Users size={15}/> مجتمعك الرقمي في مكان واحد</div>
     <h1>تواصل، شارك، واكتشف عالمك على <span>VYRA.</span></h1>
