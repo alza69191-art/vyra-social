@@ -4,7 +4,8 @@ import Link from "next/link";
 import AuthGate from "@/components/auth-gate";
 import {ArrowRight,PackageCheck} from "lucide-react";
 const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/$/,"");
-const labels:Record<string,string>={pending_payment:"بانتظار الدفع",paid:"مدفوع",processing:"قيد التجهيز",shipped:"تم الشحن",completed:"مكتمل",cancelled:"ملغي",refunded:"مسترد"};\nconst shipmentLabels:Record<string,string>={label_created:"تم إنشاء بوليصة الشحن",picked_up:"استلمت شركة الشحن الطرد",in_transit:"الشحنة في الطريق",out_for_delivery:"خرجت للتسليم",delivered:"تم التسليم",exception:"تعثر التوصيل",returned:"أعيدت الشحنة"};
+const labels:Record<string,string>={pending_payment:"بانتظار الدفع",paid:"مدفوع",processing:"قيد التجهيز",shipped:"تم الشحن",completed:"مكتمل",cancelled:"ملغي",refunded:"مسترد"};
+const shipmentLabels:Record<string,string>={label_created:"تم إنشاء بوليصة الشحن",picked_up:"استلمت شركة الشحن الطرد",in_transit:"الشحنة في الطريق",out_for_delivery:"خرجت للتسليم",delivered:"تم التسليم",exception:"تعثر التوصيل",returned:"أعيدت الشحنة"};
 export default function OrdersPage(){return <AuthGate><Orders/></AuthGate>}
 function Orders(){const [rows,setRows]=useState<any[]>([]),[tracking,setTracking]=useState<Record<string,any>>({}),[error,setError]=useState("");
  useEffect(()=>{const token=sessionStorage.getItem("vyra_access_token")||"";fetch(API+"/api/orders",{headers:{Authorization:"Bearer "+token},cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.detail||"تعذر تحميل الطلبات");setRows(d);const pairs=await Promise.all(d.map(async (o:any)=>{try{const r=await fetch(API+"/api/orders/"+o.id+"/tracking",{headers:{Authorization:"Bearer "+token},cache:"no-store"});return [o.id,r.ok?await r.json():null] as const;}catch{return [o.id,null] as const;}}));setTracking(Object.fromEntries(pairs.filter(x=>x[1])));}).catch(e=>setError(e.message));},[]);
