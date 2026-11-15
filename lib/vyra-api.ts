@@ -96,7 +96,7 @@ export async function uploadVideoDirect(
   if (!file.type.startsWith("video/")) throw new Error("اختر ملف فيديو صالحاً.");
   const signature = await request<DirectUploadSignature>(
     "/api/uploads/signature",
-    { method: "POST", body: JSON.stringify({ post_id: postId, resource_type: "video" }) },
+    { method: "POST", body: JSON.stringify({ post_id: postId, resource_type: "video", content_type: file.type, file_size: file.size }) },
     accessToken,
   );
   const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(signature.cloud_name)}/video/upload`;
