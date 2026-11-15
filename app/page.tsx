@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getPublicPosts, createPost, toggleReaction, getComments, createComment, uploadMedia, toggleBookmark, deletePost, updatePost, getMyProfile, type VyraComment } from "@/lib/vyra-api";
+import { getPublicPosts, createPost, toggleReaction, getComments, createComment, uploadMedia, toggleBookmark, deletePost, updatePost, getMyProfile, uploadVideoDirect, type VyraComment } from "@/lib/vyra-api";
 import AuthGate from "@/components/auth-gate";
 import { Home, Compass, Clapperboard, Users, MessageCircle, Bell, Bookmark, Radio, Store, Gavel, UsersRound, Settings, Search, Plus, Image as ImageIcon, Video, Smile, MoreHorizontal, Heart, MessageSquare, Share2, Send, ChevronDown, Sparkles, PanelLeftClose, Menu, X, Check, ShieldCheck, TrendingUp, CircleHelp, WandSparkles, Hash } from "lucide-react";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://vyra-api-9pxl.onrender.com";
@@ -183,7 +183,7 @@ function HomeFeed() {
       const uploaded: Array<{url:string;media_type:string}> = [];
       for (let index = 0; index < selectedFiles.length; index += 2) {
         const batch = selectedFiles.slice(index, index + 2);
-        const results = await Promise.all(batch.map(file => uploadMedia(token, file, "post", created.id)));
+        const results = await Promise.all(batch.map(file => file.type.startsWith("video/") ? uploadVideoDirect(token, file, created.id) : uploadMedia(token, file, "post", created.id)));
         uploaded.push(...results.map(item => ({ url: item.url, media_type: item.media_type })));
       }
       setPosts(current => [{ id: created.id, authorId: created.author_id, visibility: created.visibility, name: "أنت", handle: "@your.profile", avatar: "أ", time: "الآن", text: created.body || "", likes: 0, comments: 0, shares: 0, tag: "منشور جديد", liked: false, media: uploaded }, ...current]);
