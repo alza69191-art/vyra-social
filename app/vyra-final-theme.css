@@ -1,15 +1,18 @@
 /* VYRA FINAL DESIGN TOKENS — clean white / graphite / restrained orange */
 :root{
   color-scheme:light;
-  --vyra-primary:#F36B24;
-  --vyra-primary-hover:#DF5714;
-  --vyra-ink:#252B33;
-  --vyra-muted:#69737D;
-  --vyra-border:#E5E8EB;
+  --vyra-primary:#0033FF;
+  --vyra-primary-hover:#0028CC;
+  --vyra-ink:#212529;
+  --vyra-muted:#878787;
+  --vyra-border:#D9D9D9;
   --vyra-surface:#FFFFFF;
-  --vyra-canvas:#F5F7F9;
-  --vyra-orange-soft:#FFF2E9;
+  --vyra-canvas:#EFEFEF;
+  --vyra-orange-soft:#FFF1EB;
   --vyra-green:#16865B;
+  --vyra-orange:#FF4800;
+  --vyra-purple:#D054CE;
+  --vyra-brand-blue:#0092F4;
   --vyra-red:#C43D3D;
   --vyra-shadow:0 4px 18px rgba(25,35,45,.045);
   --vyra-shadow-hover:0 12px 30px rgba(25,35,45,.09);
