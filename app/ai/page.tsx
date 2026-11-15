@@ -214,11 +214,13 @@ function AIChat() {
       context.fillRect(0, 0, canvas.width, canvas.height);
       const times = [0, 0.25, 0.5, 0.75, 0.95].map(part => Math.min(Math.max(0, video.duration - 0.05), video.duration * part));
       for (let index = 0; index < times.length; index++) {
-        await new Promise<void>((resolve, reject) => {
-          video.onseeked = () => resolve();
-          video.onerror = () => reject(new Error("تعذر استخراج إطارات الفيديو."));
-          video.currentTime = times[index];
-        });
+        if (Math.abs(video.currentTime - times[index]) > 0.01) {
+          await new Promise<void>((resolve, reject) => {
+            video.onseeked = () => resolve();
+            video.onerror = () => reject(new Error("تعذر استخراج إطارات الفيديو."));
+            video.currentTime = times[index];
+          });
+        }
         const x = (index % 2) * width;
         const y = Math.floor(index / 2) * height;
         context.drawImage(video, x, y, width, height);
