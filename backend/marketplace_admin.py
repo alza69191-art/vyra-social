@@ -51,6 +51,7 @@ DEFAULT_SETTINGS = {
     "payment_methods": ["manual_transfer", "paypal", "payoneer"],
     "product_categories": ["تقنية وإلكترونيات", "ملابس وإكسسوارات", "منتجات رقمية", "منزل ومكتب", "أخرى"],
     "service_categories": ["برمجة وتطوير", "تصميم وإبداع", "تسويق رقمي", "فيديو وموشن", "كتابة وترجمة", "أخرى"],
+    "commission_percent": 10,
 }
 
 
@@ -131,6 +132,7 @@ class SettingsInput(BaseModel):
     payment_methods: list[str] | None = Field(default=None, max_length=8)
     product_categories: list[str] | None = Field(default=None, max_length=60)
     service_categories: list[str] | None = Field(default=None, max_length=60)
+    commission_percent: Decimal | None = Field(default=None, ge=0, le=50)
 
 
 def product_out(item: MarketplaceProduct):
