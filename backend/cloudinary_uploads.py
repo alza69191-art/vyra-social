@@ -132,7 +132,9 @@ import time
 
 class DirectUploadSignature(BaseModel):
     post_id: str = Field(min_length=1, max_length=36)
-    resource_type: str = Field(default="video", pattern="^(image|video)$")
+    resource_type: str = Field(default="video", pattern="^video$")
+    content_type: str = Field(pattern="^video/(mp4|webm|quicktime)$")
+    file_size: int = Field(gt=0, le=524288000)
 
 
 class DirectUploadComplete(BaseModel):
@@ -197,7 +199,8 @@ def complete_direct_upload(
 
     parsed = urlparse(payload.secure_url)
     expected_path = f"/{cloud_name}/{payload.resource_type}/upload/"
-    if parsed.scheme != "https" or parsed.hostname != "res.cloudinary.com" or expected_path not in parsed.path:
+    signed_asset_path = f"/v{payload.version}/{payload.public_id}"
+    if parsed.scheme != "https" or parsed.hostname != "res.cloudinary.com" or expected_path not in parsed.path or signed_asset_path not in parsed.path:
         raise HTTPException(status_code=422, detail="Invalid Cloudinary media URL")
 
     cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
