@@ -42,29 +42,48 @@ type DirectUploadSignature = {
   resource_type: "image" | "video";
 };
 
-function uploadCloudinaryChunk(
+async function uploadCloudinaryChunk(
   endpoint: string,
   form: FormData,
   headers: Record<string, string>,
   onProgress: (loaded: number) => void,
 ): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", endpoint);
-    Object.entries(headers).forEach(([key, value]) => xhr.setRequestHeader(key, value));
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(event.loaded);
-    };
-    xhr.onload = () => {
-      let data: any = {};
-      try { data = JSON.parse(xhr.responseText || "{}"); } catch {}
-      if (xhr.status >= 200 && xhr.status < 300) resolve(data);
-      else reject(new Error(data?.error?.message || data?.message || "تعذر رفع جزء من الفيديو إلى التخزين."));
-    };
-    xhr.onerror = () => reject(new Error("انقطع الاتصال أثناء رفع الفيديو. أعد المحاولة."));
-    xhr.onabort = () => reject(new Error("تم إلغاء رفع الفيديو."));
-    xhr.send(form);
-  });
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", endpoint);
+        Object.entries(headers).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) onProgress(event.loaded);
+        };
+        xhr.onload = () => {
+          let data: any = {};
+          try { data = JSON.parse(xhr.responseText || "{}"); } catch {}
+          if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+          else {
+            const error: any = new Error(data?.error?.message || data?.message || "تعذر رفع جزء من الفيديو إلى التخزين.");
+            error.status = xhr.status;
+            reject(error);
+          }
+        };
+        xhr.onerror = () => {
+          const error: any = new Error("انقطع الاتصال أثناء رفع الفيديو.");
+          error.status = 0;
+          reject(error);
+        };
+        xhr.onabort = () => reject(new Error("تم إلغاء رفع الفيديو."));
+        xhr.send(form);
+      });
+    } catch (error: any) {
+      lastError = error;
+      const retryable = error?.status === 0 || error?.status === 429 || error?.status >= 500;
+      if (!retryable || attempt === 2) break;
+      await new Promise((resolve) => window.setTimeout(resolve, 500 * (2 ** attempt)));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("تعذر إكمال رفع الفيديو.");
 }
 
 /** Upload video bytes straight to Cloudinary in resumable-size chunks, then attach
