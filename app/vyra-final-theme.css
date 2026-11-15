@@ -98,7 +98,7 @@ main:not(.vyra-marketing):not(.vyra-reels-page):not(.vyra-support-page) button.p
 .vyra-reels-primary:disabled,.vyra-reels-secondary:disabled{opacity:.55;cursor:not-allowed;transform:none}
 .vyra-reels-secondary{background:#fff;border:1px solid var(--vyra-border);color:var(--vyra-ink)}
 .vyra-reels-secondary:hover{background:var(--vyra-orange-soft);border-color:#F4C4A9;color:var(--vyra-primary-hover)}
-.vyra-reels-intro{max-width:1320px;margin:34px auto 22px;display:flex;justify-content:space-between;align-items:end;gap:20px}
+.vyra-reels-intro{max-width:1320px;margin:34px auto 22px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
 .vyra-reels-eyebrow{display:inline-flex;align-items:center;gap:7px;color:var(--vyra-primary-hover);font-size:11px;font-weight:700}
 .vyra-reels-intro h1{margin:8px 0 5px;font-size:30px;letter-spacing:-.04em}
 .vyra-reels-intro p{margin:0;color:var(--vyra-muted);font-size:12px}
