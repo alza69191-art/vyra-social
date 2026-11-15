@@ -330,6 +330,6 @@ function HomeFeed() {
     {notice && <div className="toast"><Check size={17}/>{notice}<button onClick={()=>setNotice("")}><X size={15}/></button></div>}
   </main>;
 }
-function Brand() { return <div className="brand"><span className="brand-mark">V</span><span className="brand-word">VYRA</span></div>; }
+function Brand() { return <a className="brand" href="/" aria-label="VYRA الصفحة الرئيسية"><img src="/brand/vyra-logo.svg" alt="VYRA" width="126" height="36" style={{width:126,height:"auto",display:"block"}} /></a>; }
 
 const menuItem = {display:"flex",alignItems:"center",gap:9,padding:"10px 11px",borderRadius:8,textAlign:"right",fontSize:12,whiteSpace:"nowrap"} as const;
