@@ -617,6 +617,49 @@ class DirectMessageUpdate(BaseModel):
     media_type: str | None = Field(default=None, pattern="^(image|video|audio)$")
 
 
+@app.get("/api/notifications")
+def list_notifications(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    rows = db.scalars(
+        select(models.Notification)
+        .where(models.Notification.user_id == claims["sub"])
+        .order_by(desc(models.Notification.created_at)).limit(100)
+    ).all()
+    return [{
+        "id": row.id, "kind": row.kind, "target_id": row.target_id,
+        "read": row.read_at is not None, "created_at": row.created_at,
+    } for row in rows]
+
+
+@app.put("/api/notifications/read-all")
+def mark_all_notifications_read(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    now = datetime.now(timezone.utc)
+    rows = db.scalars(select(models.Notification).where(
+        models.Notification.user_id == claims["sub"], models.Notification.read_at.is_(None)
+    )).all()
+    for row in rows:
+        row.read_at = now
+    db.commit()
+    return {"updated": len(rows)}
+
+
+@app.put("/api/notifications/{notification_id}/read")
+def mark_notification_read(notification_id: str, claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    row = db.get(models.Notification, notification_id)
+    if row is None or row.user_id != claims["sub"]:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    row.read_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"read": True}
+
+
+@app.get("/api/notifications/unread-count")
+def unread_notification_count(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    count = db.scalar(select(func.count(models.Notification.id)).where(
+        models.Notification.user_id == claims["sub"], models.Notification.read_at.is_(None)
+    )) or 0
+    return {"count": count}
+
+
 @app.get("/api/friends")
 def list_friends(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     user_id = claims["sub"]
