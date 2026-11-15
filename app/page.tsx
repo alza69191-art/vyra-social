@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getPublicPosts, createPost, toggleReaction, getComments, createComment, uploadMedia, toggleBookmark, deletePost, updatePost, getMyProfile, type VyraComment } from "@/lib/vyra-api";
 import AuthGate from "@/components/auth-gate";
 import { Home, Compass, Clapperboard, Users, MessageCircle, Bell, Bookmark, Radio, Store, Gavel, UsersRound, Settings, Search, Plus, Image as ImageIcon, Video, Smile, MoreHorizontal, Heart, MessageSquare, Share2, Send, ChevronDown, Sparkles, PanelLeftClose, Menu, X, Check, TrendingUp, CircleHelp, WandSparkles, Hash } from "lucide-react";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://vyra-api-9pxl.onrender.com";
 
 const navigation = [
   { label: "الرئيسية", icon: Home, active: true },
@@ -113,8 +114,8 @@ function HomeFeed() {
     setSharePost(post);setShareTargets([]);setSelectedShareTarget("");setShareNote("");
     try {
       const [friendsResponse,conversationsResponse]=await Promise.all([
-        fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/$/,"")+"/api/friends",{headers:{Authorization:"Bearer "+token},cache:"no-store"}),
-        fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/$/,"")+"/api/conversations",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
+        fetch(API_BASE+"/api/friends",{headers:{Authorization:"Bearer "+token},cache:"no-store"}),
+        fetch(API_BASE+"/api/conversations",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
       ]);
       const friends=friendsResponse.ok?await friendsResponse.json():[];
       const conversations=conversationsResponse.ok?await conversationsResponse.json():[];
@@ -131,16 +132,16 @@ function HomeFeed() {
     try {
       let conversationId=target.conversationId;
       if(!conversationId&&target.kind==="friend"){
-        const created=await fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/$/,"")+"/api/conversations/direct",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({recipient_id:target.recipientId})});
+        const created=await fetch(API_BASE+"/api/conversations/direct",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({recipient_id:target.recipientId})});
         const data=await created.json();if(!created.ok)throw new Error(data.detail||"تعذر فتح محادثة الصديق");conversationId=data.id;
       }
       if(!conversationId&&target.kind==="group"){
-        const created=await fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/$/,"")+"/api/conversations/space",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({space_type:"group",space_id:target.groupId})});
+        const created=await fetch(API_BASE+"/api/conversations/space",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({space_type:"group",space_id:target.groupId})});
         const data=await created.json();if(!created.ok)throw new Error(data.detail||"تعذر فتح محادثة المجتمع");conversationId=data.id;
       }
       const url=window.location.origin+"/?post="+sharePost.id;
       const body=(shareNote.trim()?shareNote.trim()+"\\n\\n":"")+"مشاركة من VYRA: "+url;
-      const sent=await fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/$/,"")+"/api/conversations/"+conversationId+"/messages",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({body})});
+      const sent=await fetch(API_BASE+"/api/conversations/"+conversationId+"/messages",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({body})});
       const result=await sent.json();if(!sent.ok)throw new Error(result.detail||"تعذر إرسال المشاركة");
       setSharePost(null);setNotice("تم إرسال المنشور إلى "+target.label);
     } catch(e) { setNotice(e instanceof Error?e.message:"تعذر إرسال المشاركة"); }
