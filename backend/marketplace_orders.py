@@ -413,7 +413,9 @@ def admin_update_order_status(order_id: str, payload: AdminOrderStatus, claims: 
         payment = db.scalar(select(MarketplacePaymentRecord).where(MarketplacePaymentRecord.order_id == order.id))
         if payment:
             payment.status = "refunded"
-    order.status = payload.status
+    # Confirming COD collection must not move a delivered shipment backwards.
+    if not (payload.status == "paid" and previous == "shipped"):
+        order.status = payload.status
     db.commit()
     db.refresh(order)
     return _order_out(db, order, include_buyer=True)
