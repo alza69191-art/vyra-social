@@ -1,20 +1,170 @@
 "use client";
-import {useEffect,useState} from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import AuthGate from "@/components/auth-gate";
-import {ArrowRight,Headset,Send,Plus,MessageCircle} from "lucide-react";
-const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/$/,"");
-type Ticket={id:string;subject:string;status:string;last_message:string;created_at:string;user_name?:string};
-type Msg={id:string;sender_id:string;sender_role:string;message:string;created_at:string};
-function Support(){const [tickets,setTickets]=useState<Ticket[]>([]),[active,setActive]=useState<Ticket|null>(null),[messages,setMessages]=useState<Msg[]>([]),[subject,setSubject]=useState(""),[draft,setDraft]=useState(""),[newMode,setNewMode]=useState(false),[notice,setNotice]=useState(""),[busy,setBusy]=useState(false);
-const token=()=>sessionStorage.getItem("vyra_access_token")||"";
-async function load(){const r=await fetch(API+"/api/support/tickets",{headers:{Authorization:"Bearer "+token()}});if(r.ok)setTickets(await r.json())}
-async function open(t:Ticket){setActive(t);setNewMode(false);const r=await fetch(API+"/api/support/tickets/"+t.id+"/messages",{headers:{Authorization:"Bearer "+token()}});if(r.ok)setMessages(await r.json())}
-useEffect(()=>{load().catch(()=>setNotice("تعذر تحميل تذاكر الدعم."));const timer=setInterval(()=>{load().catch(()=>undefined);if(active){fetch(API+"/api/support/tickets/"+active.id+"/messages",{headers:{Authorization:"Bearer "+token()},cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d)setMessages(d)}).catch(()=>undefined)}},12000);return()=>clearInterval(timer)},[active?.id]);
-async function create(){if(!subject.trim()||!draft.trim())return;setBusy(true);try{const r=await fetch(API+"/api/support/tickets",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token()},body:JSON.stringify({subject,message:draft})});const d=await r.json();if(!r.ok)throw Error(d.detail||"تعذر إرسال الطلب");setSubject("");setDraft("");setNotice("تم إرسال رسالتك إلى الدعم بشكل خاص.");await load();await open(d)}catch(e){setNotice(e instanceof Error?e.message:"حدث خطأ")}finally{setBusy(false)}}
-async function send(){if(!active||!draft.trim()||busy)return;setBusy(true);try{const r=await fetch(API+"/api/support/tickets/"+active.id+"/messages",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token()},body:JSON.stringify({message:draft})});const d=await r.json();if(!r.ok)throw Error(d.detail||"تعذر الإرسال");setDraft("");const m=await fetch(API+"/api/support/tickets/"+active.id+"/messages",{headers:{Authorization:"Bearer "+token()}});if(m.ok)setMessages(await m.json());await load()}catch(e){setNotice(e instanceof Error?e.message:"حدث خطأ")}finally{setBusy(false)}}
-return <main dir="rtl" style={{maxWidth:1050,margin:"30px auto",padding:18,color:"#24211d"}}><Link href="/" style={{color:"#8a673b",textDecoration:"none"}}><ArrowRight size={16} style={{verticalAlign:"middle"}}/> العودة للرئيسية</Link><header style={{display:"flex",gap:12,alignItems:"center",margin:"22px 0"}}><Headset size={30}/><div><h1 style={{margin:0}}>الدعم الفني</h1><p style={{margin:"5px 0",color:"#888"}}>مراسلات خاصة بينك وبين فريق دعم VYRA فقط.</p></div></header>{notice&&<p role="status">{notice}</p>}<div style={{display:"grid",gridTemplateColumns:"minmax(220px, .8fr) minmax(0,1.5fr)",gap:14}}><aside style={{background:"#fff",border:"1px solid #eee",borderRadius:14,padding:14}}><button onClick={()=>{setActive(null);setMessages([]);setNewMode(true);setDraft("")}} style={btn}><Plus size={16}/> طلب دعم جديد</button>{tickets.map(t=><button key={t.id} onClick={()=>open(t)} style={{...btn,display:"block",width:"100%",textAlign:"right",marginTop:9,background:active?.id===t.id?"#f5eee4":"#fafafa"}}><b>{t.subject}</b>{t.user_name&&<small style={{display:"block",color:"#9a6b36"}}>{t.user_name}</small>}<small style={{display:"block",color:"#888",marginTop:4}}>{t.status==="closed"?"مغلقة":"مفتوحة"} · {t.last_message}</small></button>)}{!tickets.length&&<p style={{color:"#888"}}>لا توجد طلبات دعم بعد.</p>}</aside><section style={{background:"#fff",border:"1px solid #eee",borderRadius:14,padding:16,minHeight:420}}>{newMode?<><h3>إرسال رسالة للدعم</h3><input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="عنوان الطلب" style={input}/><textarea value={draft} onChange={e=>setDraft(e.target.value)} placeholder="اكتب رسالتك، لن يراها سوى أنت والدعم..." style={area}/><button disabled={busy} onClick={create} style={btn}><Send size={16}/> إرسال بشكل خاص</button></>:active?<><h3>{active.subject}</h3><div style={{height:300,overflowY:"auto",borderBlock:"1px solid #eee",padding:"12px 0"}}>{messages.map(m=><div key={m.id} style={{margin:"9px 0",padding:12,borderRadius:10,background:m.sender_role==="support"?"#f3eee6":"#edf3fa",maxWidth:"85%"}}><small style={{color:"#888"}}>{m.sender_role==="support"?"الدعم الفني":"أنت"}</small><p style={{whiteSpace:"pre-wrap",margin:"5px 0"}}>{m.message}</p></div>)}</div><textarea value={draft} onChange={e=>setDraft(e.target.value)} placeholder="اكتب ردك..." style={area}/><button disabled={busy||active.status==="closed"} onClick={send} style={btn}><Send size={16}/> إرسال</button>{active.status==="closed"&&<p>هذه التذكرة مغلقة.</p>}</>:<div style={{textAlign:"center",padding:70,color:"#888"}}><MessageCircle size={34}/><p>اختر طلباً أو أنشئ طلب دعم جديداً.</p></div>}</section></div></main>}
-const btn:React.CSSProperties={display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8,padding:"10px 13px",border:0,borderRadius:9,background:"#211f1b",color:"#fff",cursor:"pointer",font:"inherit"};
-const input:React.CSSProperties={display:"block",width:"100%",padding:12,margin:"12px 0",border:"1px solid #ddd",borderRadius:9,font:"inherit"};
-const area:React.CSSProperties={display:"block",width:"100%",minHeight:100,padding:12,margin:"12px 0",border:"1px solid #ddd",borderRadius:9,font:"inherit"};
-export default function Page(){return <AuthGate><Support/></AuthGate>}
+import { ArrowRight, Headset, Send, Plus, MessageCircle, RefreshCw, LifeBuoy, CheckCircle2, Clock3 } from "lucide-react";
+
+const API = (process.env.NEXT_PUBLIC_API_URL || "https://vyra-api-9pxl.onrender.com").replace(/\/+$/, "");
+type Ticket = { id: string; subject: string; status: string; last_message: string; created_at: string; user_name?: string };
+type Msg = { id: string; sender_id: string; sender_role: string; message: string; created_at: string };
+
+function Support() {
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [active, setActive] = useState<Ticket | null>(null);
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [subject, setSubject] = useState("");
+  const [draft, setDraft] = useState("");
+  const [newMode, setNewMode] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const accessToken = () => sessionStorage.getItem("vyra_access_token") || "";
+  const request = async (path: string, init: RequestInit = {}) => {
+    const response = await fetch(API + path, {
+      ...init,
+      headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), Authorization: "Bearer " + accessToken(), ...init.headers },
+      cache: "no-store",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || data.error || "تعذر تنفيذ الطلب.");
+    return data;
+  };
+
+  const loadTickets = useCallback(async () => {
+    const data = await request("/api/support/tickets");
+    setTickets(Array.isArray(data) ? data : []);
+  }, []);
+
+  const loadMessages = useCallback(async (ticketId: string) => {
+    const data = await request("/api/support/tickets/" + encodeURIComponent(ticketId) + "/messages");
+    setMessages(Array.isArray(data) ? data : []);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    loadTickets().catch((e) => alive && setError(e instanceof Error ? e.message : "تعذر تحميل التذاكر."))
+      .finally(() => alive && setLoading(false));
+    return () => { alive = false; };
+  }, [loadTickets]);
+
+  useEffect(() => {
+    if (!active?.id || newMode) return;
+    const ticketId = active.id;
+    const timer = window.setInterval(() => {
+      loadTickets().catch(() => undefined);
+      loadMessages(ticketId).catch(() => undefined);
+    }, 12000);
+    return () => window.clearInterval(timer);
+  }, [active?.id, newMode, loadTickets, loadMessages]);
+
+  async function openTicket(ticket: Ticket) {
+    setActive(ticket);
+    setNewMode(false);
+    setDraft("");
+    setError("");
+    try { await loadMessages(ticket.id); }
+    catch (e) { setError(e instanceof Error ? e.message : "تعذر فتح المحادثة."); }
+  }
+
+  async function createTicket() {
+    if (busy || subject.trim().length < 3 || !draft.trim()) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const ticket = await request("/api/support/tickets", {
+        method: "POST",
+        body: JSON.stringify({ subject: subject.trim(), message: draft.trim() }),
+      });
+      setSubject(""); setDraft("");
+      await loadTickets();
+      setActive(ticket); setNewMode(false);
+      await loadMessages(ticket.id);
+      setNotice("تم إرسال طلبك بشكل خاص إلى فريق الدعم.");
+    } catch (e) { setError(e instanceof Error ? e.message : "تعذر إرسال الطلب."); }
+    finally { setBusy(false); }
+  }
+
+  async function sendMessage() {
+    if (!active || !draft.trim() || busy || active.status === "closed") return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      await request("/api/support/tickets/" + encodeURIComponent(active.id) + "/messages", {
+        method: "POST", body: JSON.stringify({ message: draft.trim() }),
+      });
+      setDraft("");
+      await Promise.all([loadMessages(active.id), loadTickets()]);
+      setNotice("تم إرسال رسالتك إلى فريق الدعم.");
+    } catch (e) { setError(e instanceof Error ? e.message : "تعذر إرسال الرسالة."); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <main className="vyra-support-page" dir="rtl">
+      <div className="vyra-support-wrap">
+        <Link className="vyra-support-back" href="/"><ArrowRight size={16}/> العودة إلى VYRA</Link>
+        <header className="vyra-support-heading">
+          <span className="vyra-support-icon"><Headset size={23}/></span>
+          <div><span className="vyra-support-eyebrow">مركز المساعدة</span><h1>الدعم الفني</h1><p>تواصل بشكل خاص مع فريق VYRA وتابع حالة طلباتك من مكان واحد.</p></div>
+          <button className="vyra-support-new" onClick={() => { setActive(null); setMessages([]); setNewMode(true); setDraft(""); setError(""); setNotice(""); }}><Plus size={17}/> طلب دعم جديد</button>
+        </header>
+
+        {notice && <p className="vyra-support-alert success" role="status"><CheckCircle2 size={16}/>{notice}</p>}
+        {error && <p className="vyra-support-alert error" role="alert">{error}</p>}
+
+        <div className="vyra-support-layout">
+          <aside className="vyra-support-list">
+            <div className="vyra-support-list-head"><div><b>طلباتك</b><small>{tickets.length} تذكرة</small></div><button aria-label="تحديث الطلبات" onClick={() => loadTickets().catch(e => setError(e.message))}><RefreshCw size={16}/></button></div>
+            {loading ? <div className="vyra-support-empty small">جارٍ تحميل الطلبات...</div> : tickets.map(ticket => (
+              <button key={ticket.id} className={"vyra-support-ticket" + (active?.id === ticket.id ? " active" : "")} onClick={() => void openTicket(ticket)}>
+                <span className="vyra-support-ticket-top"><b>{ticket.subject}</b><em className={ticket.status === "closed" ? "closed" : "open"}>{ticket.status === "closed" ? "مغلقة" : "مفتوحة"}</em></span>
+                <small>{ticket.last_message || "لا توجد رسائل"}</small>
+                <span className="vyra-support-ticket-date">{ticket.created_at ? new Date(ticket.created_at).toLocaleDateString("ar") : ""}</span>
+              </button>
+            ))}
+            {!loading && tickets.length === 0 && <div className="vyra-support-empty"><LifeBuoy size={24}/><b>لا توجد طلبات دعم</b><span>أنشئ طلباً جديداً وسنساعدك.</span></div>}
+          </aside>
+
+          <section className="vyra-support-thread">
+            {newMode ? (
+              <div className="vyra-support-compose-new">
+                <span className="vyra-support-eyebrow">رسالة خاصة</span><h2>إرسال طلب دعم جديد</h2>
+                <p>اكتب عنوان المشكلة واشرح ما تحتاج إليه. لا يمكن للأعضاء الآخرين رؤية هذه المراسلة.</p>
+                <label>عنوان الطلب<input value={subject} onChange={e => setSubject(e.target.value)} maxLength={160} placeholder="مثال: مشكلة في نشر الفيديو"/></label>
+                <label>تفاصيل الرسالة<textarea value={draft} onChange={e => setDraft(e.target.value)} maxLength={5000} placeholder="اشرح المشكلة أو اكتب سؤالك..." rows={7}/></label>
+                <button className="vyra-support-send" disabled={busy || subject.trim().length < 3 || !draft.trim()} onClick={() => void createTicket()}><Send size={16}/>{busy ? "جارٍ الإرسال..." : "إرسال الطلب"}</button>
+              </div>
+            ) : active ? (
+              <>
+                <div className="vyra-support-thread-head"><div><span className="vyra-support-eyebrow">محادثة الدعم</span><h2>{active.subject}</h2><small>رقم الطلب: {active.id}</small></div><span className={"vyra-support-status " + (active.status === "closed" ? "closed" : "open")}>{active.status === "closed" ? "مغلقة" : "قيد المتابعة"}</span></div>
+                <div className="vyra-support-messages">
+                  {messages.map(message => (
+                    <article key={message.id} className={"vyra-support-message " + (message.sender_role === "support" ? "from-support" : "from-user")}>
+                      <span>{message.sender_role === "support" ? "فريق دعم VYRA" : "أنت"}</span>
+                      <p>{message.message}</p>
+                      <small>{message.created_at ? new Date(message.created_at).toLocaleString("ar") : ""}</small>
+                    </article>
+                  ))}
+                  {messages.length === 0 && <div className="vyra-support-empty small">لا توجد رسائل في هذه المحادثة.</div>}
+                </div>
+                {active.status === "closed" ? <div className="vyra-support-closed"><Clock3 size={17}/> هذا الطلب مغلق حالياً. أنشئ طلباً جديداً إذا كنت تحتاج إلى متابعة أخرى.</div> : (
+                  <form className="vyra-support-reply" onSubmit={e => { e.preventDefault(); void sendMessage(); }}>
+                    <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={3} maxLength={5000} placeholder="اكتب رسالتك أو ردك هنا..."/>
+                    <div><small>يصل رد فريق الدعم إلى مركز التنبيهات لديك.</small><button className="vyra-support-send" disabled={busy || !draft.trim()}><Send size={16}/>{busy ? "جارٍ الإرسال..." : "إرسال"}</button></div>
+                  </form>
+                )}
+              </>
+            ) : (
+              <div className="vyra-support-empty large"><span><MessageCircle size={28}/></span><h2>كيف يمكننا مساعدتك؟</h2><p>اختر طلباً من القائمة لمتابعة المحادثة، أو أنشئ طلب دعم جديداً.</p><button className="vyra-support-new" onClick={() => setNewMode(true)}><Plus size={16}/> إنشاء طلب دعم</button></div>
+            )}
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export default function Page() {
+  return <AuthGate><Support/></AuthGate>;
+}
