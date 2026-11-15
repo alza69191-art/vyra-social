@@ -27,6 +27,110 @@ async function request<T>(path: string, init: RequestInit = {}, accessToken?: st
 export function getPublicPosts(limit = 20, offset = 0): Promise<VyraPost[]> {
   return request<VyraPost[]>(`/api/posts?limit=${limit}&offset=${offset}`);
 }
+
+export function getPublicReels(limit = 20, offset = 0): Promise<VyraPost[]> {
+  return request<VyraPost[]>(`/api/reels?limit=${limit}&offset=${offset}`);
+}
+
+type DirectUploadSignature = {
+  cloud_name: string;
+  api_key: string;
+  timestamp: number;
+  signature: string;
+  folder: string;
+  public_id: string;
+  resource_type: "image" | "video";
+};
+
+function uploadCloudinaryChunk(
+  endpoint: string,
+  form: FormData,
+  headers: Record<string, string>,
+  onProgress: (loaded: number) => void,
+): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", endpoint);
+    Object.entries(headers).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(event.loaded);
+    };
+    xhr.onload = () => {
+      let data: any = {};
+      try { data = JSON.parse(xhr.responseText || "{}"); } catch {}
+      if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+      else reject(new Error(data?.error?.message || data?.message || "تعذر رفع جزء من الفيديو إلى التخزين."));
+    };
+    xhr.onerror = () => reject(new Error("انقطع الاتصال أثناء رفع الفيديو. أعد المحاولة."));
+    xhr.onabort = () => reject(new Error("تم إلغاء رفع الفيديو."));
+    xhr.send(form);
+  });
+}
+
+/** Upload video bytes straight to Cloudinary in resumable-size chunks, then attach
+ * the signed Cloudinary response to the user's own post through the API. */
+export async function uploadVideoDirect(
+  accessToken: string,
+  file: File,
+  postId: string,
+  onProgress: (percent: number) => void = () => undefined,
+): Promise<{ url: string; media_type: "video"; purpose: "post"; post_id: string }> {
+  if (!file.type.startsWith("video/")) throw new Error("اختر ملف فيديو صالحاً.");
+  const signature = await request<DirectUploadSignature>(
+    "/api/uploads/signature",
+    { method: "POST", body: JSON.stringify({ post_id: postId, resource_type: "video" }) },
+    accessToken,
+  );
+  const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(signature.cloud_name)}/video/upload`;
+  const chunkSize = 6 * 1024 * 1024;
+  const uploadId = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  let response: any = null;
+
+  for (let start = 0; start < file.size; start += chunkSize) {
+    const endExclusive = Math.min(start + chunkSize, file.size);
+    const chunk = file.slice(start, endExclusive);
+    const form = new FormData();
+    form.append("file", chunk, file.name);
+    form.append("api_key", signature.api_key);
+    form.append("timestamp", String(signature.timestamp));
+    form.append("signature", signature.signature);
+    form.append("folder", signature.folder);
+    form.append("public_id", signature.public_id);
+    const isChunked = file.size > chunkSize;
+    const headers: Record<string, string> = {};
+    if (isChunked) {
+      headers["X-Unique-Upload-Id"] = uploadId;
+      headers["Content-Range"] = `bytes ${start}-${endExclusive - 1}/${file.size}`;
+    }
+    response = await uploadCloudinaryChunk(endpoint, form, headers, (loaded) => {
+      const completed = start + Math.min(loaded, chunk.size);
+      onProgress(Math.min(99, Math.round((completed / file.size) * 100)));
+    });
+  }
+
+  if (!response?.secure_url || !response?.public_id || !response?.version || !response?.signature) {
+    throw new Error("اكتمل الرفع دون استلام بيانات تحقق صالحة من التخزين.");
+  }
+  const attached = await request<{ url: string; media_type: "video"; post_id: string }>(
+    "/api/uploads/complete",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        post_id: postId,
+        public_id: response.public_id,
+        secure_url: response.secure_url,
+        version: response.version,
+        signature: response.signature,
+        resource_type: "video",
+      }),
+    },
+    accessToken,
+  );
+  onProgress(100);
+  return { ...attached, purpose: "post" };
+}
 export function saveProfile(accessToken: string, profile: { username: string; display_name: string; bio?: string | null; is_private?: boolean }): Promise<VyraProfile> {
   return request<VyraProfile>("/api/me", { method: "PUT", body: JSON.stringify(profile) }, accessToken);
 }
