@@ -14,6 +14,9 @@ WINDOW_SECONDS = 60
 LIMITS = {
     "/api/auth/register": 5,
     "/api/auth/login": 8,
+    "/api/auth/admin-login": 5,
+    "/api/friends/request": 10,
+    "/api/conversations/direct": 12,
     "/api/ai/chat": 12,
     "/api/ai/agent": 8,
     "/api/uploads": 12,
