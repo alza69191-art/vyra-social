@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { ArrowRight, Bot, LoaderCircle, Send, Sparkles, Copy, Plus, WandSparkles, BrainCircuit, Check, ImagePlus, X, Link2, Unplug, Image as ImageIcon, Download, Mic, MicOff, Volume2 } from "lucide-react";
+import { ArrowRight, Bot, LoaderCircle, Send, Sparkles, Copy, Plus, WandSparkles, BrainCircuit, Check, ImagePlus, X, Link2, Unplug, Image as ImageIcon, Download, Mic, MicOff, Volume2, Video } from "lucide-react";
 import Link from "next/link";
 import AuthGate from "@/components/auth-gate";
 
