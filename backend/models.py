@@ -244,6 +244,7 @@ class MarketListing(Base):
     location: Mapped[str | None] = mapped_column(String(120), nullable=True)
     media_url: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     media_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    group_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(16), default="active", nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
 
