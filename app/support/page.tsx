@@ -24,7 +24,7 @@ function Support() {
   const request = async (path: string, init: RequestInit = {}) => {
     const response = await fetch(API + path, {
       ...init,
-      headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), Authorization: "Bearer " + accessToken(), ...init.headers },
+      headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), Authorization: "Bearer " + accessToken() },
       cache: "no-store",
     });
     const data = await response.json().catch(() => ({}));
