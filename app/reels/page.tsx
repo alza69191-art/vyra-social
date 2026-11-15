@@ -22,7 +22,7 @@ function Reels(){
   }),{threshold:[0,0.65,1]});
   videos.forEach(v=>observer.observe(v));
   return()=>observer.disconnect();
- },[reels.length]);
+ },[rows.length]);
  async function publish(e:React.FormEvent){e.preventDefault();if(!file||!token()||busy)return;setBusy(true);try{const post=await createPost(token(),caption,"public");const uploaded=await uploadMedia(token(),file,"post",post.id);if(uploaded.media_type!=="video")throw new Error("اختر ملف فيديو صالحاً.");setNotice("تم نشر الريلز.");setShow(false);setFile(null);setCaption("");await load()}catch(e){setNotice(e instanceof Error?e.message:"تعذر نشر الفيديو")}finally{setBusy(false)}}
  const reels=useMemo(()=>rows, [rows]);
  return <main dir="rtl" style={{minHeight:"100vh",background:"#0d1020",color:"#fff",padding:16}}><header style={{maxWidth:900,margin:"0 auto 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}><Link href="/" style={{display:"inline-flex",gap:8,alignItems:"center",color:"#fff",textDecoration:"none"}}><ArrowRight size={18}/> العودة إلى VYRA</Link><b style={{letterSpacing:3}}>VYRA REELS</b><button onClick={()=>setShow(true)} style={action}><Plus size={17}/> إنشاء ريلز</button></header>{notice&&<p role="status" style={{textAlign:"center",color:"#d6d8ff"}}>{notice}</p>}
