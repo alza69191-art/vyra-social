@@ -4,6 +4,7 @@ import "./vyra-nexus.css";
 import "./payoneer-facebook.css";
 import "./vyra-brand.css";
 import "./payoneer-inspired.css";
+import "./vyra-final-theme.css";
 import VyraWorkspaceNav from "@/components/vyra-workspace-nav";
 
 export const metadata: Metadata = {
