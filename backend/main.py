@@ -295,6 +295,24 @@ class SocialSpaceCreate(BaseModel):
     cover_url: str | None = Field(default=None, max_length=2000)
 
 
+@app.get("/api/my/groups")
+def list_my_groups(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    rows = db.execute(
+        select(models.SocialGroup, models.GroupMember)
+        .join(models.GroupMember, models.GroupMember.group_id == models.SocialGroup.id)
+        .where(models.GroupMember.user_id == claims["sub"], models.GroupMember.status == "active")
+        .order_by(desc(models.SocialGroup.created_at))
+    ).all()
+    return [{
+        "id": group.id, "name": group.name, "description": group.description,
+        "privacy": group.privacy, "category": group.category,
+        "conversation_id": db.scalar(select(models.Conversation.id).where(
+            models.Conversation.context_type == "group",
+            models.Conversation.context_id == group.id,
+        )),
+    } for group, _member in rows]
+
+
 @app.get("/api/groups")
 def list_groups(db: Session = Depends(get_db)):
     groups = db.scalars(select(models.SocialGroup).where(models.SocialGroup.privacy == "public").order_by(desc(models.SocialGroup.created_at)).limit(100)).all()
