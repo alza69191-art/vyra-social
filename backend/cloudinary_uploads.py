@@ -161,17 +161,15 @@ def sign_direct_upload(
         raise HTTPException(status_code=404, detail="Post not found")
 
     cloudinary.config(cloud_name=cloud_name, api_key=api_key, api_secret=api_secret, secure=True)
-    folder = f"vyra/posts/{claims['sub']}/{post.id}"
-    public_id = uuid4().hex
+    public_id = f"vyra/posts/{claims['sub']}/{post.id}/{uuid4().hex}"
     timestamp = int(time.time())
-    signed_params = {"folder": folder, "public_id": public_id, "timestamp": timestamp}
+    signed_params = {"public_id": public_id, "timestamp": timestamp}
     signature = cloudinary.utils.api_sign_request(signed_params, api_secret)
     return {
         "cloud_name": cloud_name,
         "api_key": api_key,
         "timestamp": timestamp,
         "signature": signature,
-        "folder": folder,
         "public_id": public_id,
         "resource_type": payload.resource_type,
     }
