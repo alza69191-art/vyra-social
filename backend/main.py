@@ -36,6 +36,7 @@ origins = [
     "http://localhost:3000",
     "https://vyra-web-rs1b.onrender.com",
     "https://vyra-nexus-preview.onrender.com",
+    "https://vyra-marketplace-mc2q.onrender.com",
 ]
 app.add_middleware(
     CORSMiddleware,
