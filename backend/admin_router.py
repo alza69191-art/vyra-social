@@ -100,6 +100,38 @@ def posts(claims: dict = Depends(current_user), db: Session = Depends(get_db),
         "body": post.body, "visibility": post.visibility, "created_at": post.created_at,
     } for post, profile in rows]
 
+@router.get("/reels")
+def reels(claims: dict = Depends(current_user), db: Session = Depends(get_db),
+          limit: int = Query(default=50, ge=1, le=100), offset: int = Query(default=0, ge=0)):
+    require_admin(claims, db)
+    video_post_ids = select(models.PostMedia.post_id).where(models.PostMedia.media_type == "video")
+    rows = db.execute(
+        select(models.Post, models.Profile)
+        .join(models.Profile, models.Profile.id == models.Post.author_id)
+        .where(models.Post.id.in_(video_post_ids))
+        .order_by(desc(models.Post.created_at))
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    ids = [post.id for post, _profile in rows]
+    if not ids:
+        return []
+    media_rows = db.scalars(
+        select(models.PostMedia)
+        .where(models.PostMedia.post_id.in_(ids), models.PostMedia.media_type == "video")
+        .order_by(models.PostMedia.created_at)
+    ).all()
+    media_by_post: dict[str, list[dict]] = {}
+    for media in media_rows:
+        media_by_post.setdefault(media.post_id, []).append({"url": media.media_url, "media_type": "video"})
+    return [{
+        "id": post.id, "author_id": post.author_id,
+        "author_name": profile.display_name, "author_username": profile.username,
+        "body": post.body, "visibility": post.visibility, "created_at": post.created_at,
+        "media": media_by_post.get(post.id, []),
+    } for post, profile in rows]
+
+
 @router.delete("/posts/{post_id}")
 def remove_post(post_id: str, payload: ModerationAction,
                 claims: dict = Depends(current_user), db: Session = Depends(get_db)):
