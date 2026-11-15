@@ -76,6 +76,8 @@ def initialize_schema():
             "social_pages": {"privacy": "VARCHAR(16) NOT NULL DEFAULT 'public'", "avatar_url": "TEXT NULL", "cover_url": "TEXT NULL"},
             "direct_messages": {"media_type": "VARCHAR(16) NULL", "edited_at": "DATETIME NULL"},
             "market_listings": {"media_url": "VARCHAR(2000) NULL", "media_type": "VARCHAR(16) NULL", "group_id": "VARCHAR(36) NULL"},
+            "stories": {"visibility": "VARCHAR(16) NOT NULL DEFAULT 'public'"},
+
             "conversations": {"context_type": "VARCHAR(16) NULL", "context_id": "VARCHAR(36) NULL"},
             "users": {"email_verified_at": "DATETIME NULL"},
         }
