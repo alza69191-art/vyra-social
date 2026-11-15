@@ -127,6 +127,7 @@ class Story(Base):
     media_url: Mapped[str] = mapped_column(Text)
     media_type: Mapped[str] = mapped_column(String(16))
     caption: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    visibility: Mapped[str] = mapped_column(String(16), default="public", nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
