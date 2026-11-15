@@ -51,7 +51,7 @@ export default function VyraWorkspaceNav() {
     setAuthenticated(Boolean(sessionStorage.getItem("vyra_access_token")));
   }, [pathname]);
 
-  if (!authenticated || pathname === "/login" || pathname === "/help" || pathname.startsWith("/help/")) return null;
+  if (!authenticated || pathname === "/" || pathname === "/login" || pathname === "/help" || pathname.startsWith("/help/")) return null;
 
   return (
     <aside className="vyra-workspace-sidebar" dir="rtl" aria-label="قائمة VYRA الرئيسية">
