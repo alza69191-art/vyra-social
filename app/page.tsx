@@ -123,6 +123,7 @@ function HomeFeed() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState(false);
   const [notice, setNotice] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [sponsoredAds, setSponsoredAds] = useState<Array<{id:string;brand_name:string;title:string;body:string|null;destination_url:string;media_url:string|null}>>([]);
   useEffect(()=>{fetch((process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/+$/,"")+"/api/ads?limit=4",{cache:"no-store"}).then(r=>r.ok?r.json():[]).then(setSponsoredAds).catch(()=>setSponsoredAds([]));},[]);
@@ -179,18 +180,19 @@ function HomeFeed() {
     try {
       const created = await createPost(token, body, visibility);
       createdPostId = created.id;
-      setNotice("جارٍ رفع الصور والفيديوهات...");
+      setUploadProgress(0);
+      setNotice("جارٍ تجهيز الوسائط للنشر...");
       const uploaded: Array<{url:string;media_type:string}> = [];
       for (let index = 0; index < selectedFiles.length; index += 2) {
         const batch = selectedFiles.slice(index, index + 2);
-        const results = await Promise.all(batch.map(file => file.type.startsWith("video/") ? uploadVideoDirect(token, file, created.id) : uploadMedia(token, file, "post", created.id)));
+        const results = await Promise.all(batch.map((file, batchIndex) => { const fileIndex = index + batchIndex; return file.type.startsWith("video/") ? uploadVideoDirect(token, file, created.id, value => { const percent = Math.round(((fileIndex + value / 100) / selectedFiles.length) * 100); setUploadProgress(percent); setNotice("جارٍ رفع الفيديو مباشرة... " + percent + "%"); }) : uploadMedia(token, file, "post", created.id); }));
         uploaded.push(...results.map(item => ({ url: item.url, media_type: item.media_type })));
       }
       setPosts(current => [{ id: created.id, authorId: created.author_id, visibility: created.visibility, name: "أنت", handle: "@your.profile", avatar: "أ", time: "الآن", text: created.body || "", likes: 0, comments: 0, shares: 0, tag: "منشور جديد", liked: false, media: uploaded }, ...current]);
-      setDraft(""); setSelectedFiles([]); setVisibility("public"); setNotice("تم نشر المنشور ورفع الوسائط"); setTimeout(() => setNotice(""), 2500);
+      setDraft(""); setSelectedFiles([]); setVisibility("public"); setUploadProgress(100); setNotice("تم نشر المنشور ورفع الوسائط"); setTimeout(() => setNotice(""), 2500);
     } catch (error) {
       if (createdPostId) { try { await deletePost(token, createdPostId); } catch { /* Keep the original publish error visible. */ } }
-      setNotice(error instanceof Error ? error.message : "تعذر نشر المنشور");
+      setUploadProgress(0); setNotice(error instanceof Error ? error.message : "تعذر نشر المنشور");
       setTimeout(() => setNotice(""), 3500);
     }
   }
