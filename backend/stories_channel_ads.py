@@ -36,6 +36,7 @@ class StoryCreate(BaseModel):
     media_url: str = Field(min_length=8, max_length=2000)
     media_type: str = Field(pattern="^(image|video)$")
     caption: str | None = Field(default=None, max_length=500)
+    visibility: str = Field(default="public", pattern="^(public|private)$")
 
 
 class AdCreate(BaseModel):
@@ -56,20 +57,23 @@ def create_story(payload: StoryCreate, claims: dict = Depends(current_user), db:
     story = models.Story(
         id=str(uuid4()), author_id=uid, media_url=payload.media_url,
         media_type=payload.media_type, caption=(payload.caption or "").strip() or None,
+        visibility=payload.visibility,
         expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
     )
     db.add(story)
     db.commit()
     db.refresh(story)
     return {"id": story.id, "media_url": story.media_url, "media_type": story.media_type,
-            "caption": story.caption, "expires_at": story.expires_at, "views_count": 0}
+            "caption": story.caption, "visibility": story.visibility, "expires_at": story.expires_at, "views_count": 0}
 
 
 @router.get("/stories")
 def list_stories(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
     now = datetime.now(timezone.utc)
-    rows = db.scalars(select(models.Story).where(models.Story.expires_at > now)
-                      .order_by(desc(models.Story.created_at)).limit(200)).all()
+    rows = db.scalars(select(models.Story).where(
+        models.Story.expires_at > now,
+        (models.Story.visibility == "public") | (models.Story.author_id == claims["sub"]),
+    ).order_by(desc(models.Story.created_at)).limit(200)).all()
     result = []
     for story in rows:
         profile = db.get(models.Profile, story.author_id)
@@ -79,7 +83,7 @@ def list_stories(claims: dict = Depends(current_user), db: Session = Depends(get
                        "username": profile.username if profile else "",
                        "avatar_url": profile.avatar_url if profile else None,
                        "media_url": story.media_url, "media_type": story.media_type,
-                       "caption": story.caption, "created_at": story.created_at,
+                       "caption": story.caption, "visibility": story.visibility, "created_at": story.created_at,
                        "expires_at": story.expires_at, "views_count": views,
                        "viewed": bool(db.scalar(select(models.StoryView.id).where(
                            models.StoryView.story_id == story.id,
