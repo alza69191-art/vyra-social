@@ -1,0 +1,64 @@
+/* VYRA corporate identity — warm orange, graphite and white */
+:root {
+  color-scheme: light;
+  --vyra-primary: #f26a21;
+  --vyra-primary-dark: #d95316;
+  --vyra-accent: #ff9a55;
+  --vyra-ink: #20232b;
+  --vyra-muted: #737985;
+  --vyra-border: #e9e9ec;
+  --vyra-surface: #ffffff;
+  --vyra-page: #f7f7f8;
+  --vyra-orange-gradient: linear-gradient(115deg,#f26a21 0%,#ff8a3d 100%);
+}
+html, body { background:var(--vyra-page)!important; color:var(--vyra-ink)!important; }
+body { accent-color:var(--vyra-primary); }
+a { transition:color .18s ease,background .18s ease,border-color .18s ease; }
+a:hover { color:var(--vyra-primary-dark)!important; }
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible {
+  outline:3px solid rgba(242,106,33,.28)!important; outline-offset:2px;
+}
+.brand-mark,.auth-brand .brand-mark,.ai-brand>span {
+  background:var(--vyra-orange-gradient)!important; color:#fff!important;
+  box-shadow:0 7px 20px rgba(242,106,33,.22)!important;
+}
+.brand-word,.auth-brand b,.ai-brand { color:var(--vyra-ink)!important; }
+.nav-item { transition:all .18s ease; }
+.nav-item:hover { background:#fff2e9!important;color:var(--vyra-primary-dark)!important; }
+.nav-item.active { background:var(--vyra-orange-gradient)!important;color:#fff!important; }
+.black-button,.publish-button,.auth-card form button,.ai-form button,
+main button[type="submit"],main .primary-button {
+  background:var(--vyra-orange-gradient)!important;color:#fff!important;border:0!important;
+  box-shadow:0 8px 20px rgba(242,106,33,.18)!important;
+}
+.black-button:hover,.publish-button:hover,.auth-card form button:hover,.ai-form button:hover,
+main button[type="submit"]:hover { filter:brightness(.97); transform:translateY(-1px); }
+.icon-button:hover,.collapse-button:hover,.composer-tools button:hover,.post-actions button:hover {
+  background:#fff2e9!important;color:var(--vyra-primary-dark)!important;
+}
+.search-box:focus-within,.auth-card input:focus,.ai-form textarea:focus,
+main input:focus,main textarea:focus,main select:focus { border-color:var(--vyra-primary)!important; }
+.story-ring { border-color:var(--vyra-primary)!important; }
+.notification-icon i { background:var(--vyra-primary)!important; }
+.post-actions button.liked { color:#e34c65!important;background:#fff0f1!important; }
+.post-tag,.quick-icon { background:#fff2e9!important;color:var(--vyra-primary-dark)!important;border-color:#ffe0cc!important; }
+.welcome-row h1 span,.eyebrow { color:var(--vyra-primary)!important; }
+.progress-track span { background:var(--vyra-orange-gradient)!important; }
+.toast { background:#252830!important;color:#fff!important; }
+.auth-page,.auth-loading,.ai-page {
+  background:radial-gradient(ellipse at 12% 8%,rgba(242,106,33,.10),transparent 36%),#f7f7f8!important;
+}
+.auth-brand .brand-mark,.ai-logo { background:var(--vyra-orange-gradient)!important; }
+.auth-card,.composer-card,.post-card,.side-card,.stories-panel {
+  border-color:var(--vyra-border)!important;
+}
+main[dir="rtl"][lang="ar"] a[style*="6657e8"],
+main[dir="rtl"][lang="ar"] a[style*="6657e8"],
+main[dir="rtl"][lang="ar"] p[style*="6657e8"],
+main[dir="rtl"][lang="ar"] span[style*="6657e8"] { color:var(--vyra-primary)!important; }
+main[dir="rtl"][lang="ar"] a[style*="background: rgb(102, 87, 232)"],
+main[dir="rtl"][lang="ar"] a[style*="background:#6657e8"],
+main[dir="rtl"][lang="ar"] a[style*="background: #6657e8"] {
+  background:var(--vyra-orange-gradient)!important;color:#fff!important;
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
