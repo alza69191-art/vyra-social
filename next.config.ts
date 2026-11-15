@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
     return [
-      ...["admin", "account", "settings", "messages", "notifications", "support", "saved", "call", "login"].map((path) => ({
+      ...["admin", "account", "settings", "messages", "notifications", "support", "saved", "call", "login", "market/orders", "market/cart", "market/seller-orders"].map((path) => ({
         source: `/${path}/:path*`,
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       })),
