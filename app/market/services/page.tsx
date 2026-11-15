@@ -1,4 +1,5 @@
 "use client";
+import "./service-publish.css";
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import AuthGate from "@/components/auth-gate";
