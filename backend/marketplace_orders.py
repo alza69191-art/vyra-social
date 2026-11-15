@@ -272,12 +272,29 @@ def checkout(payload: CheckoutInput, claims: dict = Depends(current_user), db: S
     subtotal = _money(subtotal)
     commission_total = _money(commission_total)
     seller_net_total = _money(seller_net_total)
+    currency = next(iter(currencies))
+    has_physical_products = any(product.item_type == "product" for _, product, _ in products)
+    shipping_fee = Decimal("0.00")
+    if has_physical_products:
+        if not settings.get("shipping_enabled", True):
+            raise HTTPException(status_code=403, detail="الشحن متوقف حالياً. لا يمكن إتمام طلب المنتجات المادية.")
+        default_rates = {"USD": 5, "EUR": 5, "ILS": 18, "SAR": 18, "AED": 18}
+        default_thresholds = {"USD": 100, "EUR": 100, "ILS": 350, "SAR": 375, "AED": 375}
+        rates = settings.get("shipping_rates", default_rates)
+        thresholds = settings.get("free_shipping_thresholds", default_thresholds)
+        rate = Decimal(str(rates.get(currency, 0)))
+        free_threshold = Decimal(str(thresholds.get(currency, 0)))
+        if rate < 0 or free_threshold < 0:
+            raise HTTPException(status_code=422, detail="إعدادات الشحن غير صالحة")
+        if free_threshold <= 0 or subtotal < free_threshold:
+            shipping_fee = _money(rate)
     order_id = str(uuid4())
     order_number = "VY-" + datetime.now(timezone.utc).strftime("%y%m%d") + "-" + uuid4().hex[:6].upper()
+    order_total = _money(subtotal + shipping_fee)
     order = MarketplaceOrder(id=order_id, order_number=order_number, buyer_id=claims["sub"],
         status="pending_payment", payment_method=payload.payment_method, payment_status="pending",
-        currency=next(iter(currencies)), subtotal=subtotal, shipping_fee=Decimal("0.00"),
-        platform_commission=commission_total, seller_net_total=seller_net_total, total=subtotal,
+        currency=currency, subtotal=subtotal, shipping_fee=shipping_fee,
+        platform_commission=commission_total, seller_net_total=seller_net_total, total=order_total,
         commission_percent=commission_percent, shipping_address=payload.shipping_address,
         buyer_note=payload.buyer_note)
     db.add(order)
@@ -292,7 +309,7 @@ def checkout(payload: CheckoutInput, claims: dict = Depends(current_user), db: S
                 actor_id=claims["sub"], delta=-row.quantity, reason=f"Order {order_number} stock reservation"))
         db.delete(row)
     db.add(MarketplacePaymentRecord(id=str(uuid4()), order_id=order_id, method=payload.payment_method,
-        status="pending", amount=subtotal, currency=order.currency))
+        status="pending", amount=order.total, currency=order.currency))
     db.commit()
     db.refresh(order)
     return _order_out(db, order)
