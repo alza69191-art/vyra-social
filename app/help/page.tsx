@@ -36,7 +36,16 @@ export default function HelpPage(){
  const [query,setQuery]=useState("");
  const [opened,setOpened]=useState<string|null>(null);
  const filtered=useMemo(()=>sections.map(s=>({...s,items:s.items.filter(([q,a])=>(q+" "+a+" "+s.title).toLowerCase().includes(query.toLowerCase()))})).filter(s=>s.items.length),[query]);
+ const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: sections.flatMap((section) => section.items.map(([question, answer]) => ({
+   "@type": "Question", name: question,
+   acceptedAnswer: { "@type": "Answer", text: answer },
+  }))),
+ };
  return <main dir="rtl" style={{minHeight:"100vh",background:"#f7f7f7",color:"#171717",padding:"28px 18px 60px"}}>
+  <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structuredData)}} />
   <div style={{maxWidth:980,margin:"0 auto"}}>
    <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
     <Link href="/" style={{color:"#171717",textDecoration:"none",fontWeight:700}}>← العودة إلى VYRA</Link>
