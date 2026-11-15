@@ -62,3 +62,51 @@ main[dir="rtl"][lang="ar"] a[style*="background: #6657e8"] {
   background:var(--vyra-orange-gradient)!important;color:#fff!important;
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+
+/* Complete VYRA design-system coverage for every internal route */
+:root{
+  --primary:#f26a21;--primary-hover:#d95316;--accent:#ff9a55;
+  --ink:#20232b;--muted:#737985;--line:#e9e9ec;
+  --surface:#fff;--canvas:#f7f7f8;
+}
+html,body{background:var(--canvas)!important;color:var(--ink)!important}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+main{color:var(--ink)}
+main h1,main h2,main h3,main h4{color:var(--ink)}
+main p,main label,main small{color:var(--muted)}
+main a{color:var(--vyra-primary)}
+main button,main [role="button"]{font-family:inherit}
+main button[type="submit"],main button.primary,main .primary-button,
+main a.primary-button,.black-button,.publish-button{
+  background:var(--vyra-orange-gradient)!important;color:#fff!important;
+  border:1px solid transparent!important;border-radius:12px!important;
+  box-shadow:0 8px 20px rgba(242,106,33,.16)!important;
+}
+main button:not([type="submit"]):not(.primary):not(.primary-button){
+  border-radius:11px;
+}
+main input,main textarea,main select{
+  color:var(--ink)!important;border:1px solid var(--vyra-border)!important;
+  border-radius:11px!important;background:#fff!important;
+}
+main input:focus,main textarea:focus,main select:focus{
+  outline:3px solid rgba(242,106,33,.14)!important;border-color:var(--vyra-primary)!important;
+}
+main article,main aside,main [class*="card"],main [class*="panel"]{
+  border-color:var(--vyra-border);
+}
+main article,main [class*="card"],main [class*="panel"]{
+  box-shadow:0 10px 30px rgba(32,35,43,.045);
+}
+[class*="sidebar"],[class*="topbar"],[class*="header"]{
+  border-color:var(--vyra-border);
+}
+[class*="active"],[aria-current="page"],[aria-selected="true"]{
+  --tw-ring-color:rgba(242,106,33,.2);
+}
+::selection{background:rgba(242,106,33,.18);color:var(--ink)}
+@media(max-width:768px){
+  main{max-width:100%;overflow-x:hidden}
+  main [class*="grid"]{min-width:0}
+}
