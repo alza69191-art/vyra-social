@@ -284,3 +284,111 @@ def admin_product_status(product_id: str, payload: ProductStatus, claims: dict =
     audit(db, actor, "marketplace_listing_status_changed", "market_listing", legacy.id, payload.reason)
     db.commit()
     return {"id": legacy.id, "status": legacy.status, "legacy_listing": True}
+
+
+# Storefront control center: JSON-driven theme, module switches, and merchant payment methods.
+from fastapi import Body
+
+
+PAYMENT_METHOD_TYPES = {"wallet", "bank", "gateway", "cash_on_delivery"}
+PAYMENT_PROVIDER_IDS = {"maalchat", "jawwalpay", "palpay", "bank_transfer", "paypal", "payoneer", "visa_mastercard", "cash_on_delivery"}
+
+
+def _store_control_read(db: Session):
+    return {
+        "theme": read_settings(db).get("storefront_theme", {
+            "primary": "#ff5a1f", "secondary": "#26364b", "background": "#ffffff",
+            "surface": "#f7f8fa", "text": "#202938", "radius": 14,
+            "font": "Tajawal", "dark_mode": False, "announcement": "",
+            "header_style": "sticky", "product_columns_desktop": 4, "product_columns_mobile": 2,
+        }),
+        "modules": read_settings(db).get("storefront_modules", {}),
+        "payments": read_settings(db).get("store_payment_methods", []),
+    }
+
+
+@admin_router.get("/store-control")
+def get_store_control(claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    require_admin(claims, db)
+    return _store_control_read(db)
+
+
+@admin_router.put("/store-control")
+def put_store_control(payload: dict = Body(...), claims: dict = Depends(current_user), db: Session = Depends(get_db)):
+    actor = require_admin(claims, db)
+    if set(payload) - {"theme", "modules", "payments"}:
+        raise HTTPException(status_code=422, detail="Unsupported store-control field")
+    if "theme" in payload:
+        theme = payload["theme"]
+        if not isinstance(theme, dict) or len(json.dumps(theme, ensure_ascii=False)) > 20000:
+            raise HTTPException(status_code=422, detail="Invalid theme configuration")
+        allowed_theme = {"primary", "secondary", "background", "surface", "text", "radius", "font",
+                         "dark_mode", "announcement", "header_style", "product_columns_desktop",
+                         "product_columns_mobile", "footer_text", "logo_url", "favicon_url"}
+        if set(theme) - allowed_theme:
+            raise HTTPException(status_code=422, detail="Unsupported theme property")
+        for color_key in ("primary", "secondary", "background", "surface", "text"):
+            if color_key in theme and not (isinstance(theme[color_key], str) and __import__("re").fullmatch(r"#[0-9a-fA-F]{6}", theme[color_key])):
+                raise HTTPException(status_code=422, detail=f"Invalid color: {color_key}")
+        if "radius" in theme and (not isinstance(theme["radius"], int) or not 0 <= theme["radius"] <= 32):
+            raise HTTPException(status_code=422, detail="Border radius must be between 0 and 32")
+        if "product_columns_desktop" in theme and theme["product_columns_desktop"] not in (2, 3, 4, 5, 6):
+            raise HTTPException(status_code=422, detail="Invalid desktop product columns")
+        if "product_columns_mobile" in theme and theme["product_columns_mobile"] not in (1, 2):
+            raise HTTPException(status_code=422, detail="Invalid mobile product columns")
+        save_setting(db, "storefront_theme", theme)
+    if "modules" in payload:
+        modules = payload["modules"]
+        if not isinstance(modules, dict) or len(modules) > 80 or any(not isinstance(v, bool) for v in modules.values()):
+            raise HTTPException(status_code=422, detail="Modules must be a map of boolean switches")
+        save_setting(db, "storefront_modules", modules)
+    if "payments" in payload:
+        payments = payload["payments"]
+        if not isinstance(payments, list) or len(payments) > 40:
+            raise HTTPException(status_code=422, detail="Invalid payment methods list")
+        normalized = []
+        seen = set()
+        allowed_fields = {"id", "name", "provider", "type", "enabled", "public_enabled", "currency",
+                          "country", "account_holder", "account_number", "bank_name", "instructions",
+                          "checkout_url", "fee_fixed", "fee_percent", "sort_order"}
+        for method in payments:
+            if not isinstance(method, dict) or set(method) - allowed_fields:
+                raise HTTPException(status_code=422, detail="Unsupported payment method field")
+            pid = str(method.get("id", "")).strip()
+            if not pid or len(pid) > 50 or pid in seen or method.get("type") not in PAYMENT_METHOD_TYPES:
+                raise HTTPException(status_code=422, detail="Invalid or duplicate payment method")
+            if method.get("provider") not in PAYMENT_PROVIDER_IDS and method.get("provider") != "custom":
+                raise HTTPException(status_code=422, detail="Unsupported payment provider")
+            if len(str(method.get("name", "")).strip()) < 2:
+                raise HTTPException(status_code=422, detail="Payment method name is required")
+            if method.get("type") == "gateway" and method.get("enabled") and not method.get("checkout_url"):
+                raise HTTPException(status_code=422, detail="Gateway checkout URL or verified API integration is required")
+            if method.get("checkout_url") and not str(method["checkout_url"]).startswith("https://"):
+                raise HTTPException(status_code=422, detail="Checkout URL must use HTTPS")
+            for numeric in ("fee_fixed", "fee_percent", "sort_order"):
+                if numeric in method and (not isinstance(method[numeric], (int, float)) or method[numeric] < 0):
+                    raise HTTPException(status_code=422, detail=f"Invalid {numeric}")
+            clean = {k: v for k, v in method.items() if k in allowed_fields}
+            clean["id"] = pid
+            clean["enabled"] = bool(clean.get("enabled", False))
+            clean["public_enabled"] = bool(clean.get("public_enabled", False))
+            clean["integration_status"] = "manual_verification_required" if clean["type"] in {"wallet", "bank"} else "provider_setup_required"
+            normalized.append(clean)
+            seen.add(pid)
+        save_setting(db, "store_payment_methods", normalized)
+    audit(db, actor, "store_control_updated", "storefront", "configuration", "Updated storefront theme, modules or payment methods")
+    db.commit()
+    return _store_control_read(db)
+
+
+@router.get("/api/storefront/config")
+def public_storefront_config(db: Session = Depends(get_db)):
+    settings = _store_control_read(db)
+    public_payments = []
+    for item in settings["payments"]:
+        if item.get("enabled") and item.get("public_enabled"):
+            public_payments.append({k: item.get(k) for k in (
+                "id", "name", "provider", "type", "currency", "country", "account_holder",
+                "account_number", "bank_name", "instructions", "checkout_url", "fee_fixed", "fee_percent"
+            ) if item.get(k) is not None})
+    return {"theme": settings["theme"], "modules": settings["modules"], "payments": public_payments}
