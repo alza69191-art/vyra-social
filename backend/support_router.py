@@ -54,6 +54,7 @@ def create_ticket(payload: TicketCreate, claims: dict=Depends(current_user), db:
     if db.get(models.Profile,uid) is None: raise HTTPException(404,"Profile not found")
     ticket=models.SupportTicket(id=str(uuid4()),user_id=uid,subject=payload.subject.strip(),status="open")
     db.add(ticket)
+    db.flush()  # Persist the parent row before inserting its first message (FK-safe on MySQL).
     db.add(models.SupportMessage(id=str(uuid4()),ticket_id=ticket.id,sender_id=uid,sender_role="user",body=payload.message.strip()))
     admin_id = support_admin_profile_id(db)
     if admin_id and admin_id != uid:
