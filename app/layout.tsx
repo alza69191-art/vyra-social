@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./vyra-nexus.css";
 import "./payoneer-facebook.css";
+import "./vyra-brand.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vyra-web-rs1b.onrender.com"),
@@ -29,7 +30,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f4f6fc",
+  themeColor: "#f26a21",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
