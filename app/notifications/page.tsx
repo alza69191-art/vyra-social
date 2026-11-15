@@ -3,7 +3,7 @@ import {useEffect,useState} from "react";
 import Link from "next/link";
 import AuthGate from "@/components/auth-gate";
 import {ArrowRight,Bell,CheckCheck,MessageCircle,Users,Heart,MessageSquare,Info} from "lucide-react";
-const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\\/+$/,"");
+const API=(process.env.NEXT_PUBLIC_API_URL||"https://vyra-api-9pxl.onrender.com").replace(/\/+$/, "");
 type N={id:string;kind:string;target_id:string|null;read:boolean;created_at:string};
 function Notifications(){
  const [rows,setRows]=useState<N[]>([]),[notice,setNotice]=useState("");
