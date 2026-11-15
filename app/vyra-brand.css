@@ -110,3 +110,15 @@ main article,main [class*="card"],main [class*="panel"]{
   main{max-width:100%;overflow-x:hidden}
   main [class*="grid"]{min-width:0}
 }
+
+/* Normalize remaining legacy inline brand accents on internal routes */
+[style*="#7165f5"],[style*="#7468f5"],[style*="#7771e8"],[style*="#6c63d9"],[style*="#6657e8"]{color:#f26a21!important}
+[style*="#45b9e8"],[style*="#40b9df"]{color:#d95316!important}
+[style*="background:#7165f5"],[style*="background: #7165f5"],
+[style*="background:#7468f5"],[style*="background: #7468f5"],
+[style*="background:#6657e8"],[style*="background: #6657e8"],
+[style*="background: rgb(113, 101, 245)"],[style*="background: rgb(102, 87, 232)"]{
+ background:var(--vyra-orange-gradient)!important;color:#fff!important
+}
+[style*="border-color:#7165f5"],[style*="border-color: #7165f5"],
+[style*="border:1px solid #7165f5"],[style*="border: 1px solid #7165f5"]{border-color:#f26a21!important}
