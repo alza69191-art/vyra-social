@@ -122,3 +122,19 @@ main article,main [class*="card"],main [class*="panel"]{
 }
 [style*="border-color:#7165f5"],[style*="border-color: #7165f5"],
 [style*="border:1px solid #7165f5"],[style*="border: 1px solid #7165f5"]{border-color:#f26a21!important}
+
+/* Legacy route accent normalization: brown and violet themes converge on VYRA orange */
+[style*="#a47742"],[style*="#956b36"],[style*="#9a6a2d"],[style*="#8a6334"],
+[style*="#805b2c"],[style*="#75562d"],[style*="#6d4d2c"],[style*="#8a673b"],
+[style*="#5a4328"],[style*="#b77932"],[style*="#c9a16b"],[style*="#9a6b36"]{
+ color:#f26a21!important
+}
+[style*="background:#a47742"],[style*="background: #a47742"],
+[style*="background:#956b36"],[style*="background: #956b36"],
+[style*="background:#9a6a2d"],[style*="background: #9a6a2d"],
+[style*="background:#8a6334"],[style*="background: #8a6334"],
+[style*="background:#805b2c"],[style*="background: #805b2c"],
+[style*="background:#75562d"],[style*="background: #75562d"]{
+ background:var(--vyra-orange-gradient)!important;color:#fff!important
+}
+[style*="#7771e8"],[style*="#6c63d9"],[style*="#625bd0"],[style*="#6d65dc"]{color:#f26a21!important}
